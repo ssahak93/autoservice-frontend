@@ -1,0 +1,140 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "close": "Close",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phoneNumber": "Phone Number",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signUp": "Sign up",
+    "signIn": "Sign in",
+    "invalidCredentials": "Invalid email or password",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "registerSuccess": "Registration successful! Please check your email."
+  },
+  "home": {
+    "title": "Auto Service Connect",
+    "subtitle": "Find and book the best auto services in Armenia",
+    "getStarted": "Get Started",
+    "browseServices": "Browse Services",
+    "features": {
+      "title": "Why Choose Us",
+      "feature1": {
+        "title": "Verified Services",
+        "description": "All services are verified and trusted"
+      },
+      "feature2": {
+        "title": "Easy Booking",
+        "description": "Book your service in just a few clicks"
+      },
+      "feature3": {
+        "title": "Real Reviews",
+        "description": "Read authentic reviews from real customers"
+      }
+    }
+  },
+  "services": {
+    "title": "Auto Services",
+    "searchPlaceholder": "Search services...",
+    "filterBy": "Filter by",
+    "city": "City",
+    "region": "Region",
+    "serviceType": "Service Type",
+    "minRating": "Minimum Rating",
+    "noServices": "No services found",
+    "viewDetails": "View Details",
+    "bookVisit": "Book Visit",
+    "rating": "Rating",
+    "reviews": "Reviews",
+    "verified": "Verified",
+    "workingHours": "Working Hours",
+    "contact": "Contact",
+    "description": "Description",
+    "specialization": "Specialization"
+  },
+  "visits": {
+    "title": "My Visits",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled",
+    "completed": "Completed",
+    "noVisits": "You don't have any visits yet",
+    "bookNew": "Book a new visit",
+    "preferredDate": "Preferred Date",
+    "preferredTime": "Preferred Time",
+    "description": "Description",
+    "status": "Status",
+    "service": "Service",
+    "date": "Date",
+    "time": "Time"
+  },
+  "reviews": {
+    "title": "Reviews",
+    "writeReview": "Write a Review",
+    "rating": "Rating",
+    "comment": "Comment",
+    "submitReview": "Submit Review",
+    "noReviews": "No reviews yet",
+    "averageRating": "Average Rating",
+    "totalReviews": "Total Reviews"
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": "Personal Information",
+    "changePassword": "Change Password",
+    "avatar": "Avatar",
+    "uploadPhoto": "Upload Photo",
+    "saveChanges": "Save Changes",
+    "profileUpdated": "Profile updated successfully"
+  },
+  "navigation": {
+    "home": "Home",
+    "services": "Services",
+    "myVisits": "My Visits",
+    "profile": "Profile",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "You are not authorized to perform this action.",
+    "notFound": "The requested resource was not found.",
+    "serverError": "Server error. Please try again later."
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Must be no more than {max} characters",
+    "phone": "Please enter a valid phone number"
+  }
+}

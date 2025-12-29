@@ -1,0 +1,140 @@
+{
+  "common": {
+    "welcome": "Добро пожаловать",
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успешно",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "close": "Закрыть",
+    "submit": "Отправить",
+    "back": "Назад",
+    "next": "Далее",
+    "previous": "Предыдущий",
+    "confirm": "Подтвердить"
+  },
+  "auth": {
+    "login": "Войти",
+    "register": "Регистрация",
+    "logout": "Выйти",
+    "email": "Email",
+    "password": "Пароль",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "phoneNumber": "Номер телефона",
+    "rememberMe": "Запомнить меня",
+    "forgotPassword": "Забыли пароль?",
+    "noAccount": "Нет аккаунта?",
+    "hasAccount": "Уже есть аккаунт?",
+    "signUp": "Зарегистрироваться",
+    "signIn": "Войти",
+    "invalidCredentials": "Неверный email или пароль",
+    "emailRequired": "Email обязателен",
+    "passwordRequired": "Пароль обязателен",
+    "passwordMinLength": "Пароль должен содержать минимум 8 символов",
+    "registerSuccess": "Регистрация успешна! Проверьте вашу почту."
+  },
+  "home": {
+    "title": "Auto Service Connect",
+    "subtitle": "Найдите и забронируйте лучшие автосервисы в Армении",
+    "getStarted": "Начать",
+    "browseServices": "Просмотреть услуги",
+    "features": {
+      "title": "Почему выбирают нас",
+      "feature1": {
+        "title": "Проверенные услуги",
+        "description": "Все услуги проверены и надежны"
+      },
+      "feature2": {
+        "title": "Легкое бронирование",
+        "description": "Забронируйте услугу в несколько кликов"
+      },
+      "feature3": {
+        "title": "Реальные отзывы",
+        "description": "Читайте настоящие отзывы от реальных клиентов"
+      }
+    }
+  },
+  "services": {
+    "title": "Автосервисы",
+    "searchPlaceholder": "Поиск услуг...",
+    "filterBy": "Фильтр по",
+    "city": "Город",
+    "region": "Регион",
+    "serviceType": "Тип услуги",
+    "minRating": "Минимальный рейтинг",
+    "noServices": "Услуги не найдены",
+    "viewDetails": "Подробнее",
+    "bookVisit": "Забронировать визит",
+    "rating": "Рейтинг",
+    "reviews": "Отзывы",
+    "verified": "Проверено",
+    "workingHours": "Часы работы",
+    "contact": "Контакты",
+    "description": "Описание",
+    "specialization": "Специализация"
+  },
+  "visits": {
+    "title": "Мои визиты",
+    "upcoming": "Предстоящие",
+    "past": "Прошедшие",
+    "pending": "Ожидает",
+    "confirmed": "Подтверждено",
+    "cancelled": "Отменено",
+    "completed": "Завершено",
+    "noVisits": "У вас пока нет визитов",
+    "bookNew": "Забронировать новый визит",
+    "preferredDate": "Предпочтительная дата",
+    "preferredTime": "Предпочтительное время",
+    "description": "Описание",
+    "status": "Статус",
+    "service": "Услуга",
+    "date": "Дата",
+    "time": "Время"
+  },
+  "reviews": {
+    "title": "Отзывы",
+    "writeReview": "Написать отзыв",
+    "rating": "Рейтинг",
+    "comment": "Комментарий",
+    "submitReview": "Отправить отзыв",
+    "noReviews": "Пока нет отзывов",
+    "averageRating": "Средний рейтинг",
+    "totalReviews": "Всего отзывов"
+  },
+  "profile": {
+    "title": "Профиль",
+    "personalInfo": "Личная информация",
+    "changePassword": "Изменить пароль",
+    "avatar": "Аватар",
+    "uploadPhoto": "Загрузить фото",
+    "saveChanges": "Сохранить изменения",
+    "profileUpdated": "Профиль успешно обновлен"
+  },
+  "navigation": {
+    "home": "Главная",
+    "services": "Услуги",
+    "myVisits": "Мои визиты",
+    "profile": "Профиль",
+    "about": "О нас",
+    "contact": "Контакты"
+  },
+  "errors": {
+    "generic": "Что-то пошло не так. Попробуйте еще раз.",
+    "network": "Ошибка сети. Проверьте ваше подключение.",
+    "unauthorized": "У вас нет прав для выполнения этого действия.",
+    "notFound": "Запрашиваемый ресурс не найден.",
+    "serverError": "Ошибка сервера. Попробуйте позже."
+  },
+  "validation": {
+    "required": "Это поле обязательно",
+    "email": "Введите корректный email адрес",
+    "minLength": "Минимум {min} символов",
+    "maxLength": "Максимум {max} символов",
+    "phone": "Введите корректный номер телефона"
+  }
+}
