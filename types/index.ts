@@ -58,10 +58,14 @@ export interface AutoService {
   avatarFile?: {
     fileUrl: string;
   };
-  profile?: {
-    profilePhotoFileIds?: string[];
-    workPhotoFileIds?: string[];
-  };
+  services?: Array<{
+    id: string;
+    name: string;
+    category?: string;
+  }>;
+  profilePhotoFileIds?: string[];
+  workPhotoFileIds?: string[];
+  yearsOfExperience?: number;
 }
 
 export interface WorkingHours {

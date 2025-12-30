@@ -119,6 +119,15 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
   const [firstName, ...lastNameParts] = response.name.split(' ');
   const lastName = lastNameParts.join(' ') || '';
 
+  // Convert file IDs to URLs (assuming backend proxy endpoint)
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
+  const profilePhotoUrls = response.profilePhotoFileIds.map(
+    (id) => `${API_BASE_URL}/files/proxy/${encodeURIComponent(id)}`
+  );
+  const workPhotoUrls = response.workPhotoFileIds.map(
+    (id) => `${API_BASE_URL}/files/proxy/${encodeURIComponent(id)}`
+  );
+
   return {
     id: response.id,
     serviceType: response.serviceType,
@@ -142,6 +151,10 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
           fileUrl: response.avatarUrl,
         }
       : undefined,
+    services: response.services,
+    profilePhotoFileIds: profilePhotoUrls,
+    workPhotoFileIds: workPhotoUrls,
+    yearsOfExperience: response.yearsOfExperience || undefined,
   };
 }
 
@@ -149,16 +162,22 @@ export const servicesServerService = {
   /**
    * Search auto services (server-side)
    */
-  async search(params: ServiceSearchParams, locale: string = 'hy'): Promise<PaginatedResponse<AutoService>> {
-    const response = await serverApiClient.get<BackendSearchResponse>(API_ENDPOINTS.AUTO_SERVICES.SEARCH, {
-      params: {
-        ...params,
-      },
-      headers: {
-        'Accept-Language': locale,
-        'X-Locale': locale,
-      },
-    });
+  async search(
+    params: ServiceSearchParams,
+    locale: string = 'hy'
+  ): Promise<PaginatedResponse<AutoService>> {
+    const response = await serverApiClient.get<BackendSearchResponse>(
+      API_ENDPOINTS.AUTO_SERVICES.SEARCH,
+      {
+        params: {
+          ...params,
+        },
+        headers: {
+          'Accept-Language': locale,
+          'X-Locale': locale,
+        },
+      }
+    );
 
     return {
       success: true,
@@ -172,12 +191,15 @@ export const servicesServerService = {
    */
   async getById(id: string, locale: string = 'hy'): Promise<AutoService | null> {
     try {
-      const response = await serverApiClient.get<BackendDetailResponse>(API_ENDPOINTS.AUTO_SERVICES.DETAIL(id), {
-        headers: {
-          'Accept-Language': locale,
-          'X-Locale': locale,
-        },
-      });
+      const response = await serverApiClient.get<BackendDetailResponse>(
+        API_ENDPOINTS.AUTO_SERVICES.DETAIL(id),
+        {
+          headers: {
+            'Accept-Language': locale,
+            'X-Locale': locale,
+          },
+        }
+      );
 
       return transformDetailResponse(response);
     } catch (error) {
@@ -188,4 +210,3 @@ export const servicesServerService = {
     }
   },
 };
-

@@ -8,6 +8,10 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { ServiceSchema } from '@/components/seo/ServiceSchema';
 import { ServiceDetailClient } from '@/components/services/ServiceDetailClient';
+import { ServiceGallery } from '@/components/services/ServiceGallery';
+import { ServiceInfo } from '@/components/services/ServiceInfo';
+import { ServiceMap } from '@/components/services/ServiceMap';
+import { ServiceTypesList } from '@/components/services/ServiceTypesList';
 import { WorkingHours } from '@/components/services/WorkingHours';
 import { servicesServerService } from '@/lib/services/services.server';
 
@@ -15,7 +19,8 @@ import { generateServiceMetadata } from './metadata';
 
 // Lazy load modal to reduce initial bundle size
 const BookVisitModal = dynamic(
-  () => import('@/components/visits/BookVisitModal').then((mod) => ({ default: mod.BookVisitModal })),
+  () =>
+    import('@/components/visits/BookVisitModal').then((mod) => ({ default: mod.BookVisitModal })),
   {
     loading: () => <div className="h-10 w-32 animate-pulse rounded-lg bg-neutral-200" />,
     ssr: false,
@@ -28,7 +33,7 @@ interface ServiceDetailPageProps {
 
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
   const { locale, id } = await params;
-  
+
   try {
     const service = await servicesServerService.getById(id, locale);
     if (!service) {
@@ -87,7 +92,12 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               )}
               {service.isVerified && (
                 <div className="absolute right-2 top-2 rounded-full bg-success-500 p-1">
-                  <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg
+                    className="h-4 w-4 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -115,7 +125,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               <div className="flex flex-wrap items-center gap-6">
                 {rating > 0 && (
                   <div className="flex items-center gap-2">
-                    <svg className="h-5 w-5 fill-warning-400 text-warning-400" viewBox="0 0 20 20" aria-hidden="true">
+                    <svg
+                      className="h-5 w-5 fill-warning-400 text-warning-400"
+                      viewBox="0 0 20 20"
+                      aria-hidden="true"
+                    >
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     <span className="font-semibold">{rating.toFixed(1)}</span>
@@ -126,14 +140,25 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                 )}
 
                 <div className="flex items-center gap-2">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
                       d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
                     />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
                   </svg>
                   <span>
                     {service.address}, {service.city}, {service.region}
@@ -142,7 +167,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
                 {service.phoneNumber && (
                   <div className="flex items-center gap-2">
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -165,23 +196,82 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
       {/* Content Section */}
       <div className="container mx-auto -mt-20 px-4 pb-12">
-        <div className="glass-light rounded-2xl p-8">
-          {/* Description */}
-          {service.description && (
-            <div className="mb-8">
-              <h2 className="mb-4 font-display text-2xl font-semibold">{t('description')}</h2>
-              <p className="text-neutral-700">{service.description}</p>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Main Content */}
+          <div className="space-y-8 lg:col-span-2">
+            {/* Description */}
+            {service.description && (
+              <div className="glass-light rounded-2xl p-8">
+                <h2 className="mb-4 font-display text-2xl font-semibold">{t('description')}</h2>
+                <p className="leading-relaxed text-neutral-700">{service.description}</p>
+              </div>
+            )}
+
+            {/* Gallery */}
+            {(service.profilePhotoFileIds?.length || service.workPhotoFileIds?.length) && (
+              <div className="glass-light rounded-2xl p-8">
+                <ServiceGallery
+                  profilePhotos={service.profilePhotoFileIds}
+                  workPhotos={service.workPhotoFileIds}
+                />
+              </div>
+            )}
+
+            {/* Services Offered */}
+            {service.services && service.services.length > 0 && (
+              <div className="glass-light rounded-2xl p-8">
+                <ServiceTypesList services={service.services} />
+              </div>
+            )}
+
+            {/* Map */}
+            {service.latitude && service.longitude && (
+              <div className="glass-light rounded-2xl p-8">
+                <ServiceMap
+                  latitude={service.latitude}
+                  longitude={service.longitude}
+                  address={service.address}
+                  city={service.city}
+                  name={name}
+                />
+              </div>
+            )}
+
+            {/* Reviews Section - Client component for interactivity */}
+            <div className="glass-light rounded-2xl p-8">
+              <ServiceDetailClient serviceId={id} />
             </div>
-          )}
+          </div>
 
-          {/* Working Hours */}
-          {service.workingHours && Object.keys(service.workingHours).length > 0 && (
-            <WorkingHours workingHours={service.workingHours} />
-          )}
+          {/* Sidebar */}
+          <div className="space-y-8 lg:col-span-1">
+            {/* Contact Info */}
+            <div className="glass-light rounded-2xl p-8">
+              <ServiceInfo
+                phoneNumber={service.phoneNumber}
+                address={service.address}
+                city={service.city}
+                region={service.region}
+                yearsOfExperience={service.yearsOfExperience}
+                serviceType={service.serviceType}
+              />
+            </div>
 
-          {/* Reviews Section - Client component for interactivity */}
-          <div className="mt-8">
-            <ServiceDetailClient serviceId={id} />
+            {/* Working Hours */}
+            {service.workingHours && Object.keys(service.workingHours).length > 0 && (
+              <div className="glass-light rounded-2xl p-8">
+                <WorkingHours workingHours={service.workingHours} />
+              </div>
+            )}
+
+            {/* Book Visit Button (for mobile) */}
+            <div className="lg:hidden">
+              <ProtectedRoute redirect={false}>
+                <div className="glass-light rounded-2xl p-6">
+                  <BookVisitModal serviceId={id} serviceName={name} />
+                </div>
+              </ProtectedRoute>
+            </div>
           </div>
         </div>
       </div>

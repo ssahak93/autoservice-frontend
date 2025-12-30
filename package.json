@@ -14,6 +14,19 @@
     "i18n:validate": "ts-node scripts/validate-translations.ts",
     "prepare": "husky install || true"
   },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
     "@tailwindcss/forms": "^0.5.7",
