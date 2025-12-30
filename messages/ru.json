@@ -61,6 +61,8 @@
   },
   "services": {
     "title": "Автосервисы",
+    "subtitle": "Найдите лучшие автосервисы в Армении",
+    "loading": "Загрузка...",
     "searchPlaceholder": "Поиск услуг...",
     "filterBy": "Фильтр по",
     "city": "Город",
@@ -76,7 +78,35 @@
     "workingHours": "Часы работы",
     "contact": "Контакты",
     "description": "Описание",
-    "specialization": "Специализация"
+    "specialization": "Специализация",
+    "filters": "Фильтры",
+    "reset": "Сбросить",
+    "resetFilters": "Сбросить все фильтры",
+    "search": "Поиск",
+    "enterCity": "Введите город",
+    "enterRegion": "Введите регион",
+    "allServiceTypes": "Все типы услуг",
+    "location": "Местоположение",
+    "useMyLocation": "Использовать мое местоположение",
+    "locationEnabled": "Местоположение включено",
+    "locationPermissionDenied": "Доступ запрещен",
+    "locationError": "Ошибка получения местоположения",
+    "locationNotSupported": "Местоположение не поддерживается",
+    "radius": "Радиус (км)",
+    "sortBy": {
+      "label": "Сортировать по",
+      "rating": "Рейтингу",
+      "distance": "Расстоянию",
+      "reviews": "Количеству отзывов",
+      "newest": "Новизне"
+    },
+    "previous": "Предыдущая",
+    "next": "Следующая",
+    "page": "Страница",
+    "of": "из",
+    "foundServices": "Найдено {count} услуг",
+    "failedToLoadServices": "Не удалось загрузить услуги. Пожалуйста, попробуйте еще раз.",
+    "retry": "Повторить попытку"
   },
   "visits": {
     "title": "Мои визиты",
@@ -94,7 +124,8 @@
     "status": "Статус",
     "service": "Услуга",
     "date": "Дата",
-    "time": "Время"
+    "time": "Время",
+    "viewDetails": "Просмотреть детали"
   },
   "reviews": {
     "title": "Отзывы",
@@ -121,7 +152,10 @@
     "myVisits": "Мои визиты",
     "profile": "Профиль",
     "about": "О нас",
-    "contact": "Контакты"
+    "contact": "Контакты",
+    "login": "Войти",
+    "logout": "Выйти",
+    "signUp": "Зарегистрироваться"
   },
   "errors": {
     "generic": "Что-то пошло не так. Попробуйте еще раз.",
@@ -136,5 +170,45 @@
     "minLength": "Минимум {min} символов",
     "maxLength": "Максимум {max} символов",
     "phone": "Введите корректный номер телефона"
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "notifications": "Уведомления",
+    "noNotifications": "Нет уведомлений",
+    "noNotificationsDescription": "У вас пока нет уведомлений",
+    "markAsRead": "Отметить как прочитанное",
+    "markAllAsRead": "Отметить все как прочитанные",
+    "delete": "Удалить",
+    "deleteAllRead": "Удалить все прочитанные",
+    "viewAll": "Просмотреть все",
+    "close": "Закрыть",
+    "page": "Страница",
+    "of": "из",
+    "previous": "Предыдущая",
+    "next": "Следующая",
+    "filters": {
+      "all": "Все",
+      "unread": "Непрочитанные",
+      "visitConfirmed": "Визит подтвержден",
+      "visitCancelled": "Визит отменен",
+      "newMessage": "Новое сообщение",
+      "reviewReceived": "Получен отзыв"
+    }
+  },
+  "footer": {
+    "appName": "Auto Service Connect",
+    "appDescription": "Найдите и забронируйте лучшие автосервисы в Армении",
+    "navigation": "Навигация",
+    "account": "Аккаунт",
+    "legal": "Правовая информация",
+    "privacyPolicy": "Политика конфиденциальности",
+    "termsOfService": "Условия использования",
+    "allRightsReserved": "Все права защищены"
+  },
+  "errorBoundary": {
+    "somethingWentWrong": "Что-то пошло не так",
+    "unexpectedError": "Произошла непредвиденная ошибка",
+    "tryAgain": "Попробовать снова",
+    "goHome": "На главную"
   }
 }

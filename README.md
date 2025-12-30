@@ -77,6 +77,7 @@ See `/docs` folder for detailed documentation:
 - `FRONTEND_DESIGN_TOKENS.md` - Design tokens
 - `FRONTEND_BACKGROUNDS.md` - Background system
 - `FRONTEND_UI_EFFECTS.md` - UI effects guide
+- `SEO_PRINCIPLES.md` - SEO best practices (Google, Yandex)
 
 ## 🎨 Design System
 
@@ -88,9 +89,9 @@ See `/docs` folder for detailed documentation:
 
 The app supports **3 languages**:
 
-- 🇬🇧 **English** (en) - Default
+- 🇦🇲 **Armenian** (hy) - Default
+- 🇬🇧 **English** (en)
 - 🇷🇺 **Russian** (ru)
-- 🇦🇲 **Armenian** (hy)
 
 ### Usage
 

@@ -10,11 +10,11 @@ export const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
   },
 
-  // Service Providers
-  SERVICE_PROVIDERS: {
-    LIST: '/service-providers',
-    DETAIL: (id: string) => `/service-providers/${id}`,
-    REVIEWS: (id: string) => `/service-providers/${id}/reviews`,
+  // Auto Services (Public)
+  AUTO_SERVICES: {
+    SEARCH: '/search/auto-services',
+    DETAIL: (id: string) => `/auto-services/${id}`,
+    REVIEWS: (id: string) => `/auto-services/${id}/reviews`,
   },
 
   // Visits
@@ -51,5 +51,15 @@ export const API_ENDPOINTS = {
     BY_CATEGORY: (category: string) => `/service-types/category/${category}`,
     BY_CATEGORY_AND_GROUP: (category: string, group: string) =>
       `/service-types/category/${category}/group/${group}`,
+  },
+
+  // Notifications
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    STATS: '/notifications/stats',
+    MARK_AS_READ: (id: string) => `/notifications/${id}/read`,
+    MARK_ALL_AS_READ: '/notifications/read-all',
+    DELETE: (id: string) => `/notifications/${id}`,
+    DELETE_ALL_READ: '/notifications/read',
   },
 } as const;

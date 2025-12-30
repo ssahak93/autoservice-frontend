@@ -5,6 +5,8 @@ import axios, {
   AxiosRequestConfig,
 } from 'axios';
 
+import { getCurrentLocale } from '@/lib/utils/i18n';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
 class ApiClient {
@@ -18,13 +20,21 @@ class ApiClient {
       },
     });
 
-    // Request interceptor for auth token
+    // Request interceptor for auth token and locale
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         const token = this.getToken();
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Add locale to request headers for backend
+        const locale = getCurrentLocale();
+        if (config.headers) {
+          config.headers['Accept-Language'] = locale;
+          config.headers['X-Locale'] = locale; // Custom header for explicit locale
+        }
+
         return config;
       },
       (error) => Promise.reject(error)

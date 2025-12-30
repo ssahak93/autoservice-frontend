@@ -9,8 +9,8 @@ export interface User {
   avatarFile?: {
     fileUrl: string;
   };
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Auth types
@@ -87,6 +87,13 @@ export interface Visit {
   description?: string;
   createdAt: string;
   updatedAt: string;
+  autoServiceProfile?: {
+    autoService?: {
+      companyName?: string;
+      firstName?: string;
+      lastName?: string;
+    };
+  };
 }
 
 export interface CreateVisitRequest {

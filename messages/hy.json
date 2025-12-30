@@ -61,6 +61,8 @@
   },
   "services": {
     "title": "Ավտոսպասարկում",
+    "subtitle": "Գտեք լավագույն ավտոսպասարկումը Հայաստանում",
+    "loading": "Բեռնվում է...",
     "searchPlaceholder": "Որոնել ծառայություններ...",
     "filterBy": "Զտել ըստ",
     "city": "Քաղաք",
@@ -76,7 +78,35 @@
     "workingHours": "Աշխատանքային ժամեր",
     "contact": "Կոնտակտ",
     "description": "Նկարագրություն",
-    "specialization": "Մասնագիտացում"
+    "specialization": "Մասնագիտացում",
+    "filters": "Զտիչներ",
+    "reset": "Վերականգնել",
+    "resetFilters": "Վերականգնել բոլոր զտիչները",
+    "search": "Որոնում",
+    "enterCity": "Մուտքագրել քաղաք",
+    "enterRegion": "Մուտքագրել մարզ",
+    "allServiceTypes": "Բոլոր ծառայությունները",
+    "location": "Գտնվելու վայր",
+    "useMyLocation": "Օգտագործել իմ գտնվելու վայրը",
+    "locationEnabled": "Գտնվելու վայրը միացված է",
+    "locationPermissionDenied": "Թույլտվություն մերժված է",
+    "locationError": "Սխալ գտնվելու վայրը ստանալիս",
+    "locationNotSupported": "Գտնվելու վայրը չի աջակցվում",
+    "radius": "Շառավիղ (կմ)",
+    "sortBy": {
+      "label": "Դասավորել ըստ",
+      "rating": "Գնահատական",
+      "distance": "Հեռավորություն",
+      "reviews": "Ակնարկների քանակ",
+      "newest": "Նորագույն"
+    },
+    "previous": "Նախորդ",
+    "next": "Հաջորդ",
+    "page": "Էջ",
+    "of": "ից",
+    "foundServices": "Գտնվել է {count} ծառայություն",
+    "failedToLoadServices": "Չհաջողվեց բեռնել ծառայությունները: Խնդրում ենք կրկին փորձել:",
+    "retry": "Կրկին փորձել"
   },
   "visits": {
     "title": "Իմ այցելությունները",
@@ -103,8 +133,68 @@
     "comment": "Մեկնաբանություն",
     "submitReview": "Ուղարկել ակնարկ",
     "noReviews": "Դեռ ակնարկներ չկան",
+    "noReviewsDescription": "Այս ծառայության համար դեռ ակնարկներ չկան:",
     "averageRating": "Միջին գնահատական",
-    "totalReviews": "Ընդամենը ակնարկներ"
+    "totalReviews": "Ընդամենը ակնարկներ",
+    "anonymous": "Անանուն",
+    "verified": "Ստուգված",
+    "report": "Զեկուցել",
+    "sort": {
+      "newest": "Նորագույն",
+      "oldest": "Հնագույն",
+      "highest": "Բարձրագույն",
+      "lowest": "Ամենացածր"
+    },
+    "page": "Էջ",
+    "of": "ից",
+    "previous": "Նախորդ",
+    "next": "Հաջորդ",
+    "createReview": "Գրել ակնարկ",
+    "selectVisit": "Ընտրել ավարտված այցելություն",
+    "visitRequired": "Խնդրում ենք ընտրել այցելություն",
+    "ratingRequired": "Խնդրում ենք տրամադրել գնահատական",
+    "reviewCreated": "Ակնարկը հաջողությամբ ստեղծվեց",
+    "reviewError": "Սխալ ակնարկ ստեղծելիս",
+    "noCompletedVisits": "Այս ծառայության համար ավարտված այցելություններ չունեք"
+  },
+  "chat": {
+    "title": "Զրույց",
+    "chat": "Զրույց",
+    "typeMessage": "Գրեք հաղորդագրություն...",
+    "send": "Ուղարկել",
+    "attachImage": "Կցել պատկեր",
+    "removeImage": "Հեռացնել պատկեր",
+    "imageMessage": "Պատկեր",
+    "read": "Կարդացված",
+    "close": "Փակել",
+    "noMessages": "Դեռ հաղորդագրություններ չկան",
+    "startConversation": "Սկսեք զրույցը՝ ուղարկելով հաղորդագրություն",
+    "sending": "Ուղարկվում է...",
+    "failedToSend": "Չհաջողվեց ուղարկել հաղորդագրությունը"
+  },
+  "notifications": {
+    "title": "Ծանուցումներ",
+    "notifications": "Ծանուցումներ",
+    "noNotifications": "Ծանուցումներ չկան",
+    "noNotificationsDescription": "Դուք դեռ ծանուցումներ չունեք",
+    "markAsRead": "Նշել որպես կարդացված",
+    "markAllAsRead": "Նշել բոլորը որպես կարդացված",
+    "delete": "Ջնջել",
+    "deleteAllRead": "Ջնջել բոլոր կարդացվածները",
+    "viewAll": "Դիտել բոլորը",
+    "close": "Փակել",
+    "page": "Էջ",
+    "of": "ից",
+    "previous": "Նախորդ",
+    "next": "Հաջորդ",
+    "filters": {
+      "all": "Բոլորը",
+      "unread": "Չկարդացված",
+      "visitConfirmed": "Այցելություն հաստատված",
+      "visitCancelled": "Այցելություն չեղարկված",
+      "newMessage": "Նոր հաղորդագրություն",
+      "reviewReceived": "Ստացված ակնարկ"
+    }
   },
   "profile": {
     "title": "Պրոֆիլ",
@@ -121,7 +211,10 @@
     "myVisits": "Իմ այցելությունները",
     "profile": "Պրոֆիլ",
     "about": "Մեր մասին",
-    "contact": "Կոնտակտ"
+    "contact": "Կոնտակտ",
+    "login": "Մուտք",
+    "logout": "Ելք",
+    "signUp": "Գրանցվել"
   },
   "errors": {
     "generic": "Ինչ-որ բան սխալ է: Խնդրում ենք կրկին փորձել:",
@@ -136,5 +229,21 @@
     "minLength": "Պետք է լինի առնվազն {min} նիշ",
     "maxLength": "Պետք է լինի ոչ ավելի քան {max} նիշ",
     "phone": "Խնդրում ենք մուտքագրել վավեր հեռախոսահամար"
+  },
+  "footer": {
+    "appName": "Auto Service Connect",
+    "appDescription": "Գտեք և ամրագրեք լավագույն ավտոսպասարկումը Հայաստանում",
+    "navigation": "Նավարկություն",
+    "account": "Հաշիվ",
+    "legal": "Իրավական",
+    "privacyPolicy": "Գաղտնիության քաղաքականություն",
+    "termsOfService": "Ծառայության պայմաններ",
+    "allRightsReserved": "Բոլոր իրավունքները պաշտպանված են"
+  },
+  "errorBoundary": {
+    "somethingWentWrong": "Ինչ-որ բան սխալ է",
+    "unexpectedError": "Անսպասելի սխալ է տեղի ունեցել",
+    "tryAgain": "Կրկին փորձել",
+    "goHome": "Գնալ գլխավոր"
   }
 }

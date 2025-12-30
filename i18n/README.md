@@ -4,9 +4,9 @@ This project uses `next-intl` for internationalization support.
 
 ## 🌍 Supported Languages
 
-- **English** (en) - Default
+- **Armenian** (hy) - Default
+- **English** (en)
 - **Russian** (ru)
-- **Armenian** (hy)
 
 ## 📁 File Structure
 
@@ -28,9 +28,9 @@ frontend/
 
 The routing is configured in `i18n/routing.ts`:
 
-- Locales: `['en', 'ru', 'hy']`
-- Default locale: `'en'`
-- URL prefix: Always shown (e.g., `/en/`, `/ru/`, `/hy/`)
+- Locales: `['hy', 'en', 'ru']` (Armenian first)
+- Default locale: `'hy'` (Armenian)
+- URL prefix: Always shown (e.g., `/hy/`, `/en/`, `/ru/`)
 
 ### Middleware
 

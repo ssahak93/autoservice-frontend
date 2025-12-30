@@ -61,6 +61,8 @@
   },
   "services": {
     "title": "Auto Services",
+    "subtitle": "Find the best auto services in Armenia",
+    "loading": "Loading...",
     "searchPlaceholder": "Search services...",
     "filterBy": "Filter by",
     "city": "City",
@@ -76,7 +78,35 @@
     "workingHours": "Working Hours",
     "contact": "Contact",
     "description": "Description",
-    "specialization": "Specialization"
+    "specialization": "Specialization",
+    "filters": "Filters",
+    "reset": "Reset",
+    "resetFilters": "Reset all filters",
+    "search": "Search",
+    "enterCity": "Enter city",
+    "enterRegion": "Enter region",
+    "allServiceTypes": "All Service Types",
+    "location": "Location",
+    "useMyLocation": "Use My Location",
+    "locationEnabled": "Location Enabled",
+    "locationPermissionDenied": "Permission denied",
+    "locationError": "Error getting location",
+    "locationNotSupported": "Location not supported",
+    "radius": "Radius (km)",
+    "sortBy": {
+      "label": "Sort By",
+      "rating": "Rating",
+      "distance": "Distance",
+      "reviews": "Reviews Count",
+      "newest": "Newest"
+    },
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of",
+    "foundServices": "Found {count} services",
+    "failedToLoadServices": "Failed to load services. Please try again.",
+    "retry": "Retry"
   },
   "visits": {
     "title": "My Visits",
@@ -94,7 +124,8 @@
     "status": "Status",
     "service": "Service",
     "date": "Date",
-    "time": "Time"
+    "time": "Time",
+    "viewDetails": "View Details"
   },
   "reviews": {
     "title": "Reviews",
@@ -121,7 +152,10 @@
     "myVisits": "My Visits",
     "profile": "Profile",
     "about": "About",
-    "contact": "Contact"
+    "contact": "Contact",
+    "login": "Login",
+    "logout": "Logout",
+    "signUp": "Sign Up"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -136,5 +170,45 @@
     "minLength": "Must be at least {min} characters",
     "maxLength": "Must be no more than {max} characters",
     "phone": "Please enter a valid phone number"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "notifications": "Notifications",
+    "noNotifications": "No notifications",
+    "noNotificationsDescription": "You don't have any notifications yet",
+    "markAsRead": "Mark as read",
+    "markAllAsRead": "Mark all as read",
+    "delete": "Delete",
+    "deleteAllRead": "Delete all read",
+    "viewAll": "View All",
+    "close": "Close",
+    "page": "Page",
+    "of": "of",
+    "previous": "Previous",
+    "next": "Next",
+    "filters": {
+      "all": "All",
+      "unread": "Unread",
+      "visitConfirmed": "Visit Confirmed",
+      "visitCancelled": "Visit Cancelled",
+      "newMessage": "New Message",
+      "reviewReceived": "Review Received"
+    }
+  },
+  "footer": {
+    "appName": "Auto Service Connect",
+    "appDescription": "Find and book the best auto services in Armenia",
+    "navigation": "Navigation",
+    "account": "Account",
+    "legal": "Legal",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "allRightsReserved": "All rights reserved"
+  },
+  "errorBoundary": {
+    "somethingWentWrong": "Something went wrong",
+    "unexpectedError": "An unexpected error occurred",
+    "tryAgain": "Try Again",
+    "goHome": "Go Home"
   }
 }
