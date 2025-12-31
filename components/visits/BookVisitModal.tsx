@@ -80,7 +80,9 @@ export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) 
           <>
             {/* Backdrop */}
             <motion.div
-              {...variants.fadeIn}
+              initial={variants.fadeIn.initial}
+              animate={variants.fadeIn.animate}
+              exit={variants.fadeIn.exit}
               className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
               onClick={close}
               aria-hidden="true"
@@ -89,7 +91,9 @@ export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) 
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
               <motion.div
-                {...variants.modal}
+                initial={variants.modal.initial}
+                animate={variants.modal.animate}
+                exit={variants.modal.exit}
                 className="glass-light w-full max-w-md rounded-xl p-4 shadow-2xl sm:rounded-2xl sm:p-6"
                 onClick={(e) => e.stopPropagation()}
                 role="dialog"

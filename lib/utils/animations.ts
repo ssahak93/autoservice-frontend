@@ -7,8 +7,6 @@ export const shouldReduceMotion = (): boolean => {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 };
 
-import type { Variant } from 'framer-motion';
-
 /**
  * Get animation variants that respect prefers-reduced-motion
  */
@@ -17,32 +15,32 @@ export const getAnimationVariants = () => {
 
   return {
     fadeIn: {
-      initial: { opacity: reduceMotion ? 1 : 0 } as Variant,
-      animate: { opacity: 1 } as Variant,
-      exit: { opacity: reduceMotion ? 1 : 0 } as Variant,
+      initial: { opacity: reduceMotion ? 1 : 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: reduceMotion ? 1 : 0 },
     },
     slideUp: {
-      initial: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 20 } as Variant,
-      animate: { opacity: 1, y: 0 } as Variant,
-      exit: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 20 } as Variant,
+      initial: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 20 },
+      animate: { opacity: 1, y: 0 },
+      exit: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 20 },
     },
     scaleIn: {
-      initial: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95 } as Variant,
-      animate: { opacity: 1, scale: 1 } as Variant,
-      exit: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95 } as Variant,
+      initial: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95 },
+      animate: { opacity: 1, scale: 1 },
+      exit: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95 },
     },
     modal: {
       initial: {
         opacity: reduceMotion ? 1 : 0,
         scale: reduceMotion ? 1 : 0.95,
         y: reduceMotion ? 0 : 20,
-      } as Variant,
-      animate: { opacity: 1, scale: 1, y: 0 } as Variant,
+      },
+      animate: { opacity: 1, scale: 1, y: 0 },
       exit: {
         opacity: reduceMotion ? 1 : 0,
         scale: reduceMotion ? 1 : 0.95,
         y: reduceMotion ? 0 : 20,
-      } as Variant,
+      },
     },
   };
 };

@@ -50,7 +50,9 @@ export function ChatWindow({ visitId, serviceName, isOpen, onClose }: ChatWindow
         <>
           {/* Backdrop */}
           <motion.div
-            {...variants.fadeIn}
+            initial={variants.fadeIn.initial}
+            animate={variants.fadeIn.animate}
+            exit={variants.fadeIn.exit}
             className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
             onClick={onClose}
             aria-hidden="true"
@@ -58,7 +60,9 @@ export function ChatWindow({ visitId, serviceName, isOpen, onClose }: ChatWindow
 
           {/* Chat Window */}
           <motion.div
-            {...variants.modal}
+            initial={variants.modal.initial}
+            animate={variants.modal.animate}
+            exit={variants.modal.exit}
             className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white shadow-2xl md:inset-auto md:bottom-4 md:right-4 md:h-[600px] md:w-full md:max-w-md md:rounded-2xl"
             role="dialog"
             aria-modal="true"
