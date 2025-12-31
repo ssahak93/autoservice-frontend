@@ -78,6 +78,7 @@ See `/docs` folder for detailed documentation:
 - `FRONTEND_BACKGROUNDS.md` - Background system
 - `FRONTEND_UI_EFFECTS.md` - UI effects guide
 - `SEO_PRINCIPLES.md` - SEO best practices (Google, Yandex)
+- `RESPONSIVE_UI_GUIDELINES.md` - Responsive design guidelines
 
 ## 🎨 Design System
 

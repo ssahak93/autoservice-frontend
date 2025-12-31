@@ -17,9 +17,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isOwnMessage = message.senderId === user?.id;
 
   return (
-    <div
-      className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
-    >
+    <div className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
       {/* Avatar */}
       <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-neutral-200">
         {message.sender?.avatarFile?.fileUrl ? (
@@ -29,6 +27,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             fill
             className="object-cover"
             sizes="48px"
+            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-primary-100 text-primary-600">
@@ -51,9 +50,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         {/* Message Bubble */}
         <div
           className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-            isOwnMessage
-              ? 'bg-primary-500 text-white'
-              : 'bg-neutral-100 text-neutral-900'
+            isOwnMessage ? 'bg-primary-500 text-white' : 'bg-neutral-100 text-neutral-900'
           }`}
         >
           {message.messageType === 'image' && message.imageFile?.fileUrl ? (
@@ -64,6 +61,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 fill
                 className="object-cover"
                 sizes="192px"
+                unoptimized
               />
             </div>
           ) : (
@@ -84,4 +82,3 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     </div>
   );
 }
-

@@ -61,6 +61,7 @@ export default function ProfilePage() {
                     fill
                     className="object-cover"
                     sizes="128px"
+                    unoptimized
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary-400 to-secondary-400">
@@ -99,12 +100,7 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <Input
-                  label={t('email')}
-                  type="email"
-                  disabled
-                  {...register('email')}
-                />
+                <Input label={t('email')} type="email" disabled {...register('email')} />
 
                 <Input
                   label={t('phoneNumber')}
@@ -127,4 +123,3 @@ export default function ProfilePage() {
     </ProtectedRoute>
   );
 }
-

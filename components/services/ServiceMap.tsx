@@ -24,7 +24,7 @@ export function ServiceMap({ latitude, longitude, address, city, name }: Service
         <span>{t('location')}</span>
       </h2>
       <div className="overflow-hidden rounded-lg border-2 border-neutral-200">
-        <div className="relative h-64 w-full md:h-96">
+        <div className="relative h-48 w-full sm:h-64 md:h-96">
           <iframe
             src={mapUrl}
             width="100%"

@@ -7,16 +7,24 @@ import { useState, useRef, ChangeEvent } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { useSendMessage, useSendImageMessage } from '@/hooks/useChat';
+import { createImagePreview, validateFile } from '@/lib/utils/fileValidation';
 
 interface MessageInputProps {
   visitId: string;
 }
 
+/**
+ * MessageInput Component
+ *
+ * Single Responsibility: Only handles message input UI
+ * Dependency Inversion: Uses file validation utilities instead of inline logic
+ */
 export function MessageInput({ visitId }: MessageInputProps) {
   const t = useTranslations('chat');
   const [message, setMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sendMessage = useSendMessage();
   const sendImageMessage = useSendImageMessage();
@@ -41,25 +49,33 @@ export function MessageInput({ visitId }: MessageInputProps) {
     }
   };
 
-  const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        return;
-      }
+    if (!file) return;
 
-      // Validate file size (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        return;
-      }
+    setImageError(null);
 
+    // Validate file using utility function
+    const validation = validateFile(file, {
+      maxSize: 5 * 1024 * 1024, // 5MB
+      allowedTypes: ['image/'],
+    });
+
+    if (!validation.isValid) {
+      setImageError(validation.error || t('invalidImage', { defaultValue: 'Invalid image' }));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    try {
       setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const preview = await createImagePreview(file);
+      setImagePreview(preview);
+    } catch (error) {
+      setImageError(t('imagePreviewError', { defaultValue: 'Failed to create preview' }));
+      setSelectedImage(null);
     }
   };
 
@@ -73,6 +89,7 @@ export function MessageInput({ visitId }: MessageInputProps) {
   const removeImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+    setImageError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -92,6 +109,7 @@ export function MessageInput({ visitId }: MessageInputProps) {
               fill
               className="object-cover"
               sizes="128px"
+              unoptimized
             />
           </div>
           <button
@@ -102,6 +120,11 @@ export function MessageInput({ visitId }: MessageInputProps) {
             <X className="h-4 w-4" />
           </button>
         </div>
+      )}
+
+      {/* Image Error */}
+      {imageError && (
+        <div className="mb-3 rounded-lg bg-error-50 p-2 text-sm text-error-600">{imageError}</div>
       )}
 
       {/* Input Area */}
@@ -147,4 +170,3 @@ export function MessageInput({ visitId }: MessageInputProps) {
     </div>
   );
 }
-

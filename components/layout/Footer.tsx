@@ -10,13 +10,11 @@ export function Footer() {
 
   return (
     <footer className="border-t border-neutral-200 bg-neutral-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4 md:gap-8">
           <div>
             <h3 className="mb-4 font-display text-lg font-semibold">{tFooter('appName')}</h3>
-            <p className="text-sm text-neutral-600">
-              {tFooter('appDescription')}
-            </p>
+            <p className="text-sm text-neutral-600">{tFooter('appDescription')}</p>
           </div>
 
           <div>
@@ -65,7 +63,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-neutral-200 pt-8 text-center text-sm text-neutral-600">
+        <div className="mt-6 border-t border-neutral-200 pt-6 text-center text-xs text-neutral-600 sm:mt-8 sm:pt-8 sm:text-sm">
           <p>
             &copy; {new Date().getFullYear()} {tFooter('appName')}. {tFooter('allRightsReserved')}
           </p>

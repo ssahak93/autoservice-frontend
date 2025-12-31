@@ -1,498 +1,239 @@
-# SOLID Principles for Frontend Development
+# SOLID Principles Implementation
 
-Применение принципов SOLID в React/Next.js приложении.
+This document describes how SOLID principles are applied in the frontend codebase, specifically in the search functionality.
 
----
+## Overview
 
-## 🎯 Overview
+The search functionality has been designed to strictly follow SOLID principles, making the code more maintainable, testable, and extensible.
 
-SOLID - это пять принципов объектно-ориентированного программирования, которые помогают создавать поддерживаемый и масштабируемый код.
+## Single Responsibility Principle (SRP)
 
----
+Each component/hook/utility has a single, well-defined responsibility:
 
-## 📋 S - Single Responsibility Principle (Принцип единственной ответственности)
+### ServicesClient Component
 
-**Каждый компонент/модуль должен иметь одну причину для изменения.**
+- **Responsibility**: Orchestrates search UI and data fetching
+- **Does NOT**: Handle URL synchronization, filter logic, or data transformation
 
-### ✅ Good Example
+### SearchBar Component
 
-```tsx
-// components/services/ServiceCard.tsx
-// Только отображение карточки сервиса
-interface ServiceCardProps {
-  service: AutoService;
-  onSelect: (service: AutoService) => void;
-}
+- **Responsibility**: Handles search input UI and debouncing
+- **Does NOT**: Manage search state or perform API calls
 
-export const ServiceCard = ({ service, onSelect }: ServiceCardProps) => {
-  return (
-    <div onClick={() => onSelect(service)}>
-      <h3>{service.companyName}</h3>
-      <p>{service.description}</p>
-    </div>
-  );
-};
+### ServiceFilters Component
 
-// hooks/useServices.ts
-// Только логика получения данных
-export const useServices = (filters: ServiceFilters) => {
-  return useQuery({
-    queryKey: ['services', filters],
-    queryFn: () => apiClient.get('/service-providers', { params: filters }),
-  });
-};
+- **Responsibility**: Handles filter UI and local state management
+- **Does NOT**: Perform API calls or manage URL state
 
-// services/api.ts
-// Только API вызовы
-export const serviceApi = {
-  getServices: (filters: ServiceFilters) =>
-    apiClient.get('/service-providers', { params: filters }),
-};
-```
+### ActiveFilters Component
 
-### ❌ Bad Example
+- **Responsibility**: Displays active filters as removable chips
+- **Does NOT**: Manage filter state or perform filtering logic
 
-```tsx
-// Плохо: компонент делает слишком много
-export const ServiceCard = ({ serviceId }: { serviceId: string }) => {
-  const [service, setService] = useState(null);
-  const [loading, setLoading] = useState(true);
+### useSearch Hook
 
-  useEffect(() => {
-    // Логика получения данных
-    fetch(`/api/services/${serviceId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setService(data);
-        setLoading(false);
-      });
-  }, [serviceId]);
+- **Responsibility**: Manages search state and URL synchronization
+- **Does NOT**: Handle UI rendering or API calls
 
-  // Логика форматирования
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
-  };
+### searchParams Utilities
 
-  // Логика валидации
-  const validateService = () => {
-    // ...
-  };
+- **Responsibility**: Serialize/deserialize search parameters to/from URL
+- **Does NOT**: Manage state or perform API calls
 
-  // Отображение
-  return <div>...</div>;
-};
-```
+## Open/Closed Principle (OCP)
 
----
+The code is open for extension but closed for modification:
 
-## 🔓 O - Open/Closed Principle (Принцип открытости/закрытости)
+### Component Composition
 
-**Компоненты должны быть открыты для расширения, но закрыты для модификации.**
+- New filter types can be added to `ServiceFilters` without modifying existing filters
+- New search features can be added by composing existing components
+- Example: Adding a "price range" filter only requires adding a new input field
 
-### ✅ Good Example
+### Hook Extensibility
 
-```tsx
-// components/ui/Button.tsx
-// Базовый компонент, расширяемый через props
-interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
-  onClick?: () => void;
-}
+- `useSearch` hook can be extended with new options without breaking existing usage
+- New search parameters can be added to utilities without modifying existing logic
 
-export const Button = ({ variant = 'primary', size = 'md', children, onClick }: ButtonProps) => {
-  const baseStyles = 'rounded-lg font-medium transition-colors';
-  const variants = {
-    primary: 'bg-primary-500 hover:bg-primary-600 text-white',
-    secondary: 'bg-secondary-500 hover:bg-secondary-600 text-white',
-    danger: 'bg-error-500 hover:bg-error-600 text-white',
-  };
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  };
+### Utility Functions
 
-  return (
-    <button className={`${baseStyles} ${variants[variant]} ${sizes[size]}`} onClick={onClick}>
-      {children}
-    </button>
-  );
-};
+- `serializeSearchParams` and `deserializeSearchParams` can handle new parameters without modification
+- New parameter types are added by extending the functions, not modifying them
 
-// Использование - расширяем функциональность через композицию
-export const IconButton = ({ icon, ...props }: ButtonProps & { icon: React.ReactNode }) => {
-  return (
-    <Button {...props}>
-      <span className="flex items-center gap-2">
-        {icon}
-        {props.children}
-      </span>
-    </Button>
-  );
-};
-```
+## Liskov Substitution Principle (LSP)
 
-### ❌ Bad Example
+Components and hooks can be substituted with compatible implementations:
 
-```tsx
-// Плохо: нужно модифицировать компонент для добавления нового варианта
-export const Button = ({ type }: { type: string }) => {
-  if (type === 'primary') {
-    return <button className="bg-blue-500">...</button>;
-  }
-  if (type === 'secondary') {
-    return <button className="bg-purple-500">...</button>;
-  }
-  // Придется добавлять новый if для каждого варианта
-  if (type === 'new-variant') {
-    return <button className="bg-green-500">...</button>;
-  }
-};
-```
+### SearchBar Component
 
----
+- Can be replaced with any component that implements the same props interface
+- Example: Could be replaced with an autocomplete search bar without breaking the parent
 
-## 🔄 L - Liskov Substitution Principle (Принцип подстановки Барбары Лисков)
+### useSearch Hook
 
-**Производные компоненты должны быть заменяемы на базовые без изменения поведения.**
+- Can be replaced with any hook that returns the same interface
+- Example: Could be replaced with a Redux-based hook without breaking components
 
-### ✅ Good Example
+## Interface Segregation Principle (ISP)
 
-```tsx
-// Базовый компонент
-interface InputProps {
-  label: string;
+Interfaces and props are focused and specific:
+
+### SearchBar Props
+
+```typescript
+interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
-  error?: string;
+  onSearch: (query: string) => void;
+  isLoading?: boolean;
+  placeholder?: string;
 }
-
-export const Input = ({ label, value, onChange, error }: InputProps) => {
-  return (
-    <div>
-      <label>{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={error ? 'border-error-500' : ''}
-      />
-      {error && <span className="text-error-500">{error}</span>}
-    </div>
-  );
-};
-
-// Расширенный компонент - полностью заменяет базовый
-export const EmailInput = (props: InputProps) => {
-  const [error, setError] = useState<string | undefined>(props.error);
-
-  const handleChange = (value: string) => {
-    props.onChange(value);
-    // Добавляем валидацию, но сохраняем тот же интерфейс
-    if (value && !value.includes('@')) {
-      setError('Invalid email');
-    } else {
-      setError(undefined);
-    }
-  };
-
-  return <Input {...props} onChange={handleChange} error={error || props.error} />;
-};
 ```
 
----
+- Only contains props relevant to search input
+- No unnecessary props or dependencies
 
-## 🎭 I - Interface Segregation Principle (Принцип разделения интерфейса)
+### useSearch Return Value
 
-**Клиенты не должны зависеть от интерфейсов, которые они не используют.**
-
-### ✅ Good Example
-
-```tsx
-// Разделяем интерфейсы на маленькие, специфичные
-interface Readable {
-  read(): string;
+```typescript
+{
+  searchParams: ServiceSearchParams;
+  updateSearch: (updates, options?) => void;
+  resetSearch: () => void;
+  setFilter: (key, value) => void;
+  isInitialized: boolean;
 }
-
-interface Writable {
-  write(data: string): void;
-}
-
-interface Deletable {
-  delete(): void;
-}
-
-// Компоненты используют только нужные интерфейсы
-export const ReadOnlyView = ({ data }: { data: Readable }) => {
-  return <div>{data.read()}</div>;
-};
-
-export const EditableView = ({ data }: { data: Readable & Writable }) => {
-  return (
-    <div>
-      <div>{data.read()}</div>
-      <button onClick={() => data.write('new data')}>Edit</button>
-    </div>
-  );
-};
-
-export const FullControlView = ({ data }: { data: Readable & Writable & Deletable }) => {
-  return (
-    <div>
-      <div>{data.read()}</div>
-      <button onClick={() => data.write('new data')}>Edit</button>
-      <button onClick={() => data.delete()}>Delete</button>
-    </div>
-  );
-};
 ```
 
-### ❌ Bad Example
+- Only exposes methods that clients actually need
+- No unnecessary state or methods
 
-```tsx
-// Плохо: один большой интерфейс, который не все используют
-interface DataManager {
-  read(): string;
-  write(data: string): void;
-  delete(): void;
-  update(): void;
-  validate(): boolean;
-  format(): string;
-  export(): Blob;
-  import(data: Blob): void;
+## Dependency Inversion Principle (DIP)
+
+High-level components depend on abstractions, not concrete implementations:
+
+### ServicesClient Dependencies
+
+- Depends on `useSearch` hook (abstraction)
+- Depends on `useServices` hook (abstraction)
+- Depends on component props interfaces, not concrete implementations
+
+### Component Dependencies
+
+- Components depend on prop interfaces, not concrete implementations
+- Hooks depend on utility function interfaces, not implementations
+- Example: `SearchBar` doesn't know about `useSearch` implementation
+
+### Benefits
+
+- Easy to mock dependencies for testing
+- Easy to swap implementations
+- Reduced coupling between components
+
+## Example: Adding a New Filter
+
+To add a new filter (e.g., "price range"):
+
+1. **Add to ServiceSearchParams** (Open/Closed - extending interface):
+
+```typescript
+export interface ServiceSearchParams {
+  // ... existing
+  minPrice?: number;
+  maxPrice?: number;
 }
-
-// Компонент вынужден зависеть от всех методов, даже если не использует их
-export const SimpleView = ({ data }: { data: DataManager }) => {
-  // Использует только read(), но зависит от всех остальных методов
-  return <div>{data.read()}</div>;
-};
 ```
 
----
+2. **Add to searchParams utilities** (Open/Closed - extending functions):
 
-## 🔌 D - Dependency Inversion Principle (Принцип инверсии зависимостей)
-
-**Зависимости должны быть на абстракциях, а не на конкретных реализациях.**
-
-### ✅ Good Example
-
-```tsx
-// Абстракция (интерфейс)
-interface AuthService {
-  login(email: string, password: string): Promise<User>;
-  logout(): Promise<void>;
-  getCurrentUser(): Promise<User | null>;
-}
-
-// Конкретная реализация
-class ApiAuthService implements AuthService {
-  async login(email: string, password: string): Promise<User> {
-    const response = await apiClient.post('/auth/login', { email, password });
-    return response.data.user;
-  }
-
-  async logout(): Promise<void> {
-    await apiClient.post('/auth/logout');
-  }
-
-  async getCurrentUser(): Promise<User | null> {
-    const response = await apiClient.get('/auth/me');
-    return response.data.user;
-  }
-}
-
-// Компонент зависит от абстракции, а не от конкретной реализации
-export const useAuth = (authService: AuthService = new ApiAuthService()) => {
-  const [user, setUser] = useState<User | null>(null);
-
-  const login = async (email: string, password: string) => {
-    const user = await authService.login(email, password);
-    setUser(user);
-  };
-
-  return { user, login };
-};
-
-// Легко заменить реализацию для тестирования
-const mockAuthService: AuthService = {
-  login: async () => ({ id: '1', email: 'test@test.com' }),
-  logout: async () => {},
-  getCurrentUser: async () => null,
-};
-
-// В тестах
-const { user } = useAuth(mockAuthService);
+```typescript
+if (params.minPrice) searchParams.set('minPrice', params.minPrice.toString());
+if (params.maxPrice) searchParams.set('maxPrice', params.maxPrice.toString());
 ```
 
-### ❌ Bad Example
+3. **Add to ServiceFilters** (Open/Closed - adding new field):
 
-```tsx
-// Плохо: компонент напрямую зависит от конкретной реализации
-export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-
-  const login = async (email: string, password: string) => {
-    // Прямая зависимость от apiClient
-    const response = await apiClient.post('/auth/login', { email, password });
-    setUser(response.data.user);
-  };
-
-  // Сложно тестировать, нельзя заменить реализацию
-  return { user, login };
-};
+```typescript
+<div>
+  <label>Price Range</label>
+  <Input
+    value={localFilters.minPrice || ''}
+    onChange={(e) => handleChange('minPrice', e.target.value)}
+  />
+</div>
 ```
 
----
+4. **Add to ActiveFilters** (Open/Closed - adding new chip):
 
-## 🏗 Practical Patterns for SOLID in React
-
-### 1. Custom Hooks for Business Logic
-
-```tsx
-// hooks/useServiceSearch.ts
-// Single Responsibility: только логика поиска
-export const useServiceSearch = () => {
-  const [filters, setFilters] = useState<ServiceFilters>({});
-  const { data, isLoading } = useQuery({
-    queryKey: ['services', filters],
-    queryFn: () => serviceApi.search(filters),
+```typescript
+if (filters.minPrice || filters.maxPrice) {
+  activeFilters.push({
+    key: 'minPrice',
+    label: 'Price',
+    value: `${filters.minPrice || 0} - ${filters.maxPrice || '∞'}`,
   });
-
-  return {
-    services: data,
-    isLoading,
-    filters,
-    setFilters,
-  };
-};
-
-// components/services/ServiceList.tsx
-// Только отображение
-export const ServiceList = () => {
-  const { services, isLoading, filters, setFilters } = useServiceSearch();
-
-  if (isLoading) return <Loading />;
-
-  return (
-    <div>
-      <Filters filters={filters} onChange={setFilters} />
-      {services?.map((service) => (
-        <ServiceCard key={service.id} service={service} />
-      ))}
-    </div>
-  );
-};
+}
 ```
 
-### 2. Composition over Inheritance
+No modification to existing components!
 
-```tsx
-// Базовые компоненты
-export const Card = ({ children, className }: CardProps) => (
-  <div className={`rounded-lg shadow ${className}`}>{children}</div>
-);
+## Example: Adding a New Search Feature
 
-export const CardHeader = ({ children }: { children: React.ReactNode }) => (
-  <div className="border-b p-4">{children}</div>
-);
+1. **Create new component** (Open/Closed):
 
-export const CardBody = ({ children }: { children: React.ReactNode }) => (
-  <div className="p-4">{children}</div>
-);
+```typescript
+export function AdvancedSearch({ onSearch }: AdvancedSearchProps) {
+  // Implementation
+}
+```
 
-// Композиция вместо наследования
-export const ServiceCard = ({ service }: { service: AutoService }) => (
-  <Card>
-    <CardHeader>
-      <h3>{service.companyName}</h3>
-    </CardHeader>
-    <CardBody>
-      <p>{service.description}</p>
-    </CardBody>
-  </Card>
+2. **Compose in ServicesClient** (Open/Closed):
+
+```typescript
+<AdvancedSearch onSearch={handleAdvancedSearch} />
+```
+
+3. **Extend useSearch if needed** (Open/Closed):
+
+```typescript
+const handleAdvancedSearch = useCallback(
+  (criteria) => {
+    updateSearch(criteria, { resetPage: true });
+  },
+  [updateSearch]
 );
 ```
 
-### 3. Dependency Injection
+No modification to existing code!
 
-```tsx
-// Создаем контекст для зависимостей
-const ServicesContext = createContext<{
-  serviceApi: ServiceApi;
-  fileApi: FileApi;
-} | null>(null);
+## Testing Benefits
 
-// Провайдер
-export const ServicesProvider = ({ children }: { children: React.ReactNode }) => {
-  const services = {
-    serviceApi: new ApiServiceService(),
-    fileApi: new ApiFileService(),
-  };
+SOLID principles make testing easier:
 
-  return <ServicesContext.Provider value={services}>{children}</ServicesContext.Provider>;
-};
+- **Unit Tests**: Each component/hook can be tested in isolation
+- **Mocking**: Dependencies are easily mockable via props/interfaces
+- **Integration Tests**: Components can be tested together without full app setup
 
-// Хук для использования
-export const useServices = () => {
-  const context = useContext(ServicesContext);
-  if (!context) throw new Error('useServices must be used within ServicesProvider');
-  return context;
-};
+## Component Hierarchy
 
-// Компонент зависит от абстракции через контекст
-export const ServiceList = () => {
-  const { serviceApi } = useServices();
-  // Легко заменить реализацию через провайдер
-};
+```
+ServicesClient (Orchestrator)
+├── SearchBar (Input UI)
+├── ServiceFilters (Filter UI)
+├── ActiveFilters (Active Filters Display)
+└── ServiceCard[] (Results Display)
+    └── useSearch (State Management)
+        └── searchParams (URL Utilities)
 ```
 
----
+Each level depends on abstractions from the level below, following DIP.
 
-## ✅ Checklist for SOLID Compliance
+## Summary
 
-### Single Responsibility
+The search functionality demonstrates all five SOLID principles:
 
-- [ ] Каждый компонент делает одну вещь
-- [ ] Бизнес-логика вынесена в хуки
-- [ ] API вызовы в отдельных сервисах
-- [ ] Утилиты в отдельных функциях
-
-### Open/Closed
-
-- [ ] Компоненты расширяются через props
-- [ ] Используется композиция вместо модификации
-- [ ] Конфигурация через параметры, а не условные операторы
-
-### Liskov Substitution
-
-- [ ] Расширенные компоненты сохраняют интерфейс базовых
-- [ ] Можно заменить компонент на расширенный без изменений
-
-### Interface Segregation
-
-- [ ] Интерфейсы маленькие и специфичные
-- [ ] Компоненты не зависят от неиспользуемых методов
-- [ ] Props разделены на логические группы
-
-### Dependency Inversion
-
-- [ ] Зависимости через props/context
-- [ ] Используются абстракции (интерфейсы)
-- [ ] Легко заменить реализации для тестирования
-
----
-
-## 📚 Resources
-
-- [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
-- [React Design Patterns](https://reactpatterns.com/)
-- [Clean Code JavaScript](https://github.com/ryanmcdermott/clean-code-javascript)
-
----
-
-**Помните: SOLID - это не правила, а принципы. Применяйте их разумно, не переусложняйте!** 🎯
+- ✅ **S**ingle Responsibility: Each component/hook has one clear purpose
+- ✅ **O**pen/Closed: Extensible without modification
+- ✅ **L**iskov Substitution: Components are interchangeable
+- ✅ **I**nterface Segregation: Focused, minimal interfaces
+- ✅ **D**ependency Inversion: Depend on abstractions, not concretions

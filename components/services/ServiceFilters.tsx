@@ -2,12 +2,13 @@
 
 import { MapPin, SlidersHorizontal, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { useRegions, useCities, useDistricts } from '@/hooks/useLocations';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import type { ServiceSearchParams } from '@/lib/services/services.service';
 
@@ -16,93 +17,132 @@ interface ServiceFiltersProps {
   onFiltersChange: (filters: ServiceSearchParams) => void;
 }
 
+/**
+ * ServiceFilters Component
+ *
+ * Single Responsibility: Only handles filter UI and state management
+ * Dependency Inversion: Uses hooks for business logic (geolocation, service types)
+ */
 export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps) {
   const t = useTranslations('services');
   const [localFilters, setLocalFilters] = useState<ServiceSearchParams>(filters);
-  const [isLocationEnabled, setIsLocationEnabled] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
   const debouncedFilters = useDebounce(localFilters, 500);
+  const geolocation = useGeolocation();
+  const isInternalUpdateRef = useRef(false);
+  const lastDebouncedValueRef = useRef<string>('');
 
   const { data: serviceTypes, isLoading: serviceTypesLoading } = useServiceTypes();
+  const { data: regions } = useRegions();
+  const { data: cities } = useCities(localFilters.region);
+  const { data: districts } = useDistricts(
+    localFilters.city?.toLowerCase() === 'yerevan' ? 'yerevan' : undefined
+  );
 
-  // Auto-apply filters after debounce
+  // Sync local filters with external filters (only if not internal update)
   useEffect(() => {
-    onFiltersChange(debouncedFilters);
+    if (!isInternalUpdateRef.current) {
+      // Deep comparison to avoid unnecessary updates
+      const currentSerialized = JSON.stringify(localFilters);
+      const newSerialized = JSON.stringify(filters);
+      if (currentSerialized !== newSerialized) {
+        setLocalFilters(filters);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  // Auto-apply filters after debounce (only if changed)
+  useEffect(() => {
+    const debouncedSerialized = JSON.stringify(debouncedFilters);
+    if (debouncedSerialized !== lastDebouncedValueRef.current) {
+      lastDebouncedValueRef.current = debouncedSerialized;
+      isInternalUpdateRef.current = true;
+      onFiltersChange(debouncedFilters);
+      // Reset flag after update
+      requestAnimationFrame(() => {
+        isInternalUpdateRef.current = false;
+      });
+    }
   }, [debouncedFilters, onFiltersChange]);
 
-  const handleChange = (key: keyof ServiceSearchParams, value: string | number | undefined) => {
-    const newFilters = { ...localFilters, [key]: value || undefined, page: 1 };
-    setLocalFilters(newFilters);
-  };
+  // Sync geolocation with filters
+  useEffect(() => {
+    if (geolocation.state.isEnabled && geolocation.state.latitude && geolocation.state.longitude) {
+      isInternalUpdateRef.current = true;
+      setLocalFilters((prev) => ({
+        ...prev,
+        latitude: geolocation.state.latitude,
+        longitude: geolocation.state.longitude,
+        page: 1,
+      }));
+      requestAnimationFrame(() => {
+        isInternalUpdateRef.current = false;
+      });
+    } else if (!geolocation.state.isEnabled) {
+      isInternalUpdateRef.current = true;
+      setLocalFilters((prev) => {
+        if (prev.latitude || prev.longitude) {
+          return {
+            ...prev,
+            latitude: undefined,
+            longitude: undefined,
+            radius: undefined,
+            page: 1,
+          };
+        }
+        return prev;
+      });
+      requestAnimationFrame(() => {
+        isInternalUpdateRef.current = false;
+      });
+    }
+  }, [geolocation.state.isEnabled, geolocation.state.latitude, geolocation.state.longitude]);
+
+  const handleChange = useCallback(
+    (key: keyof ServiceSearchParams, value: string | number | undefined) => {
+      isInternalUpdateRef.current = true;
+      const newFilters = { ...localFilters, [key]: value || undefined, page: 1 };
+      setLocalFilters(newFilters);
+      requestAnimationFrame(() => {
+        isInternalUpdateRef.current = false;
+      });
+    },
+    [localFilters]
+  );
 
   const handleReset = () => {
-    const resetFilters: ServiceSearchParams = { page: 1, limit: 20 };
+    const resetFilters: ServiceSearchParams = { page: 1, limit: 20, sortBy: 'rating' };
     setLocalFilters(resetFilters);
     onFiltersChange(resetFilters);
-    setIsLocationEnabled(false);
-    setLocationError(null);
+    geolocation.disable();
   };
 
   const handleLocationToggle = () => {
-    if (isLocationEnabled) {
-      // Disable location
-      setIsLocationEnabled(false);
-      setLocationError(null);
-      const newFilters = { ...localFilters, latitude: undefined, longitude: undefined, page: 1 };
-      setLocalFilters(newFilters);
-      onFiltersChange(newFilters);
-    } else {
-      // Enable location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setIsLocationEnabled(true);
-            setLocationError(null);
-            const newFilters = {
-              ...localFilters,
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              page: 1,
-            };
-            setLocalFilters(newFilters);
-            onFiltersChange(newFilters);
-          },
-          (error) => {
-            setIsLocationEnabled(false);
-            setLocationError(
-              error.code === error.PERMISSION_DENIED
-                ? t('locationPermissionDenied')
-                : t('locationError')
-            );
-          }
-        );
-      } else {
-        setLocationError(t('locationNotSupported'));
-      }
-    }
+    geolocation.toggle();
   };
 
   const sortOptions = [
-    { value: 'rating', label: t('sortBy.rating') },
-    { value: 'distance', label: t('sortBy.distance') },
-    { value: 'reviews', label: t('sortBy.reviews') },
-    { value: 'newest', label: t('sortBy.newest') },
+    { value: 'rating', label: t('sortBy.rating'), key: 'sort-rating' },
+    { value: 'distance', label: t('sortBy.distance'), key: 'sort-distance' },
+    { value: 'reviews', label: t('sortBy.reviews'), key: 'sort-reviews' },
+    { value: 'newest', label: t('sortBy.newest'), key: 'sort-newest' },
   ];
 
   const radiusOptions = [
-    { value: '5', label: '5 km' },
-    { value: '10', label: '10 km' },
-    { value: '25', label: '25 km' },
-    { value: '50', label: '50 km' },
-    { value: '100', label: '100 km' },
+    { value: '5', label: '5 km', key: 'radius-5' },
+    { value: '10', label: '10 km', key: 'radius-10' },
+    { value: '25', label: '25 km', key: 'radius-25' },
+    { value: '50', label: '50 km', key: 'radius-50' },
+    { value: '100', label: '100 km', key: 'radius-100' },
   ];
 
   const serviceTypeOptions = serviceTypes
     ? [
         { value: '', label: t('allServiceTypes') },
-        ...serviceTypes.map((type) => ({
+        ...serviceTypes.map((type, index) => ({
           value: type.id,
           label: type.displayName || type.name,
+          key: `serviceType-${type.id}-${index}`,
         })),
       ]
     : [{ value: '', label: t('loading') }];
@@ -110,13 +150,14 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
   const hasActiveFilters =
     localFilters.city ||
     localFilters.region ||
+    localFilters.district ||
     localFilters.serviceType ||
     localFilters.minRating ||
-    localFilters.latitude ||
+    geolocation.state.isEnabled ||
     localFilters.sortBy !== 'rating';
 
   return (
-    <div className="glass-light rounded-xl p-6">
+    <div className="glass-light rounded-xl p-4 sm:p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-5 w-5 text-primary-600" />
@@ -135,25 +176,68 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
       </div>
 
       <div className="space-y-4">
-        {/* City Filter */}
-        <div>
-          <label className="mb-2 block text-sm font-medium text-neutral-700">{t('city')}</label>
-          <Input
-            placeholder={t('enterCity')}
-            value={localFilters.city || ''}
-            onChange={(e) => handleChange('city', e.target.value)}
-          />
-        </div>
-
         {/* Region Filter */}
         <div>
           <label className="mb-2 block text-sm font-medium text-neutral-700">{t('region')}</label>
-          <Input
-            placeholder={t('enterRegion')}
+          <Select
             value={localFilters.region || ''}
-            onChange={(e) => handleChange('region', e.target.value)}
+            onChange={(e) => handleChange('region', e.target.value || undefined)}
+            options={[
+              { value: '', label: t('allRegions', { defaultValue: 'All Regions' }) },
+              ...(regions || []).map((region, index) => ({
+                value: region.code,
+                label: region.name,
+                key: `region-${region.code}-${index}`,
+              })),
+            ]}
           />
         </div>
+
+        {/* City Filter */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-neutral-700">{t('city')}</label>
+          <Select
+            value={localFilters.city || ''}
+            onChange={(e) => {
+              handleChange('city', e.target.value || undefined);
+              // Reset district when city changes
+              if (e.target.value !== localFilters.city) {
+                handleChange('district', undefined);
+              }
+            }}
+            options={[
+              { value: '', label: t('allCities', { defaultValue: 'All Cities' }) },
+              ...(cities || []).map((city, index) => ({
+                value: city.code,
+                label: city.name,
+                // Use unique key: regionCode-cityCode-index to handle duplicates
+                key: `${city.regionCode || 'all'}-${city.code}-${index}`,
+              })),
+            ]}
+            disabled={!localFilters.region}
+          />
+        </div>
+
+        {/* District Filter (only for Yerevan) */}
+        {localFilters.city?.toLowerCase() === 'yerevan' && districts && districts.length > 0 && (
+          <div>
+            <label className="mb-2 block text-sm font-medium text-neutral-700">
+              {t('district', { defaultValue: 'District' })}
+            </label>
+            <Select
+              value={localFilters.district || ''}
+              onChange={(e) => handleChange('district', e.target.value || undefined)}
+              options={[
+                { value: '', label: t('allDistricts', { defaultValue: 'All Districts' }) },
+                ...districts.map((district, index) => ({
+                  value: district.code,
+                  label: district.name,
+                  key: `district-${district.code}-${index}`,
+                })),
+              ]}
+            />
+          </div>
+        )}
 
         {/* Service Type Filter */}
         <Select
@@ -188,28 +272,48 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
 
         {/* Location-based Search */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-neutral-700">
-            {t('location')}
-          </label>
+          <label className="mb-2 block text-sm font-medium text-neutral-700">{t('location')}</label>
           <Button
             type="button"
-            variant={isLocationEnabled ? 'primary' : 'outline'}
+            variant={geolocation.state.isEnabled ? 'primary' : 'outline'}
             size="sm"
             onClick={handleLocationToggle}
+            disabled={geolocation.state.isLoading}
             className="w-full"
           >
             <MapPin className="h-4 w-4" />
-            {isLocationEnabled ? t('locationEnabled') : t('useMyLocation')}
+            {geolocation.state.isLoading
+              ? t('loading', { defaultValue: 'Loading...' })
+              : geolocation.state.isEnabled
+                ? t('locationEnabled')
+                : t('useMyLocation')}
           </Button>
-          {locationError && (
-            <p className="mt-1 text-xs text-error-600">{locationError}</p>
+          {geolocation.state.error && (
+            <p className="mt-1 text-xs text-error-600">
+              {geolocation.state.error === 'Location permission denied'
+                ? t('locationPermissionDenied')
+                : geolocation.state.error === 'Geolocation is not supported by your browser'
+                  ? t('locationNotSupported')
+                  : t('locationError')}
+            </p>
           )}
-          {isLocationEnabled && (
+          {geolocation.state.isEnabled &&
+            geolocation.state.accuracy &&
+            geolocation.state.accuracy > 1000 && (
+              <p className="mt-1 text-xs text-warning-600">
+                {t('lowAccuracyWarning', {
+                  accuracy: (geolocation.state.accuracy / 1000).toFixed(1),
+                })}
+              </p>
+            )}
+          {geolocation.state.isEnabled && (
             <div className="mt-2">
               <label className="mb-1 block text-xs text-neutral-600">{t('radius')}</label>
               <Select
                 value={localFilters.radius?.toString() || '50'}
-                onChange={(e) => handleChange('radius', e.target.value ? parseInt(e.target.value) : undefined)}
+                onChange={(e) =>
+                  handleChange('radius', e.target.value ? parseInt(e.target.value) : undefined)
+                }
                 options={radiusOptions}
               />
             </div>
@@ -218,10 +322,14 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
 
         {/* Sort By */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-neutral-700">{t('sortBy.label')}</label>
+          <label className="mb-2 block text-sm font-medium text-neutral-700">
+            {t('sortBy.label')}
+          </label>
           <Select
             value={localFilters.sortBy || 'rating'}
-            onChange={(e) => handleChange('sortBy', e.target.value as ServiceSearchParams['sortBy'])}
+            onChange={(e) =>
+              handleChange('sortBy', e.target.value as ServiceSearchParams['sortBy'])
+            }
             options={sortOptions}
           />
         </div>

@@ -5,6 +5,7 @@ import type { AutoService, PaginatedResponse } from '@/types';
 export interface ServiceSearchParams {
   city?: string;
   region?: string;
+  district?: string;
   serviceType?: string;
   minRating?: number;
   latitude?: number;
@@ -13,10 +14,19 @@ export interface ServiceSearchParams {
   page?: number;
   limit?: number;
   sortBy?: 'rating' | 'distance' | 'reviews' | 'newest';
+  query?: string; // Text search query (for future backend support)
 }
 
 export const servicesService = {
   async search(params: ServiceSearchParams): Promise<PaginatedResponse<AutoService>> {
+    // Clean params - remove undefined values to ensure they're sent
+    const cleanParams: Record<string, unknown> = {};
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        cleanParams[key] = value;
+      }
+    });
+
     const response = await apiClient.get<{
       data: AutoService[];
       pagination: {
@@ -26,7 +36,7 @@ export const servicesService = {
         totalPages: number;
       };
     }>(API_ENDPOINTS.AUTO_SERVICES.SEARCH, {
-      params,
+      params: cleanParams,
     });
     // Backend returns { data, pagination } directly from search endpoint
     // Add success field to match PaginatedResponse type

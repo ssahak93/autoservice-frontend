@@ -1,6 +1,9 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
+
+import { Button } from '@/components/ui/Button';
 
 interface EmptyStateProps {
   icon?: LucideIcon;
@@ -9,28 +12,66 @@ interface EmptyStateProps {
   action?: {
     label: string;
     onClick: () => void;
+    variant?: 'primary' | 'outline' | 'ghost';
   };
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+  };
+  className?: string;
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+/**
+ * EmptyState Component
+ *
+ * Single Responsibility: Displays empty state with icon, message, and actions
+ * Open/Closed: Can be extended with new action types without modifying core
+ */
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+  secondaryAction,
+  className,
+}: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className={`flex flex-col items-center justify-center px-4 py-12 text-center ${className || ''}`}
+    >
       {Icon && (
-        <div className="mb-4 rounded-full bg-neutral-100 p-4">
-          <Icon className="h-8 w-8 text-neutral-400" />
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+          className="mb-6 rounded-full bg-gradient-to-br from-neutral-100 to-neutral-200 p-6"
+        >
+          <Icon className="h-12 w-12 text-neutral-400" strokeWidth={1.5} />
+        </motion.div>
+      )}
+      <h3 className="mb-3 font-display text-xl font-semibold text-neutral-900 sm:text-2xl">
+        {title}
+      </h3>
+      {description && (
+        <p className="mb-8 max-w-md text-sm text-neutral-600 sm:text-base">{description}</p>
+      )}
+      {(action || secondaryAction) && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+          {action && (
+            <Button variant={action.variant || 'primary'} onClick={action.onClick} size="md">
+              {action.label}
+            </Button>
+          )}
+          {secondaryAction && (
+            <Button variant="outline" onClick={secondaryAction.onClick} size="md">
+              {secondaryAction.label}
+            </Button>
+          )}
         </div>
       )}
-      <h3 className="mb-2 font-display text-lg font-semibold text-neutral-900">{title}</h3>
-      {description && <p className="mb-6 text-sm text-neutral-600">{description}</p>}
-      {action && (
-        <button
-          onClick={action.onClick}
-          className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600"
-        >
-          {action.label}
-        </button>
-      )}
-    </div>
+    </motion.div>
   );
 }
-

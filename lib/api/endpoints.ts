@@ -53,6 +53,13 @@ export const API_ENDPOINTS = {
       `/service-types/category/${category}/group/${group}`,
   },
 
+  // Locations
+  LOCATIONS: {
+    REGIONS: '/locations/regions',
+    CITIES: '/locations/cities',
+    DISTRICTS: '/locations/districts',
+  },
+
   // Notifications
   NOTIFICATIONS: {
     LIST: '/notifications',

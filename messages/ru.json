@@ -15,7 +15,8 @@
     "back": "Назад",
     "next": "Далее",
     "previous": "Предыдущий",
-    "confirm": "Подтвердить"
+    "confirm": "Подтвердить",
+    "menu": "Меню"
   },
   "auth": {
     "login": "Войти",
@@ -76,6 +77,7 @@
     "reviews": "Отзывы",
     "verified": "Проверено",
     "workingHours": "Часы работы",
+    "noWorkingHoursAvailable": "Часы работы не указаны",
     "contact": "Контакты",
     "description": "Описание",
     "specialization": "Специализация",
@@ -86,12 +88,17 @@
     "enterCity": "Введите город",
     "enterRegion": "Введите регион",
     "allServiceTypes": "Все типы услуг",
+    "allRegions": "Все регионы",
+    "allCities": "Все города",
+    "allDistricts": "Все районы",
+    "district": "Район",
     "location": "Местоположение",
     "useMyLocation": "Использовать мое местоположение",
     "locationEnabled": "Местоположение включено",
     "locationPermissionDenied": "Доступ запрещен",
     "locationError": "Ошибка получения местоположения",
     "locationNotSupported": "Местоположение не поддерживается",
+    "lowAccuracyWarning": "Низкая точность: {accuracy}км. Рекомендуется использовать GPS для лучших результатов.",
     "radius": "Радиус (км)",
     "sortBy": {
       "label": "Сортировать по",
@@ -108,6 +115,8 @@
     "failedToLoadServices": "Не удалось загрузить услуги. Пожалуйста, попробуйте еще раз.",
     "retry": "Повторить попытку",
     "gallery": "Галерея",
+    "profilePhotos": "Фото профиля",
+    "workPhotos": "Рабочие фото",
     "viewImage": "Просмотреть изображение",
     "galleryImage": "Изображение галереи",
     "imageViewer": "Просмотр изображений",
@@ -123,7 +132,19 @@
     "years": "лет",
     "company": "Компания",
     "individual": "Частное лицо",
-    "servicesOffered": "Предоставляемые услуги"
+    "servicesOffered": "Предоставляемые услуги",
+    "openNow": "Открыто",
+    "closedNow": "Закрыто",
+    "today": "Сегодня",
+    "activeFilters": "Активные фильтры",
+    "removeFilter": "Удалить",
+    "clearAll": "Очистить все",
+    "clearAllFilters": "Очистить все фильтры",
+    "clearSearch": "Очистить поиск",
+    "tryAdjustingFilters": "Попробуйте изменить фильтры",
+    "updating": "Обновление...",
+    "noServicesDescription": "Услуги не найдены. Проверьте позже или попробуйте другой поиск.",
+    "browseAll": "Просмотреть все услуги"
   },
   "visits": {
     "title": "Мои визиты",
@@ -146,13 +167,36 @@
   },
   "reviews": {
     "title": "Отзывы",
+    "reviews": "Отзывы",
     "writeReview": "Написать отзыв",
     "rating": "Рейтинг",
     "comment": "Комментарий",
     "submitReview": "Отправить отзыв",
     "noReviews": "Пока нет отзывов",
+    "noReviewsDescription": "Для этой услуги пока нет отзывов.",
     "averageRating": "Средний рейтинг",
-    "totalReviews": "Всего отзывов"
+    "totalReviews": "Всего отзывов",
+    "anonymous": "Анонимный",
+    "verified": "Проверено",
+    "report": "Пожаловаться",
+    "sort": {
+      "newest": "Новейшие",
+      "oldest": "Старейшие",
+      "highest": "Высший рейтинг",
+      "lowest": "Низший рейтинг"
+    },
+    "page": "Страница",
+    "of": "из",
+    "previous": "Предыдущая",
+    "next": "Следующая",
+    "createReview": "Написать отзыв",
+    "selectVisit": "Выберите завершенный визит",
+    "visitRequired": "Пожалуйста, выберите визит",
+    "ratingRequired": "Пожалуйста, укажите рейтинг",
+    "reviewCreated": "Отзыв успешно создан",
+    "reviewError": "Ошибка при создании отзыва",
+    "noCompletedVisits": "У вас нет завершенных визитов для этой услуги",
+    "close": "Закрыть"
   },
   "profile": {
     "title": "Профиль",
@@ -172,7 +216,8 @@
     "contact": "Контакты",
     "login": "Войти",
     "logout": "Выйти",
-    "signUp": "Зарегистрироваться"
+    "signUp": "Зарегистрироваться",
+    "menu": "Меню"
   },
   "errors": {
     "generic": "Что-то пошло не так. Попробуйте еще раз.",

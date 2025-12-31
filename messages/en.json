@@ -15,7 +15,8 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "menu": "Menu"
   },
   "auth": {
     "login": "Login",
@@ -76,6 +77,7 @@
     "reviews": "Reviews",
     "verified": "Verified",
     "workingHours": "Working Hours",
+    "noWorkingHoursAvailable": "Working hours not specified",
     "contact": "Contact",
     "description": "Description",
     "specialization": "Specialization",
@@ -86,12 +88,17 @@
     "enterCity": "Enter city",
     "enterRegion": "Enter region",
     "allServiceTypes": "All Service Types",
+    "allRegions": "All Regions",
+    "allCities": "All Cities",
+    "allDistricts": "All Districts",
+    "district": "District",
     "location": "Location",
     "useMyLocation": "Use My Location",
     "locationEnabled": "Location Enabled",
     "locationPermissionDenied": "Permission denied",
     "locationError": "Error getting location",
     "locationNotSupported": "Location not supported",
+    "lowAccuracyWarning": "Low accuracy: {accuracy}km. GPS recommended for better results.",
     "radius": "Radius (km)",
     "sortBy": {
       "label": "Sort By",
@@ -108,6 +115,8 @@
     "failedToLoadServices": "Failed to load services. Please try again.",
     "retry": "Retry",
     "gallery": "Gallery",
+    "profilePhotos": "Profile Photos",
+    "workPhotos": "Work Photos",
     "viewImage": "View image",
     "galleryImage": "Gallery image",
     "imageViewer": "Image viewer",
@@ -123,7 +132,19 @@
     "years": "years",
     "company": "Company",
     "individual": "Individual",
-    "servicesOffered": "Services Offered"
+    "servicesOffered": "Services Offered",
+    "openNow": "Open now",
+    "closedNow": "Closed",
+    "today": "Today",
+    "activeFilters": "Active filters",
+    "removeFilter": "Remove",
+    "clearAll": "Clear all",
+    "clearAllFilters": "Clear all filters",
+    "clearSearch": "Clear search",
+    "tryAdjustingFilters": "Try adjusting your filters",
+    "updating": "Updating...",
+    "noServicesDescription": "No services found. Check back later or try a different search.",
+    "browseAll": "Browse All Services"
   },
   "visits": {
     "title": "My Visits",
@@ -146,13 +167,36 @@
   },
   "reviews": {
     "title": "Reviews",
+    "reviews": "Reviews",
     "writeReview": "Write a Review",
     "rating": "Rating",
     "comment": "Comment",
     "submitReview": "Submit Review",
     "noReviews": "No reviews yet",
+    "noReviewsDescription": "There are no reviews for this service yet.",
     "averageRating": "Average Rating",
-    "totalReviews": "Total Reviews"
+    "totalReviews": "Total Reviews",
+    "anonymous": "Anonymous",
+    "verified": "Verified",
+    "report": "Report",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "highest": "Highest",
+      "lowest": "Lowest"
+    },
+    "page": "Page",
+    "of": "of",
+    "previous": "Previous",
+    "next": "Next",
+    "createReview": "Write a Review",
+    "selectVisit": "Select completed visit",
+    "visitRequired": "Please select a visit",
+    "ratingRequired": "Please provide a rating",
+    "reviewCreated": "Review created successfully",
+    "reviewError": "Error creating review",
+    "noCompletedVisits": "You don't have any completed visits for this service",
+    "close": "Close"
   },
   "profile": {
     "title": "Profile",
@@ -172,7 +216,8 @@
     "contact": "Contact",
     "login": "Login",
     "logout": "Logout",
-    "signUp": "Sign Up"
+    "signUp": "Sign Up",
+    "menu": "Menu"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

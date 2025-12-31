@@ -21,9 +21,9 @@ export function ServiceTypesList({ services = [] }: ServiceTypesListProps) {
   }
 
   return (
-    <div className="mb-8">
-      <h2 className="mb-4 flex items-center gap-2 font-display text-2xl font-semibold">
-        <Wrench className="h-6 w-6" />
+    <div className="mb-6 sm:mb-8">
+      <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-semibold sm:mb-4 sm:text-2xl">
+        <Wrench className="h-5 w-5 sm:h-6 sm:w-6" />
         <span>{t('servicesOffered')}</span>
       </h2>
       <div className="flex flex-wrap gap-2">

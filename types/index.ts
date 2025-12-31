@@ -48,6 +48,7 @@ export interface AutoService {
   address: string;
   city: string;
   region: string;
+  district?: string; // District/neighborhood (for Yerevan)
   latitude: number;
   longitude: number;
   phoneNumber?: string;
@@ -156,6 +157,6 @@ export interface ApiError {
   error: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
   };
 }

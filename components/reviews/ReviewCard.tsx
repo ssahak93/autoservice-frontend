@@ -42,12 +42,11 @@ export function ReviewCard({ review }: ReviewCardProps) {
                 fill
                 className="object-cover"
                 sizes="48px"
+                unoptimized
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-primary-100 text-primary-600">
-                <span className="text-lg font-semibold">
-                  {driverName.charAt(0).toUpperCase()}
-                </span>
+                <span className="text-lg font-semibold">{driverName.charAt(0).toUpperCase()}</span>
               </div>
             )}
           </div>
@@ -74,9 +73,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
             </div>
 
             {/* Date */}
-            <p className="text-sm text-neutral-500">
-              {format(new Date(review.createdAt), 'PP')}
-            </p>
+            <p className="text-sm text-neutral-500">{format(new Date(review.createdAt), 'PP')}</p>
           </div>
         </div>
 
@@ -95,10 +92,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
       </div>
 
       {/* Comment */}
-      {review.comment && (
-        <p className="text-neutral-700 whitespace-pre-wrap">{review.comment}</p>
-      )}
+      {review.comment && <p className="whitespace-pre-wrap text-neutral-700">{review.comment}</p>}
     </div>
   );
 }
-

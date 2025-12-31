@@ -59,7 +59,7 @@ export function ChatWindow({ visitId, serviceName, isOpen, onClose }: ChatWindow
           {/* Chat Window */}
           <motion.div
             {...variants.modal}
-            className="fixed bottom-4 right-4 z-50 flex h-[600px] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white shadow-2xl md:inset-auto md:bottom-4 md:right-4 md:h-[600px] md:w-full md:max-w-md md:rounded-2xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="chat-title"
@@ -100,4 +100,3 @@ export function ChatWindow({ visitId, serviceName, isOpen, onClose }: ChatWindow
     </AnimatePresence>
   );
 }
-

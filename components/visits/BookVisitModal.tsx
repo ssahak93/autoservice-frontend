@@ -4,12 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { useModal } from '@/hooks/useModal';
 import { useCreateVisit } from '@/hooks/useVisits';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
@@ -27,30 +27,17 @@ interface BookVisitModalProps {
   serviceName: string;
 }
 
+/**
+ * BookVisitModal Component
+ *
+ * Single Responsibility: Only handles visit booking form UI
+ * Dependency Inversion: Uses useModal hook for modal management
+ */
 export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) {
   const t = useTranslations('visits');
-  const [isOpen, setIsOpen] = useState(false);
   const { mutate: createVisit, isPending } = useCreateVisit();
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const { isOpen, open, close, closeButtonRef } = useModal();
   const variants = getAnimationVariants();
-
-  // Focus management for accessibility
-  useEffect(() => {
-    if (isOpen && closeButtonRef.current) {
-      closeButtonRef.current.focus();
-    }
-  }, [isOpen]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen]);
 
   const {
     register,
@@ -71,7 +58,7 @@ export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) 
       },
       {
         onSuccess: () => {
-          setIsOpen(false);
+          close();
           reset();
         },
       }
@@ -80,7 +67,7 @@ export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) 
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)}>Book Visit</Button>
+      <Button onClick={open}>{t('bookVisit', { defaultValue: 'Book Visit' })}</Button>
 
       <AnimatePresence>
         {isOpen && (
@@ -89,15 +76,15 @@ export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) 
             <motion.div
               {...variants.fadeIn}
               className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-              onClick={() => setIsOpen(false)}
+              onClick={close}
               aria-hidden="true"
             />
 
             {/* Modal */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
               <motion.div
                 {...variants.modal}
-                className="glass-light w-full max-w-md rounded-2xl p-6 shadow-2xl"
+                className="glass-light w-full max-w-md rounded-xl p-4 shadow-2xl sm:rounded-2xl sm:p-6"
                 onClick={(e) => e.stopPropagation()}
                 role="dialog"
                 aria-modal="true"
@@ -112,7 +99,7 @@ export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) 
                   </div>
                   <button
                     ref={closeButtonRef}
-                    onClick={() => setIsOpen(false)}
+                    onClick={close}
                     className="rounded-lg p-2 transition-colors hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     aria-label={t('close', { defaultValue: 'Close' })}
                   >
@@ -154,16 +141,11 @@ export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) 
                   </div>
 
                   <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Cancel
+                    <Button type="button" variant="outline" className="flex-1" onClick={close}>
+                      {t('cancel', { defaultValue: 'Cancel' })}
                     </Button>
                     <Button type="submit" className="flex-1" isLoading={isPending}>
-                      Book Visit
+                      {t('bookVisit', { defaultValue: 'Book Visit' })}
                     </Button>
                   </div>
                 </form>

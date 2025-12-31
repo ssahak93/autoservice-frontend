@@ -10,6 +10,7 @@ import type { AutoService, PaginatedResponse } from '@/types';
 export interface ServiceSearchParams {
   city?: string;
   region?: string;
+  district?: string;
   serviceType?: string;
   minRating?: number;
   latitude?: number;
@@ -18,6 +19,7 @@ export interface ServiceSearchParams {
   page?: number;
   limit?: number;
   sortBy?: 'rating' | 'distance' | 'reviews' | 'newest';
+  query?: string; // Text search query (for future backend support)
 }
 
 /**
@@ -31,6 +33,7 @@ interface BackendSearchResponse {
     description: string;
     city: string;
     region: string;
+    district?: string;
     averageRating: number | null;
     totalReviews: number;
     distance?: number;
@@ -63,6 +66,7 @@ interface BackendDetailResponse {
   address: string;
   city: string;
   region: string;
+  district?: string | null;
   latitude: number;
   longitude: number;
   phoneNumber: string | null;
@@ -72,8 +76,8 @@ interface BackendDetailResponse {
     name: string;
     category: string;
   }>;
-  profilePhotoFileIds: string[];
-  workPhotoFileIds: string[];
+  profilePhotoFileIds: string[]; // Backend returns URLs, not IDs
+  workPhotoFileIds: string[]; // Backend returns URLs, not IDs
   averageRating: number | null;
   totalReviews: number;
   isVerified: boolean;
@@ -98,6 +102,7 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoSe
     address: `${result.city}, ${result.region}`, // Backend search doesn't return address, use city/region
     city: result.city,
     region: result.region,
+    district: result.district || undefined,
     latitude: 0, // Will be set from detail if needed
     longitude: 0, // Will be set from detail if needed
     averageRating: result.averageRating ? Number(result.averageRating) : undefined,
@@ -119,14 +124,9 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
   const [firstName, ...lastNameParts] = response.name.split(' ');
   const lastName = lastNameParts.join(' ') || '';
 
-  // Convert file IDs to URLs (assuming backend proxy endpoint)
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
-  const profilePhotoUrls = response.profilePhotoFileIds.map(
-    (id) => `${API_BASE_URL}/files/proxy/${encodeURIComponent(id)}`
-  );
-  const workPhotoUrls = response.workPhotoFileIds.map(
-    (id) => `${API_BASE_URL}/files/proxy/${encodeURIComponent(id)}`
-  );
+  // Backend now returns URLs directly, so use them as-is
+  const profilePhotoUrls = response.profilePhotoFileIds || [];
+  const workPhotoUrls = response.workPhotoFileIds || [];
 
   return {
     id: response.id,
@@ -139,6 +139,7 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
     address: response.address,
     city: response.city,
     region: response.region,
+    district: response.district || undefined,
     latitude: response.latitude,
     longitude: response.longitude,
     phoneNumber: response.phoneNumber || undefined,
@@ -166,12 +167,18 @@ export const servicesServerService = {
     params: ServiceSearchParams,
     locale: string = 'hy'
   ): Promise<PaginatedResponse<AutoService>> {
+    // Clean params - remove undefined values to ensure they're sent
+    const cleanParams: Record<string, unknown> = {};
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        cleanParams[key] = value;
+      }
+    });
+
     const response = await serverApiClient.get<BackendSearchResponse>(
       API_ENDPOINTS.AUTO_SERVICES.SEARCH,
       {
-        params: {
-          ...params,
-        },
+        params: cleanParams,
         headers: {
           'Accept-Language': locale,
           'X-Locale': locale,
