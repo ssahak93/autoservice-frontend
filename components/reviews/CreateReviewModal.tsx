@@ -20,12 +20,16 @@ interface CreateReviewModalProps {
 }
 
 // Schema will be created inside component to use translations
-const createReviewSchemaFactory = (t: (key: string) => string) =>
-  z.object({
-    visitId: z.string().min(1, t('visitRequired', { defaultValue: 'Visit is required' })),
+const createReviewSchemaFactory = (
+  t: (key: string, options?: { defaultValue?: string }) => string
+) => {
+  const visitRequiredMsg = t('visitRequired', { defaultValue: 'Visit is required' });
+  return z.object({
+    visitId: z.string().min(1, visitRequiredMsg),
     rating: z.number().min(1).max(5),
     comment: z.string().optional(),
   });
+};
 
 type CreateReviewFormData = z.infer<ReturnType<typeof createReviewSchemaFactory>>;
 

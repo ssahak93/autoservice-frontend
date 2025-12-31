@@ -7,6 +7,8 @@ export const shouldReduceMotion = (): boolean => {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 };
 
+import type { Variant } from 'framer-motion';
+
 /**
  * Get animation variants that respect prefers-reduced-motion
  */
@@ -15,33 +17,32 @@ export const getAnimationVariants = () => {
 
   return {
     fadeIn: {
-      initial: { opacity: reduceMotion ? 1 : 0 },
-      animate: { opacity: 1 },
-      exit: { opacity: reduceMotion ? 1 : 0 },
-      transition: { duration: reduceMotion ? 0 : 0.2 },
+      initial: { opacity: reduceMotion ? 1 : 0 } as Variant,
+      animate: { opacity: 1 } as Variant,
+      exit: { opacity: reduceMotion ? 1 : 0 } as Variant,
     },
     slideUp: {
-      initial: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 20 },
-      animate: { opacity: 1, y: 0 },
-      exit: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 20 },
-      transition: { duration: reduceMotion ? 0 : 0.3 },
+      initial: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 20 } as Variant,
+      animate: { opacity: 1, y: 0 } as Variant,
+      exit: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 20 } as Variant,
     },
     scaleIn: {
-      initial: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95 },
-      animate: { opacity: 1, scale: 1 },
-      exit: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95 },
-      transition: { duration: reduceMotion ? 0 : 0.2 },
+      initial: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95 } as Variant,
+      animate: { opacity: 1, scale: 1 } as Variant,
+      exit: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95 } as Variant,
     },
     modal: {
-      initial: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95, y: reduceMotion ? 0 : 20 },
-      animate: { opacity: 1, scale: 1, y: 0 },
-      exit: { opacity: reduceMotion ? 1 : 0, scale: reduceMotion ? 1 : 0.95, y: reduceMotion ? 0 : 20 },
-      transition: {
-        type: reduceMotion ? 'tween' : 'spring',
-        duration: reduceMotion ? 0 : undefined,
-        damping: reduceMotion ? undefined : 25,
-        stiffness: reduceMotion ? undefined : 300,
-      },
+      initial: {
+        opacity: reduceMotion ? 1 : 0,
+        scale: reduceMotion ? 1 : 0.95,
+        y: reduceMotion ? 0 : 20,
+      } as Variant,
+      animate: { opacity: 1, scale: 1, y: 0 } as Variant,
+      exit: {
+        opacity: reduceMotion ? 1 : 0,
+        scale: reduceMotion ? 1 : 0.95,
+        y: reduceMotion ? 0 : 20,
+      } as Variant,
     },
   };
 };
@@ -56,4 +57,3 @@ export const getTransition = (duration: number = 0.3) => {
     ease: 'easeOut' as const,
   };
 };
-

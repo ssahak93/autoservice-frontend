@@ -15,12 +15,15 @@ import { getAnimationVariants } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
 
 // Schema will be created inside component to use translations
-const createBookVisitSchema = (t: (key: string) => string) =>
-  z.object({
-    preferredDate: z.string().min(1, t('dateRequired', { defaultValue: 'Date is required' })),
-    preferredTime: z.string().min(1, t('timeRequired', { defaultValue: 'Time is required' })),
+const createBookVisitSchema = (t: (key: string, options?: { defaultValue?: string }) => string) => {
+  const dateRequiredMsg = t('dateRequired', { defaultValue: 'Date is required' });
+  const timeRequiredMsg = t('timeRequired', { defaultValue: 'Time is required' });
+  return z.object({
+    preferredDate: z.string().min(1, dateRequiredMsg),
+    preferredTime: z.string().min(1, timeRequiredMsg),
     description: z.string().optional(),
   });
+};
 
 type BookVisitFormData = z.infer<ReturnType<typeof createBookVisitSchema>>;
 
