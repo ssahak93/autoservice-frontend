@@ -19,25 +19,27 @@ interface CreateReviewModalProps {
   serviceId: string;
 }
 
-const createReviewSchema = z.object({
-  visitId: z.string().min(1, 'Visit is required'),
-  rating: z.number().min(1).max(5),
-  comment: z.string().optional(),
-});
+// Schema will be created inside component to use translations
+const createReviewSchemaFactory = (t: (key: string) => string) =>
+  z.object({
+    visitId: z.string().min(1, t('visitRequired', { defaultValue: 'Visit is required' })),
+    rating: z.number().min(1).max(5),
+    comment: z.string().optional(),
+  });
 
-type CreateReviewFormData = z.infer<typeof createReviewSchema>;
+type CreateReviewFormData = z.infer<ReturnType<typeof createReviewSchemaFactory>>;
 
 export function CreateReviewModal({ isOpen, onClose, serviceId }: CreateReviewModalProps) {
   const t = useTranslations('reviews');
   const showToast = useUIStore((state) => state.showToast);
   const [hoveredRating, setHoveredRating] = useState(0);
   const createReview = useCreateReview();
+  const createReviewSchema = createReviewSchemaFactory(t);
 
   // Get completed visits for this service
   const { data: visitsData } = useVisits({ status: 'completed' });
-  const completedVisits = visitsData?.data?.filter(
-    (visit) => visit.autoServiceProfileId === serviceId
-  ) || [];
+  const completedVisits =
+    visitsData?.data?.filter((visit) => visit.autoServiceProfileId === serviceId) || [];
 
   const {
     register,
@@ -128,9 +130,7 @@ export function CreateReviewModal({ isOpen, onClose, serviceId }: CreateReviewMo
                     <p className="mt-1 text-sm text-error-600">{errors.visitId.message}</p>
                   )}
                   {completedVisits.length === 0 && (
-                    <p className="mt-1 text-sm text-warning-600">
-                      {t('noCompletedVisits')}
-                    </p>
+                    <p className="mt-1 text-sm text-warning-600">{t('noCompletedVisits')}</p>
                   )}
                 </div>
 
@@ -202,4 +202,3 @@ export function CreateReviewModal({ isOpen, onClose, serviceId }: CreateReviewMo
     </AnimatePresence>
   );
 }
-

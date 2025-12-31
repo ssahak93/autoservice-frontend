@@ -1,4 +1,5 @@
 import createMiddleware from 'next-intl/middleware';
+
 import { routing } from './i18n/routing';
 
 export default createMiddleware({
@@ -9,6 +10,13 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Match only internationalized pathnames
-  matcher: ['/', '/(hy|ru|en)/:path*'],
+  // Match all pathnames except static files and API routes
+  matcher: [
+    // Match all pathnames except:
+    // - api routes
+    // - _next (Next.js internals)
+    // - _vercel (Vercel internals)
+    // - static files (images, etc.)
+    '/((?!api|_next|_vercel|.*\\..*).*)',
+  ],
 };

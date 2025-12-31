@@ -1,9 +1,11 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
+
 import { visitsService } from '@/lib/services/visits.service';
 import { useUIStore } from '@/stores/uiStore';
 import type { CreateVisitRequest } from '@/types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const useVisits = (params?: { status?: string; page?: number; limit?: number }) => {
   return useQuery({
@@ -23,15 +25,19 @@ export const useVisit = (id: string | null) => {
 export const useCreateVisit = () => {
   const queryClient = useQueryClient();
   const { showToast } = useUIStore();
+  const t = useTranslations('visits');
 
   return useMutation({
     mutationFn: (data: CreateVisitRequest) => visitsService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visits'] });
-      showToast('Visit booked successfully', 'success');
+      showToast(t('bookedSuccessfully', { defaultValue: 'Visit booked successfully' }), 'success');
     },
     onError: (error: Error) => {
-      showToast(error.message || 'Failed to book visit', 'error');
+      showToast(
+        error.message || t('failedToBook', { defaultValue: 'Failed to book visit' }),
+        'error'
+      );
     },
   });
 };
@@ -39,6 +45,7 @@ export const useCreateVisit = () => {
 export const useUpdateVisitStatus = () => {
   const queryClient = useQueryClient();
   const { showToast } = useUIStore();
+  const t = useTranslations('visits');
 
   return useMutation({
     mutationFn: ({
@@ -50,10 +57,14 @@ export const useUpdateVisitStatus = () => {
     }) => visitsService.updateStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visits'] });
-      showToast('Visit status updated', 'success');
+      showToast(t('statusUpdated', { defaultValue: 'Visit status updated' }), 'success');
     },
     onError: (error: Error) => {
-      showToast(error.message || 'Failed to update visit status', 'error');
+      showToast(
+        error.message ||
+          t('failedToUpdateStatus', { defaultValue: 'Failed to update visit status' }),
+        'error'
+      );
     },
   });
 };

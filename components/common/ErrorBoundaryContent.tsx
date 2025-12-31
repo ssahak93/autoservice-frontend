@@ -4,14 +4,21 @@ import { AlertCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/Button';
+import { useRouter } from '@/i18n/routing';
 
 interface ErrorBoundaryContentProps {
   error: Error | null;
   onReset: () => void;
 }
 
+/**
+ * ErrorBoundaryContent Component
+ *
+ * Now used within NextIntlClientProvider, so translations are available.
+ */
 export function ErrorBoundaryContent({ error, onReset }: ErrorBoundaryContentProps) {
   const t = useTranslations('errorBoundary');
+  const router = useRouter();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-subtle p-4">
@@ -20,25 +27,14 @@ export function ErrorBoundaryContent({ error, onReset }: ErrorBoundaryContentPro
         <h2 className="mb-2 font-display text-2xl font-bold text-neutral-900">
           {t('somethingWentWrong')}
         </h2>
-        <p className="mb-6 text-neutral-600">
-          {error?.message || t('unexpectedError')}
-        </p>
+        <p className="mb-6 text-neutral-600">{error?.message || t('unexpectedError')}</p>
         <div className="flex gap-3">
           <Button onClick={onReset} variant="outline">
             {t('tryAgain')}
           </Button>
-          <Button
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.href = '/';
-              }
-            }}
-          >
-            {t('goHome')}
-          </Button>
+          <Button onClick={() => router.push('/')}>{t('goHome')}</Button>
         </div>
       </div>
     </div>
   );
 }
-

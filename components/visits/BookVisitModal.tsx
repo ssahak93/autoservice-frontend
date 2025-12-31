@@ -14,13 +14,15 @@ import { useCreateVisit } from '@/hooks/useVisits';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
 
-const bookVisitSchema = z.object({
-  preferredDate: z.string().min(1, 'Date is required'),
-  preferredTime: z.string().min(1, 'Time is required'),
-  description: z.string().optional(),
-});
+// Schema will be created inside component to use translations
+const createBookVisitSchema = (t: (key: string) => string) =>
+  z.object({
+    preferredDate: z.string().min(1, t('dateRequired', { defaultValue: 'Date is required' })),
+    preferredTime: z.string().min(1, t('timeRequired', { defaultValue: 'Time is required' })),
+    description: z.string().optional(),
+  });
 
-type BookVisitFormData = z.infer<typeof bookVisitSchema>;
+type BookVisitFormData = z.infer<ReturnType<typeof createBookVisitSchema>>;
 
 interface BookVisitModalProps {
   serviceId: string;
@@ -38,6 +40,7 @@ export function BookVisitModal({ serviceId, serviceName }: BookVisitModalProps) 
   const { mutate: createVisit, isPending } = useCreateVisit();
   const { isOpen, open, close, closeButtonRef } = useModal();
   const variants = getAnimationVariants();
+  const bookVisitSchema = createBookVisitSchema(t);
 
   const {
     register,

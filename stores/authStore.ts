@@ -32,15 +32,30 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-      logout: () =>
+      setUser: (user) => {
+        set({ user, isAuthenticated: !!user });
+      },
+      setTokens: (accessToken, refreshToken) => {
+        // Save tokens to both Zustand store and localStorage for immediate API client access
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+        set({ accessToken, refreshToken });
+      },
+      logout: () => {
+        // Clear both Zustand store and localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        }
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
-        }),
+        });
+      },
       setLoading: (isLoading) => set({ isLoading }),
     }),
     {

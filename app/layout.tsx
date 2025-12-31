@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 
-import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-
 import { Providers } from './providers';
 import './globals.css';
 
@@ -24,17 +22,14 @@ export const metadata: Metadata = {
   description: 'Find and book the best auto services in Armenia',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`} suppressHydrationWarning>
-        <ErrorBoundary>
-          <Providers>{children}</Providers>
-        </ErrorBoundary>
+      <body
+        className={`${inter.variable} ${poppins.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -1,8 +1,9 @@
 'use client';
 
-import { useRouter, usePathname, useSearchParams as useNextSearchParams } from 'next/navigation';
+import { useSearchParams as useNextSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { useRouter, usePathname } from '@/i18n/routing';
 import type { ServiceSearchParams } from '@/lib/services/services.service';
 import {
   deserializeSearchParams,

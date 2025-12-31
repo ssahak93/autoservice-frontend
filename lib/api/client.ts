@@ -44,8 +44,20 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
+        // Don't log 404 errors for notifications/stats endpoint (expected if not implemented)
+        const url = error.config?.url || '';
+        const isNotificationsStats = url.includes('/notifications/stats');
+
         if (error.response?.status === 401) {
-          // Token expired, try to refresh
+          // Check if this is a login/register request - don't try to refresh token
+          const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/register');
+
+          if (isAuthRequest) {
+            // For login/register, just reject the error - no redirect
+            return Promise.reject(error);
+          }
+
+          // For other requests, token expired - try to refresh
           try {
             await this.refreshToken();
             // Retry original request
@@ -53,13 +65,20 @@ class ApiClient {
               return this.client.request(error.config);
             }
           } catch (refreshError) {
-            // Refresh failed, redirect to login
+            // Refresh failed, logout and dispatch event for redirect
             this.logout();
             if (typeof window !== 'undefined') {
-              window.location.href = '/login';
+              // Dispatch custom event for locale-aware redirect
+              // AuthLogoutHandler will handle the redirect
+              window.dispatchEvent(new CustomEvent('auth:logout'));
             }
           }
+        } else if (error.response?.status === 404 && isNotificationsStats) {
+          // Silently handle 404 for notifications/stats - this is expected if endpoint not implemented
+          // Return a rejected promise with a special flag so the service can handle it
+          return Promise.reject(error);
         }
+
         return Promise.reject(error);
       }
     );
@@ -106,6 +125,28 @@ class ApiClient {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
     }
+  }
+
+  private getCurrentLocale(): string {
+    if (typeof window === 'undefined') {
+      return 'hy'; // Default for SSR
+    }
+
+    // Get from URL first (most reliable)
+    const pathname = window.location.pathname;
+    const localeMatch = pathname.match(/^\/(hy|en|ru)/);
+    if (localeMatch) {
+      return localeMatch[1];
+    }
+
+    // Fallback to localStorage
+    const storedLocale = localStorage.getItem('preferred-locale');
+    if (storedLocale && ['hy', 'en', 'ru'].includes(storedLocale)) {
+      return storedLocale;
+    }
+
+    // Final fallback
+    return 'hy';
   }
 
   // Public methods

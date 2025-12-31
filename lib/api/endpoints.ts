@@ -8,6 +8,8 @@ export const API_ENDPOINTS = {
     REFRESH: '/auth/refresh',
     ME: '/auth/me',
     LOGOUT: '/auth/logout',
+    CHANGE_PASSWORD: '/auth/change-password',
+    SETTINGS: '/auth/settings',
   },
 
   // Auto Services (Public)

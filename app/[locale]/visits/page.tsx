@@ -36,7 +36,7 @@ export default function VisitsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="font-display text-4xl font-bold text-neutral-900">{t('title')}</h1>
-          <p className="mt-2 text-neutral-600">Manage your service visits</p>
+          <p className="mt-2 text-neutral-600">{t('subtitle')}</p>
         </div>
 
         {/* Filters */}
@@ -49,7 +49,7 @@ export default function VisitsPage() {
                 : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
             }`}
           >
-            All
+            {t('all')}
           </button>
           {(['pending', 'confirmed', 'cancelled', 'completed'] as const).map((status) => (
             <button
@@ -104,7 +104,8 @@ export default function VisitsPage() {
                         <div className="flex items-center gap-2 text-neutral-600">
                           <Calendar className="h-4 w-4" />
                           <span>
-                            {format(new Date(visit.preferredDate), 'PPP')} at {visit.preferredTime}
+                            {format(new Date(visit.preferredDate), 'PPP')} {t('at')}{' '}
+                            {visit.preferredTime}
                           </span>
                         </div>
 
@@ -112,8 +113,8 @@ export default function VisitsPage() {
                           <div className="flex items-center gap-2 text-sm text-success-600">
                             <CheckCircle2 className="h-4 w-4" />
                             <span>
-                              Confirmed: {format(new Date(visit.confirmedDate), 'PPP')} at{' '}
-                              {visit.confirmedTime}
+                              {t('confirmedLabel')}: {format(new Date(visit.confirmedDate), 'PPP')}{' '}
+                              {t('at')} {visit.confirmedTime}
                             </span>
                           </div>
                         )}
@@ -149,4 +150,3 @@ export default function VisitsPage() {
     </ProtectedRoute>
   );
 }
-

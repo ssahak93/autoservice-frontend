@@ -60,7 +60,7 @@ export function ServiceCard({ service, index = 0, distance }: ServiceCardProps) 
           {service.isVerified && (
             <div
               className="absolute right-2 top-2 rounded-full bg-success-500 p-1"
-              aria-label="Verified service"
+              aria-label={t('verifiedService', { defaultValue: 'Verified service' })}
             >
               <Verified className="h-4 w-4 text-white" />
             </div>

@@ -1,124 +1,321 @@
 'use client';
 
-import { User } from 'lucide-react';
-import Image from 'next/image';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { motion } from 'framer-motion';
+import { Mail, Phone, User as UserIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { AvatarUpload } from '@/components/profile/AvatarUpload';
+import { ChangePasswordModal } from '@/components/profile/ChangePasswordModal';
+import { SettingsSection } from '@/components/profile/SettingsSection';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
+import { useUpdateProfile } from '@/hooks/useProfile';
+import { getAnimationVariants } from '@/lib/utils/animations';
 
+/**
+ * Profile Page Component
+ *
+ * Single Responsibility: Displays and manages user profile information
+ * Responsive: Mobile-first design with breakpoints for tablet and desktop
+ */
 export default function ProfilePage() {
   const t = useTranslations('profile');
-  const { user } = useAuth();
+  const { user, isLoading: isLoadingUser } = useAuth();
+  const updateProfile = useUpdateProfile();
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const variants = getAnimationVariants();
+
+  // Form validation schema
+  const profileSchema = z.object({
+    firstName: z
+      .string()
+      .min(1, t('firstNameRequired', { defaultValue: 'First name is required' })),
+    lastName: z.string().min(1, t('lastNameRequired', { defaultValue: 'Last name is required' })),
+    phoneNumber: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || /^\+?[1-9]\d{1,14}$/.test(val),
+        t('invalidPhoneNumber', { defaultValue: 'Invalid phone number format' })
+      ),
+  });
+
+  type ProfileFormData = z.infer<typeof profileSchema>;
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      email: user?.email || '',
-      phoneNumber: user?.phoneNumber || '',
-    },
+    formState: { errors, isDirty },
+    reset,
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    mode: 'onBlur',
   });
 
-  const onSubmit = (data: unknown) => {
-    // TODO: Implement profile update
-    // Update profile logic will be implemented
-    void data;
+  // Reset form when user data changes
+  useEffect(() => {
+    if (user) {
+      reset({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phoneNumber: user.phoneNumber || '',
+      });
+    }
+  }, [user, reset]);
+
+  const onSubmit = async (data: ProfileFormData) => {
+    try {
+      await updateProfile.mutateAsync({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.phoneNumber || undefined,
+      });
+    } catch (error) {
+      // Error is handled in the hook
+    }
   };
 
-  if (!user) {
+  if (isLoadingUser) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
-      </div>
+      <ProtectedRoute>
+        <div className="flex min-h-screen items-center justify-center">
+          <LoadingSpinner size="lg" />
+        </div>
+      </ProtectedRoute>
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
+  const userName =
+    `${user.firstName} ${user.lastName}`.trim() || t('user', { defaultValue: 'User' });
+
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="font-display text-4xl font-bold text-neutral-900">{t('title')}</h1>
-          <p className="mt-2 text-neutral-600">{t('personalInfo')}</p>
-        </div>
+      <div className="container mx-auto px-4 py-6 sm:py-8 lg:py-12">
+        {/* Header */}
+        <motion.div
+          variants={variants.slideUp}
+          initial="initial"
+          animate="animate"
+          className="mb-6 sm:mb-8"
+        >
+          <h1 className="font-display text-3xl font-bold text-neutral-900 sm:text-4xl lg:text-5xl">
+            {t('title')}
+          </h1>
+          <p className="mt-2 text-sm text-neutral-600 sm:text-base">
+            {t('subtitle', {
+              defaultValue: 'Manage your personal information and account settings',
+            })}
+          </p>
+        </motion.div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Profile Card */}
-          <div className="lg:col-span-1">
-            <div className="glass-light rounded-xl p-6 text-center">
-              <div className="relative mx-auto mb-4 h-32 w-32 overflow-hidden rounded-full">
-                {user.avatarFile?.fileUrl ? (
-                  <Image
-                    src={user.avatarFile.fileUrl}
-                    alt={`${user.firstName} ${user.lastName}`}
-                    fill
-                    className="object-cover"
-                    sizes="128px"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary-400 to-secondary-400">
-                    <User className="h-16 w-16 text-white" />
-                  </div>
-                )}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          {/* Profile Card - Left Sidebar */}
+          <motion.div
+            variants={variants.slideUp}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-1"
+          >
+            <div className="glass-light rounded-xl p-6 sm:p-8">
+              {/* Avatar */}
+              <div className="mb-6">
+                <AvatarUpload currentAvatarUrl={user.avatarFile?.fileUrl} userName={userName} />
               </div>
 
-              <h2 className="font-display text-xl font-semibold">
-                {user.firstName} {user.lastName}
-              </h2>
-              <p className="mt-1 text-sm text-neutral-600">{user.email}</p>
+              {/* User Info */}
+              <div className="space-y-4 text-center">
+                <div>
+                  <h2 className="font-display text-xl font-semibold text-neutral-900 sm:text-2xl">
+                    {userName}
+                  </h2>
+                  <div className="mt-2 flex items-center justify-center gap-2 text-sm text-neutral-600">
+                    <Mail className="h-4 w-4" />
+                    <span className="break-all">{user.email}</span>
+                  </div>
+                  {user.phoneNumber && (
+                    <div className="mt-2 flex items-center justify-center gap-2 text-sm text-neutral-600">
+                      <Phone className="h-4 w-4" />
+                      <a
+                        href={`tel:${user.phoneNumber}`}
+                        className="hover:text-primary-600 hover:underline"
+                      >
+                        {user.phoneNumber}
+                      </a>
+                    </div>
+                  )}
+                </div>
 
-              <Button variant="outline" className="mt-4 w-full" size="sm">
-                {t('uploadPhoto')}
-              </Button>
+                {/* Account Info */}
+                <div className="border-t border-neutral-200 pt-4">
+                  <div className="space-y-2 text-sm text-neutral-600">
+                    <div className="flex items-center justify-between">
+                      <span>{t('accountCreated', { defaultValue: 'Account created' })}</span>
+                      <span className="font-medium text-neutral-900">
+                        {user.createdAt
+                          ? new Date(user.createdAt).toLocaleDateString()
+                          : t('unknown', { defaultValue: 'Unknown' })}
+                      </span>
+                    </div>
+                    {user.updatedAt && (
+                      <div className="flex items-center justify-between">
+                        <span>{t('lastUpdated', { defaultValue: 'Last updated' })}</span>
+                        <span className="font-medium text-neutral-900">
+                          {new Date(user.updatedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Profile Form */}
-          <div className="lg:col-span-2">
-            <div className="glass-light rounded-xl p-6">
-              <h3 className="mb-6 font-display text-2xl font-semibold">{t('personalInfo')}</h3>
+          {/* Profile Form - Right Side */}
+          <motion.div
+            variants={variants.slideUp}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-2"
+          >
+            <div className="glass-light rounded-xl p-6 sm:p-8">
+              {/* Form Header */}
+              <div className="mb-6 flex items-center gap-3">
+                <div className="rounded-lg bg-primary-100 p-2">
+                  <UserIcon className="h-5 w-5 text-primary-600 sm:h-6 sm:w-6" />
+                </div>
+                <div>
+                  <h3 className="font-display text-xl font-semibold text-neutral-900 sm:text-2xl">
+                    {t('personalInfo')}
+                  </h3>
+                  <p className="mt-1 text-sm text-neutral-600">
+                    {t('personalInfoDescription', {
+                      defaultValue: 'Update your personal information and contact details',
+                    })}
+                  </p>
+                </div>
+              </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              {/* Form */}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
+                {/* Name Fields */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Input
                     label={t('firstName')}
-                    {...register('firstName', { required: 'First name is required' })}
+                    placeholder={t('firstNamePlaceholder', {
+                      defaultValue: 'Enter your first name',
+                    })}
                     error={errors.firstName?.message}
+                    disabled={updateProfile.isPending}
+                    autoComplete="given-name"
+                    {...register('firstName')}
                   />
                   <Input
                     label={t('lastName')}
-                    {...register('lastName', { required: 'Last name is required' })}
+                    placeholder={t('lastNamePlaceholder', { defaultValue: 'Enter your last name' })}
                     error={errors.lastName?.message}
+                    disabled={updateProfile.isPending}
+                    autoComplete="family-name"
+                    {...register('lastName')}
                   />
                 </div>
 
-                <Input label={t('email')} type="email" disabled {...register('email')} />
+                {/* Email (Read-only) */}
+                <div>
+                  <Input
+                    label={t('email')}
+                    type="email"
+                    value={user.email}
+                    disabled
+                    helperText={t('emailCannotBeChanged', {
+                      defaultValue: 'Email cannot be changed',
+                    })}
+                    autoComplete="email"
+                  />
+                </div>
 
-                <Input
-                  label={t('phoneNumber')}
-                  type="tel"
-                  {...register('phoneNumber')}
-                  error={errors.phoneNumber?.message}
-                />
+                {/* Phone Number */}
+                <div>
+                  <Input
+                    label={t('phoneNumber')}
+                    type="tel"
+                    placeholder={t('phoneNumberPlaceholder', { defaultValue: '+374 XX XXX XXX' })}
+                    error={errors.phoneNumber?.message}
+                    disabled={updateProfile.isPending}
+                    autoComplete="tel"
+                    helperText={t('phoneNumberHelper', {
+                      defaultValue: 'Optional. Include country code',
+                    })}
+                    {...register('phoneNumber')}
+                  />
+                </div>
 
-                <div className="flex gap-3">
-                  <Button type="submit">{t('saveChanges')}</Button>
-                  <Button type="button" variant="outline">
+                {/* Form Actions */}
+                <div className="flex flex-col gap-3 border-t border-neutral-200 pt-6 sm:flex-row">
+                  <Button
+                    type="submit"
+                    fullWidth
+                    isLoading={updateProfile.isPending}
+                    disabled={updateProfile.isPending || !isDirty}
+                    className="sm:w-auto"
+                  >
+                    {t('saveChanges')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    fullWidth
+                    onClick={() => setIsChangePasswordOpen(true)}
+                    className="sm:w-auto"
+                  >
                     {t('changePassword')}
                   </Button>
+                  {isDirty && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      fullWidth
+                      onClick={() => reset()}
+                      disabled={updateProfile.isPending}
+                      className="sm:w-auto"
+                    >
+                      {t('cancel', { defaultValue: 'Cancel' })}
+                    </Button>
+                  )}
                 </div>
               </form>
             </div>
-          </div>
+          </motion.div>
         </div>
+
+        {/* Settings Section */}
+        <motion.div
+          variants={variants.slideUp}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: 0.4 }}
+          className="mt-6 lg:mt-8"
+        >
+          <SettingsSection />
+        </motion.div>
+
+        {/* Change Password Modal */}
+        <ChangePasswordModal
+          isOpen={isChangePasswordOpen}
+          onClose={() => setIsChangePasswordOpen(false)}
+        />
       </div>
     </ProtectedRoute>
   );

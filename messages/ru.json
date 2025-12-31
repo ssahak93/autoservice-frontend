@@ -37,7 +37,23 @@
     "emailRequired": "Email обязателен",
     "passwordRequired": "Пароль обязателен",
     "passwordMinLength": "Пароль должен содержать минимум 8 символов",
-    "registerSuccess": "Регистрация успешна! Проверьте вашу почту."
+    "registerSuccess": "Регистрация успешна! Проверьте вашу почту.",
+    "invalidEmail": "Неверный адрес email",
+    "welcomeBack": "Добро пожаловать! Пожалуйста, войдите в свой аккаунт.",
+    "createAccount": "Создайте аккаунт, чтобы начать.",
+    "passwordHelper": "Минимум 8 символов",
+    "firstNameRequired": "Имя обязательно",
+    "lastNameRequired": "Фамилия обязательна",
+    "confirmPassword": "Подтвердите пароль",
+    "confirmPasswordRequired": "Пожалуйста, подтвердите пароль",
+    "passwordsDontMatch": "Пароли не совпадают",
+    "loginSuccess": "Вход выполнен успешно",
+    "loginFailed": "Вход не удался. Пожалуйста, попробуйте снова.",
+    "loginFailedMessage": "Вход не удался. Пожалуйста, проверьте ваши учетные данные.",
+    "registrationSuccess": "Регистрация успешна",
+    "registrationFailed": "Регистрация не удалась. Пожалуйста, попробуйте снова.",
+    "registrationFailedMessage": "Регистрация не удалась. Пожалуйста, проверьте вашу информацию.",
+    "logoutSuccess": "Выход выполнен успешно"
   },
   "home": {
     "title": "Auto Service Connect",
@@ -144,10 +160,13 @@
     "tryAdjustingFilters": "Попробуйте изменить фильтры",
     "updating": "Обновление...",
     "noServicesDescription": "Услуги не найдены. Проверьте позже или попробуйте другой поиск.",
-    "browseAll": "Просмотреть все услуги"
+    "browseAll": "Просмотреть все услуги",
+    "verifiedService": "Проверенная услуга"
   },
   "visits": {
     "title": "Мои визиты",
+    "subtitle": "Управляйте вашими визитами на обслуживание",
+    "all": "Все",
     "upcoming": "Предстоящие",
     "past": "Прошедшие",
     "pending": "Ожидает",
@@ -163,7 +182,15 @@
     "service": "Услуга",
     "date": "Дата",
     "time": "Время",
-    "viewDetails": "Просмотреть детали"
+    "viewDetails": "Просмотреть детали",
+    "confirmedLabel": "Подтверждено",
+    "at": "в",
+    "bookedSuccessfully": "Визит успешно забронирован",
+    "failedToBook": "Не удалось забронировать визит",
+    "statusUpdated": "Статус визита обновлен",
+    "failedToUpdateStatus": "Не удалось обновить статус",
+    "dateRequired": "Дата обязательна",
+    "timeRequired": "Время обязательно"
   },
   "reviews": {
     "title": "Отзывы",
@@ -200,12 +227,91 @@
   },
   "profile": {
     "title": "Профиль",
+    "subtitle": "Управляйте вашей личной информацией и настройками аккаунта",
     "personalInfo": "Личная информация",
+    "personalInfoDescription": "Обновите вашу личную информацию и контактные данные",
     "changePassword": "Изменить пароль",
     "avatar": "Аватар",
     "uploadPhoto": "Загрузить фото",
     "saveChanges": "Сохранить изменения",
-    "profileUpdated": "Профиль успешно обновлен"
+    "profileUpdated": "Профиль успешно обновлен",
+    "updateError": "Не удалось обновить профиль",
+    "firstName": "Имя",
+    "firstNameRequired": "Имя обязательно",
+    "firstNamePlaceholder": "Введите ваше имя",
+    "lastName": "Фамилия",
+    "lastNameRequired": "Фамилия обязательна",
+    "lastNamePlaceholder": "Введите вашу фамилию",
+    "email": "Email",
+    "emailCannotBeChanged": "Email нельзя изменить",
+    "phoneNumber": "Номер телефона",
+    "phoneNumberPlaceholder": "+374 XX XXX XXX",
+    "phoneNumberHelper": "Необязательно. Включите код страны",
+    "invalidPhoneNumber": "Неверный формат номера телефона",
+    "user": "Пользователь",
+    "accountCreated": "Аккаунт создан",
+    "lastUpdated": "Последнее обновление",
+    "unknown": "Неизвестно",
+    "cancel": "Отмена",
+    "close": "Закрыть",
+    "currentPassword": "Текущий пароль",
+    "currentPasswordRequired": "Текущий пароль обязателен",
+    "newPassword": "Новый пароль",
+    "passwordMinLength": "Пароль должен содержать минимум 8 символов",
+    "confirmPasswordRequired": "Пожалуйста, подтвердите пароль",
+    "passwordsDontMatch": "Пароли не совпадают",
+    "passwordChanged": "Пароль успешно изменен",
+    "passwordChangeError": "Не удалось изменить пароль",
+    "showPassword": "Показать пароль",
+    "hidePassword": "Скрыть пароль",
+    "avatarUpdated": "Аватар успешно обновлен",
+    "avatarUpdateError": "Не удалось обновить аватар",
+    "invalidImage": "Неверный файл изображения",
+    "preview": "Предпросмотр",
+    "removePreview": "Удалить предпросмотр",
+    "previewError": "Не удалось создать предпросмотр",
+    "settings": {
+      "title": "Настройки",
+      "description": "Управляйте настройками вашего аккаунта и предпочтениями",
+      "notifications": {
+        "title": "Уведомления",
+        "email": "Email уведомления",
+        "emailDescription": "Получать уведомления по email",
+        "push": "Push уведомления",
+        "pushDescription": "Получать push уведомления в браузере",
+        "sms": "SMS уведомления",
+        "smsDescription": "Получать уведомления по SMS"
+      },
+      "privacy": {
+        "title": "Приватность",
+        "showPhone": "Показывать номер телефона",
+        "showPhoneDescription": "Разрешить другим видеть ваш номер телефона",
+        "showEmail": "Показывать Email",
+        "showEmailDescription": "Разрешить другим видеть ваш email адрес"
+      },
+      "security": {
+        "title": "Безопасность",
+        "biometric": "Биометрическая аутентификация",
+        "biometricDescription": "Использовать отпечаток пальца или распознавание лица для входа",
+        "twoFactor": "Двухфакторная аутентификация",
+        "twoFactorDescription": "Добавить дополнительный уровень безопасности к вашему аккаунту"
+      },
+      "language": {
+        "title": "Язык",
+        "interface": "Язык интерфейса",
+        "interfaceDescription": "Выберите предпочитаемый язык",
+        "note": "Язык управляется глобально. Используйте переключатель языка в заголовке."
+      },
+      "dangerZone": {
+        "title": "Опасная зона",
+        "deleteAccount": "Удалить аккаунт",
+        "deleteAccountDescription": "Навсегда удалить ваш аккаунт и все связанные данные. Это действие нельзя отменить.",
+        "delete": "Удалить",
+        "deleteAccountConfirm": "Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить."
+      },
+      "updated": "Настройки успешно обновлены",
+      "updateError": "Не удалось обновить настройки"
+    }
   },
   "navigation": {
     "home": "Главная",
@@ -217,7 +323,8 @@
     "login": "Войти",
     "logout": "Выйти",
     "signUp": "Зарегистрироваться",
-    "menu": "Меню"
+    "menu": "Меню",
+    "changeLanguage": "Изменить язык"
   },
   "errors": {
     "generic": "Что-то пошло не так. Попробуйте еще раз.",
@@ -243,6 +350,8 @@
     "delete": "Удалить",
     "deleteAllRead": "Удалить все прочитанные",
     "viewAll": "Просмотреть все",
+    "allMarkedAsRead": "Все уведомления отмечены как прочитанные",
+    "allReadDeleted": "Все прочитанные уведомления удалены",
     "close": "Закрыть",
     "page": "Страница",
     "of": "из",

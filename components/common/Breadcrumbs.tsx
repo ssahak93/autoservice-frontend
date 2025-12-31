@@ -1,9 +1,9 @@
 'use client';
 
 import { ChevronRight, Home } from 'lucide-react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
+import { Link } from '@/i18n/routing';
 import { cn } from '@/lib/utils/cn';
 
 export interface BreadcrumbItem {

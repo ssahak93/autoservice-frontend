@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
+import { AuthLogoutHandler } from '@/components/auth/AuthLogoutHandler';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { SkipLink } from '@/components/common/SkipLink';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
@@ -34,18 +36,21 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <Providers>
-        <OrganizationSchema />
-        <SkipLink />
-        <div className="flex min-h-screen flex-col">
-          <Header />
-          <main id="main-content" className="flex-1" tabIndex={-1}>
-            {children}
-          </main>
-          <Footer />
-          <Toast />
-        </div>
-      </Providers>
+      <ErrorBoundary>
+        <Providers>
+          <AuthLogoutHandler />
+          <OrganizationSchema />
+          <SkipLink />
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <main id="main-content" className="flex-1" tabIndex={-1}>
+              {children}
+            </main>
+            <Footer />
+            <Toast />
+          </div>
+        </Providers>
+      </ErrorBoundary>
     </NextIntlClientProvider>
   );
 }

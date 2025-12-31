@@ -37,7 +37,23 @@
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "passwordMinLength": "Password must be at least 8 characters",
-    "registerSuccess": "Registration successful! Please check your email."
+    "registerSuccess": "Registration successful! Please check your email.",
+    "invalidEmail": "Invalid email address",
+    "welcomeBack": "Welcome back! Please login to your account.",
+    "createAccount": "Create your account to get started.",
+    "passwordHelper": "At least 8 characters",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordRequired": "Please confirm your password",
+    "passwordsDontMatch": "Passwords don't match",
+    "loginSuccess": "Login successful",
+    "loginFailed": "Login failed. Please try again.",
+    "loginFailedMessage": "Login failed. Please check your credentials.",
+    "registrationSuccess": "Registration successful",
+    "registrationFailed": "Registration failed. Please try again.",
+    "registrationFailedMessage": "Registration failed. Please check your information.",
+    "logoutSuccess": "Logged out successfully"
   },
   "home": {
     "title": "Auto Service Connect",
@@ -144,10 +160,13 @@
     "tryAdjustingFilters": "Try adjusting your filters",
     "updating": "Updating...",
     "noServicesDescription": "No services found. Check back later or try a different search.",
-    "browseAll": "Browse All Services"
+    "browseAll": "Browse All Services",
+    "verifiedService": "Verified service"
   },
   "visits": {
     "title": "My Visits",
+    "subtitle": "Manage your service visits",
+    "all": "All",
     "upcoming": "Upcoming",
     "past": "Past",
     "pending": "Pending",
@@ -163,7 +182,15 @@
     "service": "Service",
     "date": "Date",
     "time": "Time",
-    "viewDetails": "View Details"
+    "viewDetails": "View Details",
+    "confirmedLabel": "Confirmed",
+    "at": "at",
+    "bookedSuccessfully": "Visit booked successfully",
+    "failedToBook": "Failed to book visit",
+    "statusUpdated": "Visit status updated",
+    "failedToUpdateStatus": "Failed to update visit status",
+    "dateRequired": "Date is required",
+    "timeRequired": "Time is required"
   },
   "reviews": {
     "title": "Reviews",
@@ -196,16 +223,96 @@
     "reviewCreated": "Review created successfully",
     "reviewError": "Error creating review",
     "noCompletedVisits": "You don't have any completed visits for this service",
-    "close": "Close"
+    "close": "Close",
+    "visitRequired": "Visit is required"
   },
   "profile": {
     "title": "Profile",
+    "subtitle": "Manage your personal information and account settings",
     "personalInfo": "Personal Information",
+    "personalInfoDescription": "Update your personal information and contact details",
     "changePassword": "Change Password",
     "avatar": "Avatar",
     "uploadPhoto": "Upload Photo",
     "saveChanges": "Save Changes",
-    "profileUpdated": "Profile updated successfully"
+    "profileUpdated": "Profile updated successfully",
+    "updateError": "Failed to update profile",
+    "firstName": "First Name",
+    "firstNameRequired": "First name is required",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastName": "Last Name",
+    "lastNameRequired": "Last name is required",
+    "lastNamePlaceholder": "Enter your last name",
+    "email": "Email",
+    "emailCannotBeChanged": "Email cannot be changed",
+    "phoneNumber": "Phone Number",
+    "phoneNumberPlaceholder": "+374 XX XXX XXX",
+    "phoneNumberHelper": "Optional. Include country code",
+    "invalidPhoneNumber": "Invalid phone number format",
+    "user": "User",
+    "accountCreated": "Account created",
+    "lastUpdated": "Last updated",
+    "unknown": "Unknown",
+    "cancel": "Cancel",
+    "close": "Close",
+    "currentPassword": "Current Password",
+    "currentPasswordRequired": "Current password is required",
+    "newPassword": "New Password",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "confirmPasswordRequired": "Please confirm your password",
+    "passwordsDontMatch": "Passwords don't match",
+    "passwordChanged": "Password changed successfully",
+    "passwordChangeError": "Failed to change password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "avatarUpdated": "Avatar updated successfully",
+    "avatarUpdateError": "Failed to update avatar",
+    "invalidImage": "Invalid image file",
+    "preview": "Preview",
+    "removePreview": "Remove preview",
+    "previewError": "Failed to create preview",
+    "settings": {
+      "title": "Settings",
+      "description": "Manage your account settings and preferences",
+      "notifications": {
+        "title": "Notifications",
+        "email": "Email Notifications",
+        "emailDescription": "Receive notifications via email",
+        "push": "Push Notifications",
+        "pushDescription": "Receive push notifications in your browser",
+        "sms": "SMS Notifications",
+        "smsDescription": "Receive notifications via SMS"
+      },
+      "privacy": {
+        "title": "Privacy",
+        "showPhone": "Show Phone Number",
+        "showPhoneDescription": "Allow others to see your phone number",
+        "showEmail": "Show Email",
+        "showEmailDescription": "Allow others to see your email address"
+      },
+      "security": {
+        "title": "Security",
+        "biometric": "Biometric Authentication",
+        "biometricDescription": "Use fingerprint or face recognition to sign in",
+        "twoFactor": "Two-Factor Authentication",
+        "twoFactorDescription": "Add an extra layer of security to your account"
+      },
+      "language": {
+        "title": "Language",
+        "interface": "Interface Language",
+        "interfaceDescription": "Choose your preferred language",
+        "note": "Language is managed globally. Use the language switcher in the header."
+      },
+      "dangerZone": {
+        "title": "Danger Zone",
+        "deleteAccount": "Delete Account",
+        "deleteAccountDescription": "Permanently delete your account and all associated data. This action cannot be undone.",
+        "delete": "Delete",
+        "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone."
+      },
+      "updated": "Settings updated successfully",
+      "updateError": "Failed to update settings"
+    }
   },
   "navigation": {
     "home": "Home",
@@ -217,7 +324,8 @@
     "login": "Login",
     "logout": "Logout",
     "signUp": "Sign Up",
-    "menu": "Menu"
+    "menu": "Menu",
+    "changeLanguage": "Change language"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

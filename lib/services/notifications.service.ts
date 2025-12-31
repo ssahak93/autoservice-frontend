@@ -4,7 +4,13 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints';
 export interface Notification {
   id: string;
   userId: string;
-  type: 'visit_confirmed' | 'visit_cancelled' | 'visit_reminder' | 'new_message' | 'review_received' | 'system';
+  type:
+    | 'visit_confirmed'
+    | 'visit_cancelled'
+    | 'visit_reminder'
+    | 'new_message'
+    | 'review_received'
+    | 'system';
   title: string;
   message: string;
   data?: Record<string, unknown>;
@@ -53,10 +59,30 @@ export const notificationsService = {
 
   /**
    * Get notification statistics
+   * Returns default stats if endpoint doesn't exist (404)
+   * Silently handles 404 to prevent console errors
    */
   async getStats(): Promise<NotificationStats> {
-    const response = await apiClient.get<NotificationStats>(API_ENDPOINTS.NOTIFICATIONS.STATS);
-    return response.data;
+    try {
+      const response = await apiClient.get<NotificationStats>(API_ENDPOINTS.NOTIFICATIONS.STATS);
+      return response.data;
+    } catch (error) {
+      // If endpoint doesn't exist (404), return default stats silently
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 404) {
+          // Endpoint doesn't exist yet, return default stats
+          // This is expected behavior if the endpoint hasn't been implemented yet
+          return {
+            total: 0,
+            unread: 0,
+            byType: {},
+          };
+        }
+      }
+      // Re-throw other errors
+      throw error;
+    }
   },
 
   /**
@@ -87,4 +113,3 @@ export const notificationsService = {
     await apiClient.delete(API_ENDPOINTS.NOTIFICATIONS.DELETE_ALL_READ);
   },
 };
-

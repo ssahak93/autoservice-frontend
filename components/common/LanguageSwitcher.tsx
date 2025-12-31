@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Globe } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { usePathname, useRouter } from '@/i18n/routing';
@@ -19,13 +19,14 @@ export function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const t = useTranslations('navigation');
 
   const currentLanguage = languages.find((lang) => lang.code === locale) || languages[0];
 
   const handleLanguageChange = (newLocale: string) => {
     // Store preference in localStorage
     setPreferredLocale(newLocale);
-    
+
     // Navigate to new locale
     router.replace(pathname, { locale: newLocale });
     setIsOpen(false);
@@ -36,7 +37,7 @@ export function LanguageSwitcher() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="glass-light flex items-center gap-2 rounded-lg px-3 py-2 transition-all hover:scale-105"
-        aria-label="Change language"
+        aria-label={t('changeLanguage', { defaultValue: 'Change language' })}
         aria-expanded={isOpen}
       >
         <Globe className="h-4 w-4" />

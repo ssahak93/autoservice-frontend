@@ -37,7 +37,23 @@
     "emailRequired": "Էլ. փոստը պարտադիր է",
     "passwordRequired": "Գաղտնաբառը պարտադիր է",
     "passwordMinLength": "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ",
-    "registerSuccess": "Գրանցումը հաջողվեց: Ստուգեք ձեր էլ. փոստը:"
+    "registerSuccess": "Գրանցումը հաջողվեց: Ստուգեք ձեր էլ. փոստը:",
+    "invalidEmail": "Սխալ էլ. փոստի հասցե",
+    "welcomeBack": "Բարի վերադարձ: Խնդրում ենք մուտք գործել ձեր հաշիվ:",
+    "createAccount": "Ստեղծեք ձեր հաշիվը սկսելու համար:",
+    "passwordHelper": "Առնվազն 8 նիշ",
+    "firstNameRequired": "Անունը պարտադիր է",
+    "lastNameRequired": "Ազգանունը պարտադիր է",
+    "confirmPassword": "Հաստատել գաղտնաբառը",
+    "confirmPasswordRequired": "Խնդրում ենք հաստատել գաղտնաբառը",
+    "passwordsDontMatch": "Գաղտնաբառերը չեն համընկնում",
+    "loginSuccess": "Մուտքը հաջողվեց",
+    "loginFailed": "Մուտքը ձախողվեց: Խնդրում ենք կրկին փորձել:",
+    "loginFailedMessage": "Մուտքը ձախողվեց: Խնդրում ենք ստուգել ձեր տվյալները:",
+    "registrationSuccess": "Գրանցումը հաջողվեց",
+    "registrationFailed": "Գրանցումը ձախողվեց: Խնդրում ենք կրկին փորձել:",
+    "registrationFailedMessage": "Գրանցումը ձախողվեց: Խնդրում ենք ստուգել ձեր տվյալները:",
+    "logoutSuccess": "Ելքը հաջողվեց"
   },
   "home": {
     "title": "Auto Service Connect",
@@ -144,10 +160,13 @@
     "tryAdjustingFilters": "Փորձեք փոխել զտիչները",
     "updating": "Թարմացվում է...",
     "noServicesDescription": "Ծառայություններ չեն գտնվել: Ստուգեք ավելի ուշ կամ փորձեք այլ որոնում:",
-    "browseAll": "Դիտել բոլոր ծառայությունները"
+    "browseAll": "Դիտել բոլոր ծառայությունները",
+    "verifiedService": "Ստուգված ծառայություն"
   },
   "visits": {
     "title": "Իմ այցելությունները",
+    "subtitle": "Կառավարեք ձեր ծառայության այցելությունները",
+    "all": "Բոլորը",
     "upcoming": "Առաջիկա",
     "past": "Անցած",
     "pending": "Սպասում է",
@@ -162,7 +181,16 @@
     "status": "Կարգավիճակ",
     "service": "Ծառայություն",
     "date": "Ամսաթիվ",
-    "time": "Ժամ"
+    "time": "Ժամ",
+    "viewDetails": "Դիտել մանրամասները",
+    "confirmedLabel": "Հաստատված",
+    "at": "ժամը",
+    "bookedSuccessfully": "Այցելությունը հաջողությամբ ամրագրվեց",
+    "failedToBook": "Այցելությունը ամրագրելը ձախողվեց",
+    "statusUpdated": "Այցելության կարգավիճակը թարմացվեց",
+    "failedToUpdateStatus": "Կարգավիճակը թարմացնելը ձախողվեց",
+    "dateRequired": "Ամսաթիվը պարտադիր է",
+    "timeRequired": "Ժամը պարտադիր է"
   },
   "reviews": {
     "title": "Ակնարկներ",
@@ -222,6 +250,8 @@
     "delete": "Ջնջել",
     "deleteAllRead": "Ջնջել բոլոր կարդացվածները",
     "viewAll": "Դիտել բոլորը",
+    "allMarkedAsRead": "Բոլոր ծանուցումները նշված են որպես կարդացված",
+    "allReadDeleted": "Բոլոր կարդացված ծանուցումները ջնջված են",
     "close": "Փակել",
     "page": "Էջ",
     "of": "ից",
@@ -238,12 +268,91 @@
   },
   "profile": {
     "title": "Պրոֆիլ",
+    "subtitle": "Կառավարեք ձեր անձնական տեղեկությունները և հաշվի կարգավորումները",
     "personalInfo": "Անձնական տեղեկություն",
+    "personalInfoDescription": "Թարմացրեք ձեր անձնական տեղեկությունները և կոնտակտային տվյալները",
     "changePassword": "Փոխել գաղտնաբառ",
     "avatar": "Ավատար",
     "uploadPhoto": "Բեռնել լուսանկար",
     "saveChanges": "Պահպանել փոփոխությունները",
-    "profileUpdated": "Պրոֆիլը հաջողությամբ թարմացվեց"
+    "profileUpdated": "Պրոֆիլը հաջողությամբ թարմացվեց",
+    "updateError": "Պրոֆիլը թարմացնելը ձախողվեց",
+    "firstName": "Անուն",
+    "firstNameRequired": "Անունը պարտադիր է",
+    "firstNamePlaceholder": "Մուտքագրեք ձեր անունը",
+    "lastName": "Ազգանուն",
+    "lastNameRequired": "Ազգանունը պարտադիր է",
+    "lastNamePlaceholder": "Մուտքագրեք ձեր ազգանունը",
+    "email": "Էլ. փոստ",
+    "emailCannotBeChanged": "Էլ. փոստը չի կարող փոխվել",
+    "phoneNumber": "Հեռախոսահամար",
+    "phoneNumberPlaceholder": "+374 XX XXX XXX",
+    "phoneNumberHelper": "Ոչ պարտադիր: Ներառեք երկրի կոդը",
+    "invalidPhoneNumber": "Սխալ հեռախոսահամարի ձևաչափ",
+    "user": "Օգտատեր",
+    "accountCreated": "Հաշիվը ստեղծվել է",
+    "lastUpdated": "Վերջին թարմացում",
+    "unknown": "Անհայտ",
+    "cancel": "Չեղարկել",
+    "close": "Փակել",
+    "currentPassword": "Ընթացիկ գաղտնաբառ",
+    "currentPasswordRequired": "Ընթացիկ գաղտնաբառը պարտադիր է",
+    "newPassword": "Նոր գաղտնաբառ",
+    "passwordMinLength": "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ",
+    "confirmPasswordRequired": "Խնդրում ենք հաստատել գաղտնաբառը",
+    "passwordsDontMatch": "Գաղտնաբառերը չեն համընկնում",
+    "passwordChanged": "Գաղտնաբառը հաջողությամբ փոխվեց",
+    "passwordChangeError": "Գաղտնաբառը փոխելը ձախողվեց",
+    "showPassword": "Ցուցադրել գաղտնաբառը",
+    "hidePassword": "Թաքցնել գաղտնաբառը",
+    "avatarUpdated": "Ավատարը հաջողությամբ թարմացվեց",
+    "avatarUpdateError": "Ավատարը թարմացնելը ձախողվեց",
+    "invalidImage": "Սխալ պատկերի ֆայլ",
+    "preview": "Նախադիտում",
+    "removePreview": "Հեռացնել նախադիտումը",
+    "previewError": "Նախադիտում ստեղծելը ձախողվեց",
+    "settings": {
+      "title": "Կարգավորումներ",
+      "description": "Կառավարեք ձեր հաշվի կարգավորումները և նախընտրությունները",
+      "notifications": {
+        "title": "Ծանուցումներ",
+        "email": "Էլ. փոստի ծանուցումներ",
+        "emailDescription": "Ստանալ ծանուցումներ էլ. փոստով",
+        "push": "Push ծանուցումներ",
+        "pushDescription": "Ստանալ push ծանուցումներ ձեր բրաուզերում",
+        "sms": "SMS ծանուցումներ",
+        "smsDescription": "Ստանալ ծանուցումներ SMS-ով"
+      },
+      "privacy": {
+        "title": "Գաղտնիություն",
+        "showPhone": "Ցուցադրել հեռախոսահամարը",
+        "showPhoneDescription": "Թույլ տալ ուրիշներին տեսնել ձեր հեռախոսահամարը",
+        "showEmail": "Ցուցադրել էլ. փոստը",
+        "showEmailDescription": "Թույլ տալ ուրիշներին տեսնել ձեր էլ. փոստի հասցեն"
+      },
+      "security": {
+        "title": "Անվտանգություն",
+        "biometric": "Բիոմետրիկ նույնականացում",
+        "biometricDescription": "Օգտագործել մատնահետքի կամ դեմքի ճանաչում մուտք գործելու համար",
+        "twoFactor": "Երկու գործոնային նույնականացում",
+        "twoFactorDescription": "Ավելացնել լրացուցիչ անվտանգության շերտ ձեր հաշվին"
+      },
+      "language": {
+        "title": "Լեզու",
+        "interface": "Ինտերֆեյսի լեզու",
+        "interfaceDescription": "Ընտրեք ձեր նախընտրած լեզուն",
+        "note": "Լեզուն կառավարվում է գլոբալ: Օգտագործեք լեզվի փոխարկիչը վերնագրում:"
+      },
+      "dangerZone": {
+        "title": "Վտանգավոր գոտի",
+        "deleteAccount": "Ջնջել հաշիվը",
+        "deleteAccountDescription": "Մշտապես ջնջել ձեր հաշիվը և բոլոր կապված տվյալները: Այս գործողությունը չի կարող հետարկվել:",
+        "delete": "Ջնջել",
+        "deleteAccountConfirm": "Իսկապե՞ս ցանկանում եք ջնջել ձեր հաշիվը: Այս գործողությունը չի կարող հետարկվել:"
+      },
+      "updated": "Կարգավորումները հաջողությամբ թարմացվեցին",
+      "updateError": "Կարգավորումները թարմացնելը ձախողվեց"
+    }
   },
   "navigation": {
     "home": "Գլխավոր",
@@ -255,7 +364,8 @@
     "login": "Մուտք",
     "logout": "Ելք",
     "signUp": "Գրանցվել",
-    "menu": "Մենյու"
+    "menu": "Մենյու",
+    "changeLanguage": "Փոխել լեզուն"
   },
   "errors": {
     "generic": "Ինչ-որ բան սխալ է: Խնդրում ենք կրկին փորձել:",

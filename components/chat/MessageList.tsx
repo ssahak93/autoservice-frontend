@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useMemo } from 'react';
 
 import { EmptyState } from '@/components/common/EmptyState';
@@ -19,6 +20,7 @@ export function MessageList({ visitId }: MessageListProps) {
   const markAsRead = useMarkAsRead();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messages = useMemo(() => data?.data || [], [data?.data]);
+  const t = useTranslations('chat');
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -44,8 +46,10 @@ export function MessageList({ visitId }: MessageListProps) {
     return (
       <div className="flex h-full items-center justify-center">
         <EmptyState
-          title="No messages yet"
-          description="Start the conversation by sending a message"
+          title={t('noMessages', { defaultValue: 'No messages yet' })}
+          description={t('startConversation', {
+            defaultValue: 'Start the conversation by sending a message',
+          })}
         />
       </div>
     );
@@ -71,4 +75,3 @@ export function MessageList({ visitId }: MessageListProps) {
     </div>
   );
 }
-
