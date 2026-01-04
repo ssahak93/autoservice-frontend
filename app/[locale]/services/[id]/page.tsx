@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { Breadcrumbs } from '@/components/common/Breadcrumbs';
+import { ServiceBreadcrumbs } from '@/components/common/ServiceBreadcrumbs';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { ServiceSchema } from '@/components/seo/ServiceSchema';
 import { ServiceDetailClient } from '@/components/services/ServiceDetailClient';
@@ -76,13 +76,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     <div className="min-h-screen bg-gradient-subtle">
       {/* Breadcrumbs */}
       <div className="container mx-auto px-4 pt-4 sm:pt-6">
-        <Breadcrumbs
-          items={[
-            { label: tNav('home'), href: `/${locale}` },
-            { label: t('title', { defaultValue: 'Services' }), href: `/${locale}/services` },
-            { label: name },
-          ]}
-        />
+        <ServiceBreadcrumbs serviceName={name} />
       </div>
 
       {/* Hero Section */}

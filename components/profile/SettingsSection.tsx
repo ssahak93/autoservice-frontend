@@ -53,10 +53,7 @@ export function SettingsSection({ className }: SettingsSectionProps) {
       )
     ) {
       // await settingsService.deleteAccount();
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log('Account deletion requested');
-      }
+      // Account deletion requested - handled by mutation
     }
   };
 

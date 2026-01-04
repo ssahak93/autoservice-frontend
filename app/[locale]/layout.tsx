@@ -6,6 +6,7 @@ import { AuthLogoutHandler } from '@/components/auth/AuthLogoutHandler';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { SkipLink } from '@/components/common/SkipLink';
 import { Footer } from '@/components/layout/Footer';
+import { GlobalChat } from '@/components/layout/GlobalChat';
 import { Header } from '@/components/layout/Header';
 import { OrganizationSchema } from '@/components/seo/OrganizationSchema';
 import { Toast } from '@/components/ui/Toast';
@@ -47,6 +48,7 @@ export default async function LocaleLayout({
               {children}
             </main>
             <Footer />
+            <GlobalChat />
             <Toast />
           </div>
         </Providers>

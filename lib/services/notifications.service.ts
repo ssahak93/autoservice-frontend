@@ -59,20 +59,18 @@ export const notificationsService = {
 
   /**
    * Get notification statistics
-   * Returns default stats if endpoint doesn't exist (404)
-   * Silently handles 404 to prevent console errors
+   * Returns default stats if request fails (fallback for error cases)
    */
   async getStats(): Promise<NotificationStats> {
     try {
       const response = await apiClient.get<NotificationStats>(API_ENDPOINTS.NOTIFICATIONS.STATS);
       return response.data;
     } catch (error) {
-      // If endpoint doesn't exist (404), return default stats silently
+      // If request fails (e.g., 404, 500), return default stats as fallback
+      // This prevents UI errors and provides graceful degradation
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
-        if (axiosError.response?.status === 404) {
-          // Endpoint doesn't exist yet, return default stats
-          // This is expected behavior if the endpoint hasn't been implemented yet
+        if (axiosError.response?.status === 404 || axiosError.response?.status === 500) {
           return {
             total: 0,
             unread: 0,
@@ -80,7 +78,7 @@ export const notificationsService = {
           };
         }
       }
-      // Re-throw other errors
+      // Re-throw other errors (network errors, etc.)
       throw error;
     }
   },

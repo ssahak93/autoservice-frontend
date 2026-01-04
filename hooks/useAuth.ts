@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useState, useEffect } from 'react';
 
 import { useRouter } from '@/i18n/routing';
 import { authService } from '@/lib/services/auth.service';
@@ -16,20 +17,32 @@ export const useAuth = () => {
   const { showToast } = useUIStore();
   const t = useTranslations('auth');
 
-  // Get current user
+  // Check if token exists in localStorage (for page reloads)
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+
+  // Get current user - enable query if authenticated OR if token exists (for page reloads)
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
       try {
         return await authService.getCurrentUser();
       } catch (error) {
-        // If user fetch fails, return null instead of undefined
-        // This prevents React Query from complaining about undefined
-        console.error('Failed to fetch current user:', error);
+        // If user fetch fails (e.g., 401 Unauthorized), clear auth state
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError.response?.status === 401) {
+          // Token is invalid, clear auth state
+          setUser(null);
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+          }
+        }
+        // Return null instead of undefined to prevent React Query errors
+        // Error is handled by React Query, no need to log here
         return null;
       }
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated || hasToken, // Enable if authenticated OR token exists
     retry: false,
   });
 
@@ -54,7 +67,18 @@ export const useAuth = () => {
         showToast(t('loginSuccess', { defaultValue: 'Login successful' }), 'success');
         // Small delay to ensure state is updated before redirect
         setTimeout(() => {
-          router.push('/services');
+          // Check if there's a saved redirect URL
+          const redirectUrl =
+            typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
+
+          if (redirectUrl) {
+            // Remove the saved URL and redirect there
+            sessionStorage.removeItem('redirectAfterLogin');
+            router.push(redirectUrl);
+          } else {
+            // Default redirect to services
+            router.push('/services');
+          }
         }, 100);
       } else {
         showToast(t('loginFailed', { defaultValue: 'Login failed. Please try again.' }), 'error');
@@ -89,7 +113,18 @@ export const useAuth = () => {
         showToast(t('registrationSuccess', { defaultValue: 'Registration successful' }), 'success');
         // Small delay to ensure state is updated before redirect
         setTimeout(() => {
-          router.push('/services');
+          // Check if there's a saved redirect URL
+          const redirectUrl =
+            typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
+
+          if (redirectUrl) {
+            // Remove the saved URL and redirect there
+            sessionStorage.removeItem('redirectAfterLogin');
+            router.push(redirectUrl);
+          } else {
+            // Default redirect to services
+            router.push('/services');
+          }
         }, 100);
       } else {
         showToast(
@@ -116,9 +151,20 @@ export const useAuth = () => {
     router.push('/login');
   };
 
+  // For SSR compatibility, we need to ensure isAuthenticated is consistent
+  // On server, it should always be false
+  // On client, after mount, we can use the actual value
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return {
     user: (currentUser || user) as User | null,
-    isAuthenticated,
+    // On server, always return false to prevent hydration mismatch
+    // On client, after mount, return actual value
+    isAuthenticated: mounted ? isAuthenticated : false,
     isLoading: isLoadingUser || loginMutation.isPending || registerMutation.isPending,
     login: loginMutation.mutate,
     register: registerMutation.mutate,

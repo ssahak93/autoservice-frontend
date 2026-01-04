@@ -131,7 +131,10 @@ export default function ProfilePage() {
             <div className="glass-light rounded-xl p-6 sm:p-8">
               {/* Avatar */}
               <div className="mb-6">
-                <AvatarUpload currentAvatarUrl={user.avatarFile?.fileUrl} userName={userName} />
+                <AvatarUpload
+                  currentAvatarUrl={user.avatarUrl || user.avatarFile?.fileUrl}
+                  userName={userName}
+                />
               </div>
 
               {/* User Info */}

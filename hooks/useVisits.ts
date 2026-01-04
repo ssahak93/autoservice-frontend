@@ -17,7 +17,11 @@ export const useVisits = (params?: { status?: string; page?: number; limit?: num
 export const useVisit = (id: string | null) => {
   return useQuery({
     queryKey: ['visit', id],
-    queryFn: () => (id ? visitsService.getById(id) : null),
+    queryFn: async () => {
+      if (!id) return null;
+      const result = await visitsService.getById(id);
+      return result || null;
+    },
     enabled: !!id,
   });
 };
@@ -34,10 +38,10 @@ export const useCreateVisit = () => {
       showToast(t('bookedSuccessfully', { defaultValue: 'Visit booked successfully' }), 'success');
     },
     onError: (error: Error) => {
-      showToast(
-        error.message || t('failedToBook', { defaultValue: 'Failed to book visit' }),
-        'error'
-      );
+      // Backend returns translated error message, use it directly
+      const errorMessage =
+        error.message || t('failedToBook', { defaultValue: 'Failed to book visit' });
+      showToast(errorMessage, 'error');
     },
   });
 };
@@ -63,6 +67,56 @@ export const useUpdateVisitStatus = () => {
       showToast(
         error.message ||
           t('failedToUpdateStatus', { defaultValue: 'Failed to update visit status' }),
+        'error'
+      );
+    },
+  });
+};
+
+export const useUpdateVisit = () => {
+  const queryClient = useQueryClient();
+  const { showToast } = useUIStore();
+  const t = useTranslations('visits');
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CreateVisitRequest> }) =>
+      visitsService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['visits'] });
+      queryClient.invalidateQueries({ queryKey: ['visit'] });
+      showToast(
+        t('updatedSuccessfully', { defaultValue: 'Visit updated successfully' }),
+        'success'
+      );
+    },
+    onError: (error: Error) => {
+      showToast(
+        error.message || t('failedToUpdate', { defaultValue: 'Failed to update visit' }),
+        'error'
+      );
+    },
+  });
+};
+
+export const useCancelVisit = () => {
+  const queryClient = useQueryClient();
+  const { showToast } = useUIStore();
+  const t = useTranslations('visits');
+
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      visitsService.cancel(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['visits'] });
+      queryClient.invalidateQueries({ queryKey: ['visit'] });
+      showToast(
+        t('cancelledSuccessfully', { defaultValue: 'Visit cancelled successfully' }),
+        'success'
+      );
+    },
+    onError: (error: Error) => {
+      showToast(
+        error.message || t('failedToCancel', { defaultValue: 'Failed to cancel visit' }),
         'error'
       );
     },

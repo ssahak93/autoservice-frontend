@@ -1,106 +1,107 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, MessageSquare } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 
+import { useAuth } from '@/hooks/useAuth';
 import { useUnreadCount } from '@/hooks/useChat';
-import { getAnimationVariants } from '@/lib/utils/animations';
+import { useVisit } from '@/hooks/useVisits';
 
 import { MessageInput } from './MessageInput';
 import { MessageList } from './MessageList';
 
 interface ChatWindowProps {
-  visitId: string;
+  visitId: string | null;
   serviceName?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function ChatWindow({ visitId, serviceName, isOpen, onClose }: ChatWindowProps) {
+export function ChatWindow({
+  visitId,
+  serviceName: _serviceName,
+  isOpen,
+  onClose,
+}: ChatWindowProps) {
   const t = useTranslations('chat');
+  // Always call hooks in the same order - use enabled option for conditional fetching
   const { data: unreadCount } = useUnreadCount(visitId);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const variants = getAnimationVariants();
+  const { data: visit, isLoading: isLoadingVisit } = useVisit(visitId);
+  const { user } = useAuth();
 
-  // Focus management for accessibility
-  useEffect(() => {
-    if (isOpen && closeButtonRef.current) {
-      closeButtonRef.current.focus();
+  // Determine chat participant name
+  const participantName = useMemo(() => {
+    // Wait for visit data to load
+    if (isLoadingVisit || !visit || !user) {
+      // Don't show "Service 0" or invalid names while loading
+      return t('chat', { defaultValue: 'Chat' });
     }
-  }, [isOpen]);
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+    // Determine if current user is customer or service owner
+    const isCustomer = visit.userId === user.id;
+
+    if (isCustomer) {
+      // Current user is customer, show service name
+      const autoService = visit.autoServiceProfile?.autoService || visit.autoService;
+      if (autoService?.companyName) {
+        return autoService.companyName;
       }
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+      if (autoService?.firstName || autoService?.lastName) {
+        const name = `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim();
+        if (name) return name;
+      }
+      return t('service', { defaultValue: 'Service' });
+    } else {
+      // Current user is service owner, show customer name
+      if (visit.user?.firstName || visit.user?.lastName) {
+        const name = `${visit.user.firstName || ''} ${visit.user.lastName || ''}`.trim();
+        if (name) return name;
+      }
+      return t('customer', { defaultValue: 'Customer' });
+    }
+  }, [visit, user, isLoadingVisit, t]);
 
-  if (!isOpen) return null;
+  // Use conditional rendering in JSX instead of early return
+  if (!isOpen) {
+    return null;
+  }
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={variants.fadeIn.initial}
-            animate={variants.fadeIn.animate}
-            exit={variants.fadeIn.exit}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-            onClick={onClose}
-            aria-hidden="true"
-          />
+    <div
+      className="fixed bottom-0 left-0 right-0 z-40 flex h-[500px] flex-col border-t-2 border-primary-500 bg-white shadow-lg transition-all md:left-auto md:right-0 md:h-[600px] md:w-[400px] md:rounded-tl-2xl"
+      role="dialog"
+      aria-labelledby="chat-title"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-neutral-200 bg-gradient-primary px-4 py-3 text-white">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" aria-hidden="true" />
+          <h3 id="chat-title" className="font-semibold">
+            {participantName}
+          </h3>
+          {unreadCount && unreadCount > 0 && (
+            <span className="rounded-full bg-error-500 px-2 py-0.5 text-xs font-medium">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="rounded-lg p-1 text-white/80 transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+          aria-label={t('close')}
+        >
+          <X className="h-5 w-5" aria-hidden="true" />
+        </button>
+      </div>
 
-          {/* Chat Window */}
-          <motion.div
-            initial={variants.modal.initial}
-            animate={variants.modal.animate}
-            exit={variants.modal.exit}
-            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white shadow-2xl md:inset-auto md:bottom-4 md:right-4 md:h-[600px] md:w-full md:max-w-md md:rounded-2xl"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="chat-title"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-neutral-200 bg-gradient-primary px-4 py-3 text-white">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" aria-hidden="true" />
-                <h3 id="chat-title" className="font-semibold">
-                  {serviceName || t('chat')}
-                </h3>
-                {unreadCount && unreadCount > 0 && (
-                  <span className="rounded-full bg-error-500 px-2 py-0.5 text-xs font-medium">
-                    {unreadCount}
-                  </span>
-                )}
-              </div>
-              <button
-                ref={closeButtonRef}
-                onClick={onClose}
-                className="rounded-lg p-1 text-white/80 transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                aria-label={t('close')}
-              >
-                <X className="h-5 w-5" aria-hidden="true" />
-              </button>
-            </div>
+      {/* Messages */}
+      <div className="flex-1 overflow-hidden">
+        <MessageList visitId={visitId} />
+      </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-hidden">
-              <MessageList visitId={visitId} />
-            </div>
-
-            {/* Input */}
-            <MessageInput visitId={visitId} />
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+      {/* Input */}
+      <MessageInput visitId={visitId} />
+    </div>
   );
 }

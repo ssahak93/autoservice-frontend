@@ -29,10 +29,13 @@ class ApiClient {
         }
 
         // Add locale to request headers for backend
+        // Using only Accept-Language (standard header) to reduce preflight complexity
+        // Backend will fallback to Accept-Language if X-Locale is not present
         const locale = getCurrentLocale();
         if (config.headers) {
           config.headers['Accept-Language'] = locale;
-          config.headers['X-Locale'] = locale; // Custom header for explicit locale
+          // X-Locale removed to reduce CORS preflight requests
+          // Backend LocaleInterceptor will use Accept-Language as fallback
         }
 
         return config;
@@ -44,38 +47,61 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
-        // Don't log 404 errors for notifications/stats endpoint (expected if not implemented)
+        // Handle notifications/stats endpoint errors gracefully
         const url = error.config?.url || '';
         const isNotificationsStats = url.includes('/notifications/stats');
 
         if (error.response?.status === 401) {
-          // Check if this is a login/register request - don't try to refresh token
-          const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/register');
+          const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+          // Check if this is a login/register/me request - don't try to refresh token
+          const isAuthRequest =
+            url.includes('/auth/login') ||
+            url.includes('/auth/register') ||
+            url.includes('/auth/me');
 
           if (isAuthRequest) {
-            // For login/register, just reject the error - no redirect
+            // For login/register/me, just reject the error - no redirect
+            return Promise.reject(error);
+          }
+
+          // Prevent infinite loop: if we already tried to refresh, don't try again
+          if (originalRequest._retry) {
+            // Already tried to refresh, logout and redirect
+            this.logout();
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('auth:logout'));
+            }
             return Promise.reject(error);
           }
 
           // For other requests, token expired - try to refresh
           try {
+            originalRequest._retry = true;
             await this.refreshToken();
-            // Retry original request
-            if (error.config) {
-              return this.client.request(error.config);
+
+            // Update the authorization header with the new token
+            const newToken = this.getToken();
+            if (newToken && originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
             }
+
+            // Retry original request
+            return this.client.request(originalRequest);
           } catch (refreshError) {
             // Refresh failed, logout and dispatch event for redirect
+            originalRequest._retry = false; // Reset flag
             this.logout();
             if (typeof window !== 'undefined') {
               // Dispatch custom event for locale-aware redirect
               // AuthLogoutHandler will handle the redirect
               window.dispatchEvent(new CustomEvent('auth:logout'));
             }
+            return Promise.reject(refreshError);
           }
         } else if (error.response?.status === 404 && isNotificationsStats) {
-          // Silently handle 404 for notifications/stats - this is expected if endpoint not implemented
-          // Return a rejected promise with a special flag so the service can handle it
+          // Handle 404 for notifications/stats gracefully
+          // The service will return default stats as fallback
           return Promise.reject(error);
         }
 
@@ -108,9 +134,25 @@ class ApiClient {
       refreshToken,
     });
 
-    if (response.data?.data) {
-      this.setTokens(response.data.data.accessToken, response.data.data.refreshToken);
+    // Backend returns { accessToken, refreshToken } directly or wrapped in { success, data }
+    let accessToken: string | undefined;
+    let newRefreshToken: string | undefined;
+
+    if (response.data?.data?.accessToken) {
+      // Wrapped format: { success: true, data: { accessToken, refreshToken } }
+      accessToken = response.data.data.accessToken;
+      newRefreshToken = response.data.data.refreshToken;
+    } else if (response.data?.accessToken) {
+      // Direct format: { accessToken, refreshToken }
+      accessToken = response.data.accessToken;
+      newRefreshToken = response.data.refreshToken;
     }
+
+    if (!accessToken || !newRefreshToken) {
+      throw new Error('Invalid refresh token response');
+    }
+
+    this.setTokens(accessToken, newRefreshToken);
   }
 
   private setTokens(accessToken: string, refreshToken: string): void {

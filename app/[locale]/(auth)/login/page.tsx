@@ -38,7 +38,18 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/services');
+      // Check if there's a saved redirect URL
+      const redirectUrl =
+        typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
+
+      if (redirectUrl) {
+        // Remove the saved URL and redirect there
+        sessionStorage.removeItem('redirectAfterLogin');
+        router.push(redirectUrl);
+      } else {
+        // Default redirect to services
+        router.push('/services');
+      }
     }
   }, [isAuthenticated, router]);
 

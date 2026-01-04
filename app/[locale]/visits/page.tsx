@@ -1,15 +1,20 @@
 'use client';
 
-import { format } from 'date-fns';
-import { Calendar, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { format, isToday, isPast, isFuture, parseISO } from 'date-fns';
+import { enUS } from 'date-fns/locale/en-US';
+import { hy } from 'date-fns/locale/hy';
+import { ru } from 'date-fns/locale/ru';
+import { Calendar, CheckCircle2, XCircle, AlertCircle, Clock, History, Edit } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
+import { useState, useMemo } from 'react';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Button } from '@/components/ui/Button';
+import { BookVisitModal } from '@/components/visits/BookVisitModal';
 import { VisitChatButton } from '@/components/visits/VisitChatButton';
-import { useVisits } from '@/hooks/useVisits';
+import { useVisits, useCancelVisit } from '@/hooks/useVisits';
 import { Link } from '@/i18n/routing';
+import type { Visit } from '@/types';
 
 const statusIcons = {
   pending: AlertCircle,
@@ -25,11 +30,224 @@ const statusColors = {
   completed: 'text-primary-500',
 };
 
+// Visit Card Component
+function VisitCard({
+  visit,
+  t,
+  formatDate,
+  onEdit,
+  onCancel,
+}: {
+  visit: Visit;
+  t: ReturnType<typeof useTranslations<'visits'>>;
+  formatDate: (dateStr: string | undefined) => string;
+  onEdit?: () => void;
+  onCancel?: () => void;
+}) {
+  const StatusIcon = statusIcons[visit.status];
+  const canEdit = visit.status === 'pending' || visit.status === 'confirmed';
+  const canCancel = visit.status !== 'completed' && visit.status !== 'cancelled';
+
+  return (
+    <div className="glass-light rounded-xl p-6 transition-shadow hover:shadow-lg">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="mb-4 flex items-center gap-3">
+            <StatusIcon className={`h-5 w-5 ${statusColors[visit.status]}`} />
+            <span className={`font-semibold capitalize ${statusColors[visit.status]}`}>
+              {t(visit.status)}
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {/* Service Name with Type */}
+            <div className="mb-2">
+              <p className="font-semibold text-neutral-900">
+                {(() => {
+                  const autoService = visit.autoServiceProfile?.autoService || visit.autoService;
+                  const serviceType = autoService?.serviceType;
+                  const isCompany = serviceType === 'company';
+
+                  let serviceName = '';
+                  if (isCompany && autoService?.companyName) {
+                    serviceName = autoService.companyName;
+                  } else if (!isCompany && (autoService?.firstName || autoService?.lastName)) {
+                    serviceName =
+                      `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim();
+                  } else {
+                    serviceName = t('service', { defaultValue: 'Service' });
+                  }
+
+                  const typeLabel = isCompany
+                    ? t('company', { defaultValue: 'Company' })
+                    : t('individual', { defaultValue: 'Individual' });
+
+                  return `${serviceName} (${typeLabel})`;
+                })()}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-neutral-600">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {formatDate(visit.scheduledDate || visit.preferredDate)} {t('at')}{' '}
+                {visit.scheduledTime || visit.preferredTime}
+              </span>
+            </div>
+
+            {visit.confirmedDate && (
+              <div className="flex items-center gap-2 text-sm text-success-600">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>
+                  {t('confirmedLabel')}: {formatDate(visit.confirmedDate)} {t('at')}{' '}
+                  {visit.confirmedTime}
+                </span>
+              </div>
+            )}
+
+            {(visit.problemDescription || visit.description) && (
+              <p className="text-neutral-700">{visit.problemDescription || visit.description}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+            <Link
+              href={`/services/${visit.autoServiceProfileId}`}
+              className="flex-1 sm:flex-initial"
+            >
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                {t('viewDetails', { defaultValue: 'View Details' })}
+              </Button>
+            </Link>
+            <div className="flex-1 sm:flex-initial">
+              <VisitChatButton
+                visitId={visit.id}
+                serviceName={
+                  visit.autoServiceProfile?.autoService?.companyName ||
+                  `${visit.autoServiceProfile?.autoService?.firstName || ''} ${visit.autoServiceProfile?.autoService?.lastName || ''}`.trim() ||
+                  t('service', { defaultValue: 'Service' })
+                }
+              />
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          {(canEdit || canCancel) && (
+            <div className="flex flex-wrap gap-2 border-t border-neutral-200 pt-2">
+              {canEdit && onEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onEdit}
+                  className="flex items-center gap-1"
+                >
+                  <Edit className="h-4 w-4" />
+                  {t('edit', { defaultValue: 'Edit' })}
+                </Button>
+              )}
+              {canCancel && onCancel && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onCancel}
+                  className="flex items-center gap-1 text-warning-600 hover:bg-warning-50"
+                >
+                  <XCircle className="h-4 w-4" />
+                  {t('cancelVisit', { defaultValue: 'Cancel' })}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function VisitsPage() {
   const t = useTranslations('visits');
+  const locale = useLocale();
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
+  const [cancellingVisit, setCancellingVisit] = useState<Visit | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   const { data, isLoading } = useVisits({ status: statusFilter });
+  const cancelVisit = useCancelVisit();
+
+  // Get date-fns locale for formatting
+  const dateFnsLocale = useMemo(() => {
+    switch (locale) {
+      case 'ru':
+        return ru;
+      case 'hy':
+        return hy;
+      case 'en':
+      default:
+        return enUS;
+    }
+  }, [locale]);
+
+  // Format date with locale
+  const formatDate = (dateStr: string | undefined): string => {
+    if (!dateStr) return t('dateNotSet', { defaultValue: 'Date not set' });
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return format(date, 'd MMMM yyyy', { locale: dateFnsLocale });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Group visits by category: today, upcoming, past
+  const groupedVisits = useMemo(() => {
+    if (!data?.data) return { today: [], upcoming: [], past: [] };
+
+    const today: typeof data.data = [];
+    const upcoming: typeof data.data = [];
+    const past: typeof data.data = [];
+
+    data.data.forEach((visit) => {
+      const visitDate = visit.scheduledDate || visit.preferredDate;
+      if (!visitDate) {
+        // If no date, consider it as upcoming
+        upcoming.push(visit);
+        return;
+      }
+
+      try {
+        // Try parseISO first, fallback to new Date
+        let date: Date;
+        try {
+          date = parseISO(visitDate);
+        } catch {
+          date = new Date(visitDate);
+        }
+
+        if (isNaN(date.getTime())) {
+          // Invalid date, consider as upcoming
+          upcoming.push(visit);
+        } else if (isToday(date)) {
+          today.push(visit);
+        } else if (isFuture(date)) {
+          upcoming.push(visit);
+        } else if (isPast(date)) {
+          past.push(visit);
+        } else {
+          // Same day, consider as today
+          today.push(visit);
+        }
+      } catch {
+        // If date parsing fails, consider it as upcoming
+        upcoming.push(visit);
+      }
+    });
+
+    return { today, upcoming, past };
+  }, [data]);
 
   return (
     <ProtectedRoute>
@@ -83,70 +301,228 @@ export default function VisitsPage() {
         )}
 
         {data && data.data.length > 0 && (
-          <div className="space-y-4">
-            {data.data.map((visit) => {
-              const StatusIcon = statusIcons[visit.status];
-              return (
-                <div
-                  key={visit.id}
-                  className="glass-light rounded-xl p-6 transition-shadow hover:shadow-lg"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="mb-4 flex items-center gap-3">
-                        <StatusIcon className={`h-5 w-5 ${statusColors[visit.status]}`} />
-                        <span className={`font-semibold capitalize ${statusColors[visit.status]}`}>
-                          {t(visit.status)}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-neutral-600">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {format(new Date(visit.preferredDate), 'PPP')} {t('at')}{' '}
-                            {visit.preferredTime}
-                          </span>
-                        </div>
-
-                        {visit.confirmedDate && (
-                          <div className="flex items-center gap-2 text-sm text-success-600">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span>
-                              {t('confirmedLabel')}: {format(new Date(visit.confirmedDate), 'PPP')}{' '}
-                              {t('at')} {visit.confirmedTime}
-                            </span>
-                          </div>
-                        )}
-
-                        {visit.description && (
-                          <p className="text-neutral-700">{visit.description}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Link href={`/services/${visit.autoServiceProfileId}`}>
-                        <Button variant="outline" size="sm">
-                          {t('viewDetails')}
-                        </Button>
-                      </Link>
-                      <VisitChatButton
-                        visitId={visit.id}
-                        serviceName={
-                          visit.autoServiceProfile?.autoService?.companyName ||
-                          `${visit.autoServiceProfile?.autoService?.firstName || ''} ${visit.autoServiceProfile?.autoService?.lastName || ''}`.trim() ||
-                          t('service')
-                        }
-                      />
-                    </div>
+          <div className="space-y-8">
+            {/* Today's Visits */}
+            {groupedVisits.today.length > 0 && (
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
+                    <Clock className="h-5 w-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-neutral-900">
+                      {t('today', { defaultValue: "Today's Visits" })}
+                    </h2>
+                    <p className="text-sm text-neutral-600">
+                      {groupedVisits.today.length}{' '}
+                      {groupedVisits.today.length === 1
+                        ? t('visit', { defaultValue: 'visit' })
+                        : t('visits', { defaultValue: 'visits' })}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
+                <div className="space-y-4">
+                  {groupedVisits.today.map((visit) => (
+                    <VisitCard
+                      key={visit.id}
+                      visit={visit}
+                      t={t}
+                      formatDate={formatDate}
+                      onEdit={() => setEditingVisit(visit)}
+                      onCancel={() => {
+                        setCancellingVisit(visit);
+                        setCancelReason('');
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Upcoming Visits */}
+            {groupedVisits.upcoming.length > 0 && (
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-100">
+                    <Calendar className="h-5 w-5 text-success-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-neutral-900">
+                      {t('upcoming', { defaultValue: 'Upcoming Visits' })}
+                    </h2>
+                    <p className="text-sm text-neutral-600">
+                      {groupedVisits.upcoming.length}{' '}
+                      {groupedVisits.upcoming.length === 1
+                        ? t('visit', { defaultValue: 'visit' })
+                        : t('visits', { defaultValue: 'visits' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  {groupedVisits.upcoming.map((visit) => (
+                    <VisitCard
+                      key={visit.id}
+                      visit={visit}
+                      t={t}
+                      formatDate={formatDate}
+                      onEdit={() => setEditingVisit(visit)}
+                      onCancel={() => {
+                        setCancellingVisit(visit);
+                        setCancelReason('');
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Past Visits */}
+            {groupedVisits.past.length > 0 && (
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100">
+                    <History className="h-5 w-5 text-neutral-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-neutral-900">
+                      {t('past', { defaultValue: 'Past Visits' })}
+                    </h2>
+                    <p className="text-sm text-neutral-600">
+                      {groupedVisits.past.length}{' '}
+                      {groupedVisits.past.length === 1
+                        ? t('visit', { defaultValue: 'visit' })
+                        : t('visits', { defaultValue: 'visits' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  {groupedVisits.past.map((visit) => (
+                    <VisitCard
+                      key={visit.id}
+                      visit={visit}
+                      t={t}
+                      formatDate={formatDate}
+                      onEdit={() => setEditingVisit(visit)}
+                      onCancel={() => {
+                        setCancellingVisit(visit);
+                        setCancelReason('');
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+        )}
+
+        {/* Edit Visit Modal */}
+        {editingVisit && (
+          <BookVisitModal
+            mode="edit"
+            visitId={editingVisit.id}
+            visit={{
+              scheduledDate: editingVisit.scheduledDate || editingVisit.preferredDate,
+              scheduledTime: editingVisit.scheduledTime || editingVisit.preferredTime,
+              problemDescription: editingVisit.problemDescription || editingVisit.description,
+              autoServiceId: editingVisit.autoServiceId,
+              autoServiceProfileId: editingVisit.autoServiceProfileId,
+            }}
+            serviceName={
+              editingVisit.autoServiceProfile?.autoService?.companyName ||
+              `${editingVisit.autoServiceProfile?.autoService?.firstName || ''} ${editingVisit.autoServiceProfile?.autoService?.lastName || ''}`.trim() ||
+              t('service', { defaultValue: 'Service' })
+            }
+            isOpen={!!editingVisit}
+            onClose={() => setEditingVisit(null)}
+            onSuccess={() => {
+              setEditingVisit(null);
+            }}
+          />
+        )}
+
+        {/* Cancel Visit Modal */}
+        {cancellingVisit && (
+          <CancelVisitModal
+            visit={cancellingVisit}
+            reason={cancelReason}
+            onReasonChange={setCancelReason}
+            onClose={() => {
+              setCancellingVisit(null);
+              setCancelReason('');
+            }}
+            onConfirm={() => {
+              cancelVisit.mutate(
+                { id: cancellingVisit.id, reason: cancelReason || undefined },
+                {
+                  onSuccess: () => {
+                    setCancellingVisit(null);
+                    setCancelReason('');
+                  },
+                }
+              );
+            }}
+            isLoading={cancelVisit.isPending}
+          />
         )}
       </div>
     </ProtectedRoute>
+  );
+}
+
+// Cancel Visit Modal Component
+function CancelVisitModal({
+  visit: _visit,
+  reason,
+  onReasonChange,
+  onClose,
+  onConfirm,
+  isLoading,
+}: {
+  visit: Visit;
+  reason: string;
+  onReasonChange: (reason: string) => void;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+}) {
+  const t = useTranslations('visits');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <h2 className="mb-4 text-xl font-semibold">
+          {t('cancelVisit', { defaultValue: 'Cancel Visit' })}
+        </h2>
+        <p className="mb-4 text-neutral-600">
+          {t('confirmCancel', { defaultValue: 'Are you sure you want to cancel this visit?' })}
+        </p>
+        <div className="mb-4">
+          <label className="mb-1 block text-sm font-medium">
+            {t('cancelReason', { defaultValue: 'Cancellation reason (optional)' })}
+          </label>
+          <textarea
+            value={reason}
+            onChange={(e) => onReasonChange(e.target.value)}
+            className="w-full rounded-lg border border-neutral-300 p-2"
+            rows={3}
+            placeholder={t('cancelReason', { defaultValue: 'Cancellation reason (optional)' })}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
+            {t('close', { defaultValue: 'Close' })}
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="flex-1 bg-warning-500 hover:bg-warning-600"
+          >
+            {isLoading
+              ? t('loading', { defaultValue: 'Loading...' })
+              : t('cancelVisit', { defaultValue: 'Cancel Visit' })}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

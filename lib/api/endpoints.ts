@@ -21,10 +21,13 @@ export const API_ENDPOINTS = {
 
   // Visits
   VISITS: {
-    LIST: '/visits',
+    LIST: '/visits/user', // Get user's visits
     CREATE: '/visits',
     DETAIL: (id: string) => `/visits/${id}`,
+    UPDATE: (id: string) => `/visits/${id}`,
     UPDATE_STATUS: (id: string) => `/visits/${id}/status`,
+    CANCEL: (id: string) => `/visits/${id}/cancel`,
+    DELETE: (id: string) => `/visits/${id}`,
   },
 
   // Reviews

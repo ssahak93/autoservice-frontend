@@ -20,13 +20,15 @@ npm install
 2. Create `.env.local` file:
 
 ```bash
-cp .env.local.example .env.local
+cp env.template .env.local
 ```
 
 3. Update `.env.local` with your API URL:
 
 ```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=http://localhost:3001
 ```
 
 4. Run development server:
@@ -42,43 +44,100 @@ Open [http://localhost:3001](http://localhost:3001) in your browser.
 ```
 frontend/
 ├── app/                    # Next.js App Router
-│   ├── (auth)/            # Auth routes
-│   ├── (dashboard)/       # Dashboard routes
+│   ├── [locale]/          # Internationalized routes
+│   │   ├── (auth)/        # Auth routes (login, register)
+│   │   ├── services/      # Services listing and detail pages
+│   │   ├── visits/        # Visits management page
+│   │   ├── profile/       # User profile page
+│   │   ├── notifications/ # Notifications page
+│   │   ├── layout.tsx     # Locale-specific layout
+│   │   └── page.tsx       # Home page
 │   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
+│   ├── providers.tsx      # React Query and i18n providers
+│   ├── globals.css        # Global styles
+│   ├── robots.ts          # SEO robots.txt
+│   └── sitemap.ts         # SEO sitemap
 ├── components/            # React components
-│   ├── ui/                # UI components
-│   ├── layout/            # Layout components
-│   └── features/          # Feature components
-├── lib/                   # Utilities
-│   ├── api/               # API client
+│   ├── ui/                # Reusable UI components (Button, Input, etc.)
+│   ├── layout/            # Layout components (Header, Footer, etc.)
+│   ├── auth/              # Authentication components
+│   ├── chat/              # Chat components (ChatWindow, MessageList, etc.)
+│   ├── common/            # Common components (Breadcrumbs, Loading, etc.)
+│   ├── notifications/     # Notification components
+│   ├── profile/           # Profile components
+│   ├── reviews/           # Review components
+│   ├── services/          # Service-related components
+│   ├── visits/            # Visit-related components
+│   └── seo/               # SEO components (Schema.org)
+├── lib/                   # Utilities and services
+│   ├── api/               # API client configuration
+│   │   ├── client.ts      # Axios client setup
+│   │   ├── endpoints.ts   # API endpoints definitions
+│   │   └── server-client.ts  # Server-side API client
+│   ├── services/          # Service layer (API calls)
 │   └── utils/             # Helper functions
-├── stores/                # Zustand stores
+├── hooks/                 # Custom React hooks
+│   ├── useAuth.ts         # Authentication hook
+│   ├── useChat.ts         # Chat functionality hook
+│   ├── useSocket.ts       # WebSocket hook
+│   ├── useVisits.ts       # Visits management hook
+│   └── ...                # Other feature hooks
+├── stores/                # Zustand stores (state management)
+│   ├── authStore.ts       # Authentication state
+│   ├── chatStore.ts       # Chat state
+│   └── uiStore.ts         # UI state (toasts, modals)
 ├── design-tokens/         # Design system tokens
-└── types/                 # TypeScript types
+│   ├── colors.ts          # Color definitions
+│   └── gradients.ts       # Gradient definitions
+├── types/                 # TypeScript type definitions
+│   └── index.ts           # Shared types
+├── messages/              # i18n translation files
+│   ├── en.json            # English translations
+│   ├── ru.json            # Russian translations
+│   └── hy.json            # Armenian translations
+├── i18n/                  # i18n configuration
+│   ├── routing.ts         # Next.js routing configuration
+│   └── request.ts         # Server-side i18n request
+├── middleware.ts          # Next.js middleware (i18n, auth)
+└── scripts/               # Utility scripts
+    └── validate-translations.ts  # Translation validation
 ```
 
 ## 🛠 Tech Stack
 
-- **Next.js 14** - React framework
+- **Next.js 14** - React framework (App Router)
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling
 - **Framer Motion** - Animations
 - **Zustand** - State management
-- **TanStack Query** - Data fetching
-- **React Hook Form + Zod** - Forms
+- **TanStack Query (React Query)** - Data fetching and caching
+- **React Hook Form + Zod** - Form validation
 - **next-intl** - Internationalization (i18n)
+- **Socket.IO Client** - Real-time WebSocket communication
+- **Axios** - HTTP client
+- **date-fns** - Date manipulation
 
 ## 📚 Documentation
 
 See `/docs` folder for detailed documentation:
 
+- `CODE_QUALITY.md` - Code quality tools and setup
+- `HUSKY_SETUP.md` - Git hooks configuration
+- `I18N_BEST_PRACTICES.md` - Internationalization guide
+- `OPTIMIZATION_SUMMARY.md` - Performance optimizations
+- `RESPONSIVE_UI_GUIDELINES.md` - Responsive design guidelines
+- `SEO_PRINCIPLES.md` - SEO best practices
+- `SERVER_SIDE_DATA_FETCHING.md` - Server-side data fetching
+- `SOLID_PRINCIPLES.md` - SOLID principles implementation
+- `UI_UX_BEST_PRACTICES.md` - UI/UX guidelines
+- `UI_UX_IMPROVEMENTS_SUMMARY.md` - UI/UX improvements log
+
+See `/docs` folder in project root for additional documentation:
+
 - `FRONTEND_PRINCIPLES.md` - Development principles
 - `FRONTEND_DESIGN_TOKENS.md` - Design tokens
 - `FRONTEND_BACKGROUNDS.md` - Background system
 - `FRONTEND_UI_EFFECTS.md` - UI effects guide
-- `SEO_PRINCIPLES.md` - SEO best practices (Google, Yandex)
-- `RESPONSIVE_UI_GUIDELINES.md` - Responsive design guidelines
 
 ## 🎨 Design System
 
@@ -138,9 +197,19 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 - [x] Phase 1: Setup & Configuration
 - [x] Code Quality Tools (ESLint, Prettier, Husky)
 - [x] SOLID Principles Documentation
-- [ ] Phase 2: Authentication
-- [ ] Phase 3: Core Features
-- [ ] Phase 4: Polish & Optimization
+- [x] Phase 2: Authentication (Email/Password, JWT)
+- [x] Phase 3: Core Features
+  - [x] Auto Services (listing, search, detail)
+  - [x] Visit Scheduling
+  - [x] Real-time Chat (WebSocket)
+  - [x] Reviews & Ratings
+  - [x] Notifications
+  - [x] User Profile
+- [x] Phase 4: Polish & Optimization
+  - [x] Internationalization (i18n)
+  - [x] Responsive Design
+  - [x] SEO Optimization
+  - [x] Performance Optimization
 
 ## 🔧 Code Quality
 

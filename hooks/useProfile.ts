@@ -34,12 +34,14 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: (data: UpdateProfileData) => authService.updateProfile(data),
-    onSuccess: (updatedUser: User) => {
+    onSuccess: async (updatedUser: User) => {
       // Update user in store
       setUser(updatedUser);
-      // Invalidate and refetch user data
+      // Invalidate and refetch user data to get latest avatarUrl
       queryClient.setQueryData(['auth', 'me'], updatedUser);
-      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      // Refetch to ensure we have the latest data including avatarUrl
+      await queryClient.refetchQueries({ queryKey: ['auth', 'me'] });
       showToast(t('profileUpdated', { defaultValue: 'Profile updated successfully' }), 'success');
     },
     onError: (error: Error) => {
@@ -57,7 +59,7 @@ export function useUpdateProfile() {
 export function useUploadAvatar() {
   const queryClient = useQueryClient();
   const { showToast } = useUIStore();
-  const updateProfile = useUpdateProfile();
+  const { setUser, user } = useAuthStore();
   const t = useTranslations('profile');
 
   return useMutation({
@@ -75,16 +77,37 @@ export function useUploadAvatar() {
         );
       }
 
-      // Upload file
+      // Get current user to save old avatarFileId
+      const currentUser = user || queryClient.getQueryData<User>(['auth', 'me']);
+      const oldAvatarFileId = currentUser?.avatarFileId;
+
+      // Upload new file
       const uploadResult = await filesService.uploadFile(file, 'avatars');
 
-      // Update profile with new avatar
-      await updateProfile.mutateAsync({ avatarFileId: uploadResult.id });
+      // Update profile with new avatar directly (don't use useUpdateProfile hook to avoid context issues)
+      const updatedUser = await authService.updateProfile({ avatarFileId: uploadResult.id });
 
-      return uploadResult;
+      return { uploadResult, updatedUser, oldAvatarFileId };
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      // Delete old avatar file if it exists and is different from the new one
+      if (data.oldAvatarFileId && data.oldAvatarFileId !== data.uploadResult.id) {
+        try {
+          await filesService.deleteFile(data.oldAvatarFileId);
+        } catch (error) {
+          // Log error but don't fail the upload if deletion fails
+          console.warn('Failed to delete old avatar file:', error);
+        }
+      }
+
+      // Update user in store with the returned user data
+      if (data.updatedUser) {
+        setUser(data.updatedUser);
+      }
+      // Invalidate and refetch to get updated user with avatarUrl
+      queryClient.setQueryData(['auth', 'me'], data.updatedUser);
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+      await queryClient.refetchQueries({ queryKey: ['auth', 'me'] });
       showToast(t('avatarUpdated', { defaultValue: 'Avatar updated successfully' }), 'success');
     },
     onError: (error: Error) => {

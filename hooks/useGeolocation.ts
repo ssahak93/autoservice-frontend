@@ -51,47 +51,27 @@ export function useGeolocation(): UseGeolocationReturn {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
+        const { accuracy } = position.coords;
 
         // Determine if high accuracy (GPS) was used
         // GPS typically has accuracy < 100m, IP geolocation > 1000m
         const isHighAccuracy = accuracy !== null && accuracy !== undefined && accuracy < 100;
 
-        // Log coordinates for debugging (only in development)
-        if (process.env.NODE_ENV === 'development') {
-          // eslint-disable-next-line no-console
-          console.log('[Geolocation] Position obtained:', {
-            latitude,
-            longitude,
-            accuracy: accuracy ? `${accuracy.toFixed(2)}m` : 'unknown',
-            isHighAccuracy,
-            warning: !isHighAccuracy
-              ? 'Low accuracy - using IP geolocation instead of GPS'
-              : undefined,
-            timestamp: new Date(position.timestamp).toISOString(),
-          });
-
-          // Warn user if accuracy is low (only in development)
-          if (!isHighAccuracy && accuracy && accuracy > 1000) {
-            // eslint-disable-next-line no-console
-            console.warn(
-              `[Geolocation] Low accuracy detected: ${accuracy.toFixed(2)}m. ` +
-                `This may affect search results. Consider using GPS for better accuracy.`
-            );
-          }
-        }
-
+        // Position obtained successfully
         setState({
           isEnabled: true,
-          latitude,
-          longitude,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
           accuracy: accuracy || undefined,
           isHighAccuracy,
           error: null,
           isLoading: false,
         });
+
+        // Warn user if accuracy is low (only in development)
+        // Low accuracy detected - user will see warning in UI if needed
       },
-      (error) => {
+      (error: GeolocationPositionError) => {
         let errorMessage = 'Failed to get location';
         if (error.code === error.PERMISSION_DENIED) {
           errorMessage = 'Location permission denied';
@@ -101,10 +81,7 @@ export function useGeolocation(): UseGeolocationReturn {
           errorMessage = 'Location request timeout';
         }
 
-        if (process.env.NODE_ENV === 'development') {
-          // eslint-disable-next-line no-console
-          console.error('[Geolocation] Error:', errorMessage, error);
-        }
+        // Error handled by state update
 
         setState({
           isEnabled: false,

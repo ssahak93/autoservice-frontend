@@ -1,12 +1,13 @@
 'use client';
 
-import { servicesService, type ServiceSearchParams } from '@/lib/services/services.service';
-import type { AutoService, Review } from '@/types';
 import { useQuery } from '@tanstack/react-query';
+
+import { servicesService, type ServiceSearchParams } from '@/lib/services/services.service';
+import type { AutoService, PaginatedResponse } from '@/types';
 
 export const useServices = (
   params: ServiceSearchParams,
-  options?: { initialData?: any }
+  options?: { initialData?: PaginatedResponse<AutoService> }
 ) => {
   return useQuery({
     queryKey: ['services', params],

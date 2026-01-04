@@ -2,7 +2,7 @@
 
 import { Menu, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { HeaderActions } from '@/components/layout/HeaderActions';
@@ -23,8 +23,20 @@ export function Header() {
   const tFooter = useTranslations('footer');
   const { isAuthenticated, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only showing auth-dependent content after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const userName = user ? `${user.firstName} ${user.lastName}` : undefined;
+
+  // Use mounted state to ensure server and client render match initially
+  // On server, mounted is always false, so we render non-auth version
+  // On client, after mount, we can show auth-dependent content
+  // This prevents hydration mismatch because server always renders false
+  const showAuthContent = mounted ? isAuthenticated : false;
 
   return (
     <header className="glass-light sticky top-0 z-40 border-b border-white/20">
@@ -34,14 +46,14 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <HeaderNavigation isAuthenticated={isAuthenticated} />
+        <HeaderNavigation isAuthenticated={showAuthContent} />
 
         {/* Desktop Actions */}
-        <HeaderActions isAuthenticated={isAuthenticated} userName={userName} onLogout={logout} />
+        <HeaderActions isAuthenticated={showAuthContent} userName={userName} onLogout={logout} />
 
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-2 md:hidden">
-          {isAuthenticated && <NotificationBell />}
+          {showAuthContent && <NotificationBell />}
           <LanguageSwitcher />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -57,7 +69,7 @@ export function Header() {
       {/* Mobile Menu */}
       <MobileMenu
         isOpen={mobileMenuOpen}
-        isAuthenticated={isAuthenticated}
+        isAuthenticated={showAuthContent}
         userName={userName}
         onClose={() => setMobileMenuOpen(false)}
         onLogout={logout}

@@ -1,20 +1,56 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useInfiniteQuery,
+  type InfiniteData,
+} from '@tanstack/react-query';
 
-import { chatService, type Message, type SendMessageDto } from '@/lib/services/chat.service';
+import {
+  chatService,
+  type Message,
+  type SendMessageDto,
+  type ChatMessagesResponse,
+} from '@/lib/services/chat.service';
 import { useUIStore } from '@/stores/uiStore';
 
 /**
- * Hook to get messages for a visit
+ * Hook to get messages for a visit with infinite scrolling
+ * Backend returns messages in reverse chronological order (newest first)
+ * Page 1 = newest messages, Page 2 = older messages, etc.
  */
-export function useChatMessages(visitId: string | null, page: number = 1, limit: number = 50) {
-  return useQuery({
-    queryKey: ['chat', 'messages', visitId, page, limit],
-    queryFn: () => (visitId ? chatService.getMessages(visitId, page, limit) : null),
+export function useChatMessages(visitId: string | null, limit: number = 50) {
+  return useInfiniteQuery({
+    queryKey: ['chat', 'messages', visitId, limit],
+    queryFn: async ({ pageParam = 1 }) => {
+      if (!visitId) {
+        return { data: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } };
+      }
+      try {
+        const result = await chatService.getMessages(visitId, pageParam, limit);
+        return result;
+      } catch (error) {
+        return { data: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } };
+      }
+    },
+    getNextPageParam: (lastPageResult) => {
+      // Load next page (older messages) - page number increases
+      if (lastPageResult.pagination.page < lastPageResult.pagination.totalPages) {
+        return lastPageResult.pagination.page + 1;
+      }
+      return undefined;
+    },
+    getPreviousPageParam: () => {
+      return undefined;
+    },
+    initialPageParam: 1, // Start from page 1 (newest messages)
     enabled: !!visitId,
-    refetchInterval: 5000, // Poll every 5 seconds (fallback if WebSocket fails)
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
+    refetchInterval: false, // Disable polling - WebSocket will handle real-time updates
+    refetchOnWindowFocus: false,
+    refetchOnMount: true, // Will use cached data if fresh (within staleTime)
   });
 }
 
@@ -29,9 +65,58 @@ export function useSendMessage() {
     mutationFn: ({ visitId, dto }: { visitId: string; dto: SendMessageDto }) =>
       chatService.sendMessage(visitId, dto),
     onSuccess: (data, variables) => {
-      // Invalidate messages query
-      queryClient.invalidateQueries({ queryKey: ['chat', 'messages', variables.visitId] });
-      queryClient.invalidateQueries({ queryKey: ['chat', 'unread', variables.visitId] });
+      // Update infinite query cache
+      queryClient.setQueriesData(
+        {
+          queryKey: ['chat', 'messages', variables.visitId],
+          exact: false,
+        },
+        (old: InfiniteData<ChatMessagesResponse> | undefined) => {
+          if (!old || !old.pages) {
+            // If no cache exists, create it
+            return {
+              pages: [
+                { data: [data], pagination: { page: 1, limit: 50, total: 1, totalPages: 1 } },
+              ],
+              pageParams: [1],
+            };
+          }
+
+          // Check if message already exists in any page
+          const messageExists = old.pages.some((page) =>
+            page.data?.some((m: Message) => m.id === data.id)
+          );
+
+          if (messageExists) {
+            // Update existing message
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                data: page.data?.map((m: Message) => (m.id === data.id ? data : m)) || [],
+              })),
+            };
+          }
+
+          // Add new message to the first page (most recent)
+          const newPages = [...old.pages];
+          if (newPages[0]) {
+            newPages[0] = {
+              ...newPages[0],
+              data: [...(newPages[0].data || []), data],
+              pagination: {
+                ...newPages[0].pagination,
+                total: (newPages[0].pagination?.total || 0) + 1,
+              },
+            };
+          }
+
+          return {
+            ...old,
+            pages: newPages,
+          };
+        }
+      );
     },
     onError: (error: Error) => {
       showToast(error.message || 'Failed to send message', 'error');
@@ -47,10 +132,61 @@ export function useSendImageMessage() {
   const { showToast } = useUIStore();
 
   return useMutation({
-    mutationFn: ({ visitId, file }: { visitId: string; file: File }) =>
-      chatService.sendImageMessage(visitId, file),
+    mutationFn: ({ visitId, file, content }: { visitId: string; file: File; content?: string }) =>
+      chatService.sendImageMessage(visitId, file, content),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['chat', 'messages', variables.visitId] });
+      // Update infinite query cache
+      queryClient.setQueriesData(
+        {
+          queryKey: ['chat', 'messages', variables.visitId],
+          exact: false,
+        },
+        (old: InfiniteData<ChatMessagesResponse> | undefined) => {
+          if (!old || !old.pages) {
+            // If no cache exists, create it
+            return {
+              pages: [
+                { data: [data], pagination: { page: 1, limit: 50, total: 1, totalPages: 1 } },
+              ],
+              pageParams: [1],
+            };
+          }
+
+          // Check if message already exists in any page
+          const messageExists = old.pages.some((page) =>
+            page.data?.some((m: Message) => m.id === data.id)
+          );
+
+          if (messageExists) {
+            // Update existing message
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                data: page.data?.map((m: Message) => (m.id === data.id ? data : m)) || [],
+              })),
+            };
+          }
+
+          // Add new message to the first page (most recent)
+          const newPages = [...old.pages];
+          if (newPages[0]) {
+            newPages[0] = {
+              ...newPages[0],
+              data: [...(newPages[0].data || []), data],
+              pagination: {
+                ...newPages[0].pagination,
+                total: (newPages[0].pagination?.total || 0) + 1,
+              },
+            };
+          }
+
+          return {
+            ...old,
+            pages: newPages,
+          };
+        }
+      );
     },
     onError: (error: Error) => {
       showToast(error.message || 'Failed to send image', 'error');
@@ -67,8 +203,9 @@ export function useMarkAsRead() {
   return useMutation({
     mutationFn: (visitId: string) => chatService.markAsRead(visitId),
     onSuccess: (_, visitId) => {
-      queryClient.invalidateQueries({ queryKey: ['chat', 'messages', visitId] });
-      queryClient.invalidateQueries({ queryKey: ['chat', 'unread', visitId] });
+      // Update unread count to 0
+      queryClient.setQueryData(['chat', 'unread', visitId], 0);
+      // Don't invalidate messages - they will be updated via WebSocket if needed
     },
   });
 }
@@ -79,42 +216,39 @@ export function useMarkAsRead() {
 export function useUnreadCount(visitId: string | null) {
   return useQuery({
     queryKey: ['chat', 'unread', visitId],
-    queryFn: () => (visitId ? chatService.getUnreadCount(visitId) : 0),
+    queryFn: async () => {
+      if (!visitId) return 0;
+      try {
+        return await chatService.getUnreadCount(visitId);
+      } catch (error) {
+        // If endpoint doesn't exist or fails, return 0 instead of undefined
+        return 0;
+      }
+    },
     enabled: !!visitId,
-    refetchInterval: 10000, // Poll every 10 seconds
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds (prevents duplicate requests in StrictMode)
+    refetchInterval: false, // Disable polling - WebSocket will handle real-time updates
+    refetchOnWindowFocus: false,
+    refetchOnMount: true, // Will use cached data if fresh (within staleTime), preventing duplicate requests
   });
 }
 
 /**
- * Hook to use WebSocket for real-time chat
- * Note: This is a placeholder. WebSocket implementation would require
- * additional setup with socket.io-client or similar library
+ * Hook to add reaction to a message
  */
-export function useChatWebSocket(visitId: string | null, onMessage: (message: Message) => void) {
+export function useAddReaction() {
   const queryClient = useQueryClient();
-  const wsRef = useRef<WebSocket | null>(null);
+  const { showToast } = useUIStore();
 
-  useEffect(() => {
-    if (!visitId) return;
-
-    // TODO: Implement WebSocket connection
-    // For now, we rely on polling (refetchInterval in useChatMessages)
-    // WebSocket implementation would look like:
-    // const ws = new WebSocket(`ws://localhost:3000/chat/visits/${visitId}`);
-    // ws.onmessage = (event) => {
-    //   const message = JSON.parse(event.data);
-    //   onMessage(message);
-    //   queryClient.setQueryData(['chat', 'messages', visitId], (old: any) => {
-    //     return { ...old, data: [message, ...old.data] };
-    //   });
-    // };
-    // wsRef.current = ws;
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [visitId, onMessage, queryClient]);
+  return useMutation({
+    mutationFn: ({ messageId, emoji }: { messageId: string; emoji: string }) =>
+      chatService.addReaction(messageId, emoji),
+    onSuccess: (_data, _variables) => {
+      // Invalidate messages to get updated reactions
+      queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] });
+    },
+    onError: (error: Error) => {
+      showToast(error.message || 'Failed to add reaction', 'error');
+    },
+  });
 }
-

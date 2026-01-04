@@ -3,10 +3,11 @@
 import { Image as ImageIcon, Send, X } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, useEffect, ChangeEvent } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { useSendMessage, useSendImageMessage } from '@/hooks/useChat';
+import { useSocket } from '@/hooks/useSocket';
 import { createImagePreview, validateFile } from '@/lib/utils/fileValidation';
 
 interface MessageInputProps {
@@ -26,26 +27,58 @@ export function MessageInput({ visitId }: MessageInputProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const { socket, isConnected } = useSocket();
   const sendMessage = useSendMessage();
   const sendImageMessage = useSendImageMessage();
 
   const handleSend = async () => {
     if (!message.trim() && !selectedImage) return;
 
+    const messageContent = message.trim();
+    const imageToSend = selectedImage;
+
+    // Clear input immediately for better UX
+    if (messageContent) {
+      setMessage('');
+    }
+    if (imageToSend) {
+      setSelectedImage(null);
+      setImagePreview(null);
+    }
+
     try {
-      if (selectedImage) {
-        await sendImageMessage.mutateAsync({ visitId, file: selectedImage });
-        setSelectedImage(null);
-        setImagePreview(null);
-      } else if (message.trim()) {
+      if (imageToSend) {
+        // Send image with optional text content
+        await sendImageMessage.mutateAsync({
+          visitId,
+          file: imageToSend,
+          content: messageContent || '',
+        });
+      } else if (messageContent) {
+        // Send text only
         await sendMessage.mutateAsync({
           visitId,
-          dto: { content: message.trim() },
+          dto: { content: messageContent },
         });
-        setMessage('');
       }
     } catch (error) {
-      // Error handling is done in the hook
+      // Restore message if sending failed
+      if (messageContent) {
+        setMessage(messageContent);
+      }
+      if (imageToSend) {
+        setSelectedImage(imageToSend);
+        // Restore preview if needed
+        if (imageToSend) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+          };
+          reader.readAsDataURL(imageToSend);
+        }
+      }
+      // Error handling is done in the hook (toast notification)
     }
   };
 
@@ -83,8 +116,42 @@ export function MessageInput({ visitId }: MessageInputProps) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+      // Stop typing indicator
+      if (socket && isConnected) {
+        socket.emit('typing', { visitId, isTyping: false });
+      }
     }
   };
+
+  // Typing indicator
+  const handleTyping = () => {
+    if (socket && isConnected) {
+      socket.emit('typing', { visitId, isTyping: true });
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        if (socket && isConnected) {
+          socket.emit('typing', { visitId, isTyping: false });
+        }
+      }, 3000);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (socket && isConnected) {
+        socket.emit('typing', { visitId, isTyping: false });
+      }
+    };
+  }, [socket, isConnected, visitId]);
 
   const removeImage = () => {
     setSelectedImage(null);
@@ -128,7 +195,7 @@ export function MessageInput({ visitId }: MessageInputProps) {
       )}
 
       {/* Input Area */}
-      <div className="flex items-end gap-2">
+      <div className="relative flex items-end gap-2">
         {/* Image Upload Button */}
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -148,7 +215,10 @@ export function MessageInput({ visitId }: MessageInputProps) {
         {/* Text Input */}
         <textarea
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            handleTyping();
+          }}
           onKeyPress={handleKeyPress}
           placeholder={t('typeMessage')}
           rows={1}

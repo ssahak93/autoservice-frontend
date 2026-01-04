@@ -22,7 +22,7 @@ export function useNotifications(filters?: NotificationFilters) {
 
 /**
  * Hook to get notification statistics
- * Silently handles 404 errors (endpoint may not exist yet)
+ * Automatically refetches every 30 seconds to keep stats up to date
  */
 export function useNotificationStats() {
   return useQuery({
@@ -30,14 +30,14 @@ export function useNotificationStats() {
     queryFn: () => notificationsService.getStats(),
     refetchInterval: 30000, // Poll every 30 seconds
     retry: (failureCount, error) => {
-      // Don't retry on 404 errors (endpoint doesn't exist)
+      // Don't retry on 404/500 errors (service will return default stats)
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
-        if (axiosError.response?.status === 404) {
+        if (axiosError.response?.status === 404 || axiosError.response?.status === 500) {
           return false;
         }
       }
-      // Retry other errors up to 3 times
+      // Retry other errors (network errors, etc.) up to 3 times
       return failureCount < 3;
     },
   });

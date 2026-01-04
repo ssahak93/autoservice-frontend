@@ -6,6 +6,7 @@ export interface User {
   lastName: string;
   phoneNumber?: string;
   avatarFileId?: string;
+  avatarUrl?: string; // Direct avatar URL from backend
   avatarFile?: {
     fileUrl: string;
   };
@@ -82,31 +83,54 @@ export interface WorkingHours {
 // Visit types
 export interface Visit {
   id: string;
+  userId: string;
+  autoServiceId: string;
   autoServiceProfileId: string;
-  driverId: string;
+  assignedEmployeeId?: string;
+  scheduledDate: string; // ISO date string (YYYY-MM-DD or full ISO)
+  scheduledTime: string; // HH:mm format
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  preferredDate: string;
-  preferredTime: string;
-  confirmedDate?: string;
-  confirmedTime?: string;
-  description?: string;
+  problemDescription?: string;
+  customerNotes?: string;
+  confirmedDate?: string; // ISO date string
+  confirmedTime?: string; // HH:mm format
   createdAt: string;
   updatedAt: string;
+  autoService?: {
+    id: string;
+    serviceType?: 'individual' | 'company';
+    companyName?: string;
+    firstName?: string;
+    lastName?: string;
+    profile?: {
+      id: string;
+    };
+  };
   autoServiceProfile?: {
+    id: string;
     autoService?: {
+      serviceType?: 'individual' | 'company';
       companyName?: string;
       firstName?: string;
       lastName?: string;
     };
   };
+  user?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  // Legacy fields for backward compatibility
+  preferredDate?: string;
+  preferredTime?: string;
+  description?: string;
 }
 
 export interface CreateVisitRequest {
-  autoServiceProfileId: string;
-  preferredDate: string;
-  preferredTime: string;
-  description?: string;
-  serviceTypeIds?: string[];
+  autoServiceId: string;
+  scheduledDate: string; // ISO 8601 date string (YYYY-MM-DD)
+  scheduledTime: string; // HH:mm format
+  problemDescription?: string;
 }
 
 // Review types
