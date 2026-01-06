@@ -37,17 +37,20 @@
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "passwordMinLength": "Password must be at least 8 characters",
+    "passwordInvalid": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)",
     "registerSuccess": "Registration successful! Please check your email.",
     "invalidEmail": "Invalid email address",
     "welcomeBack": "Welcome back! Please login to your account.",
     "createAccount": "Create your account to get started.",
-    "passwordHelper": "At least 8 characters",
+    "passwordHelper": "Min 8 chars: uppercase, lowercase, number, special char (@$!%*?&)",
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
     "confirmPassword": "Confirm Password",
     "confirmPasswordRequired": "Please confirm your password",
     "passwordsDontMatch": "Passwords don't match",
     "loginSuccess": "Login successful",
+    "invalidPhoneNumber": "Phone number must be 8 digits (e.g., 98222680) or 9 digits starting with 0 (e.g., 098222680)",
+    "phoneNumberHelper": "Optional. Enter 8 or 9 digits (e.g., 98222680 or 098222680)",
     "loginFailed": "Login failed. Please try again.",
     "loginFailedMessage": "Login failed. Please check your credentials.",
     "registrationSuccess": "Registration successful",
@@ -262,8 +265,7 @@
     "reviewCreated": "Review created successfully",
     "reviewError": "Error creating review",
     "noCompletedVisits": "You don't have any completed visits for this service",
-    "close": "Close",
-    "visitRequired": "Visit is required"
+    "close": "Close"
   },
   "profile": {
     "title": "Profile",
@@ -285,9 +287,9 @@
     "email": "Email",
     "emailCannotBeChanged": "Email cannot be changed",
     "phoneNumber": "Phone Number",
-    "phoneNumberPlaceholder": "+374 XX XXX XXX",
-    "phoneNumberHelper": "Optional. Include country code",
-    "invalidPhoneNumber": "Invalid phone number format",
+    "phoneNumberPlaceholder": "098222680",
+    "phoneNumberHelper": "Optional. Enter 8 or 9 digits (e.g., 98222680 or 098222680)",
+    "invalidPhoneNumber": "Phone number must be 8 digits (e.g., 98222680) or 9 digits starting with 0 (e.g., 098222680)",
     "user": "User",
     "accountCreated": "Account created",
     "lastUpdated": "Last updated",
@@ -356,6 +358,7 @@
   "navigation": {
     "home": "Home",
     "services": "Services",
+    "dashboard": "Dashboard",
     "myVisits": "My Visits",
     "profile": "Profile",
     "about": "About",
@@ -366,6 +369,304 @@
     "menu": "Menu",
     "close": "Close",
     "changeLanguage": "Change language"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your auto service",
+    "description": "Manage and track all your service visits",
+    "nav": {
+      "dashboard": "Dashboard",
+      "overview": "Overview",
+      "visits": "Visits",
+      "messages": "Messages",
+      "team": "Team",
+      "analytics": "Analytics",
+      "myService": "My Service",
+      "settings": "Settings"
+    },
+    "stats": {
+      "total": "Total Visits",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "today": "Today's Visits",
+      "error": "Failed to load statistics"
+    },
+    "recentVisits": {
+      "title": "Recent Visits",
+      "empty": "No visits yet",
+      "error": "Failed to load visits",
+      "customer": "Customer",
+      "date": "Date",
+      "time": "Time",
+      "status": "Status"
+    },
+    "notServiceOwner": {
+      "title": "Auto Service Required",
+      "message": "You need to own an auto service to access the dashboard.",
+      "browseServices": "Browse Services"
+    },
+    "selectAutoService": "Select Auto Service",
+    "selectedService": "Currently managing: {{name}}",
+    "role": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "employee": "Employee"
+    },
+    "visits": {
+      "title": "Visit Management",
+      "description": "Manage and track all your service visits",
+      "customer": "Customer",
+      "at": "at",
+      "close": "Close",
+      "cancel": "Cancel",
+      "filters": {
+        "title": "Filters",
+        "status": "Status",
+        "date": "Date",
+        "selectDate": "Select date",
+        "clear": "Clear Filters"
+      },
+      "status": {
+        "all": "All",
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "actions": {
+        "view": "View",
+        "accept": "Accept",
+        "complete": "Complete",
+        "cancel": "Cancel",
+        "reschedule": "Reschedule"
+      },
+      "empty": {
+        "title": "No visits found",
+        "description": "No visits match your filters"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{current}} of {{total}}"
+      },
+      "acceptSuccess": "Visit accepted successfully",
+      "acceptError": "Failed to accept visit",
+      "completeSuccess": "Visit completed successfully",
+      "completeError": "Failed to complete visit",
+      "cancelSuccess": "Visit cancelled successfully",
+      "cancelError": "Failed to cancel visit",
+      "rescheduleSuccess": "Visit rescheduled successfully",
+      "rescheduleError": "Failed to reschedule visit",
+      "accept": {
+        "title": "Accept Visit",
+        "confirmedDate": "Confirmed Date (optional)",
+        "confirmedTime": "Confirmed Time (optional)",
+        "notes": "Notes (optional)",
+        "notesPlaceholder": "Add any notes...",
+        "selectDate": "Select date",
+        "selectTime": "Select time",
+        "confirm": "Accept Visit"
+      },
+      "complete": {
+        "title": "Complete Visit",
+        "confirmation": "Are you sure you want to mark this visit as completed?",
+        "notes": "Completion Notes (optional)",
+        "notesPlaceholder": "Add completion notes...",
+        "confirm": "Complete Visit"
+      },
+      "cancelModal": {
+        "title": "Cancel Visit",
+        "confirmation": "Are you sure you want to cancel this visit?",
+        "reason": "Cancellation Reason",
+        "reasonPlaceholder": "Please provide a reason...",
+        "back": "Back",
+        "confirm": "Cancel Visit"
+      },
+      "reschedule": {
+        "title": "Reschedule Visit",
+        "newDate": "New Date",
+        "newTime": "New Time",
+        "selectDate": "Select date",
+        "selectTime": "Select time",
+        "dateRequired": "Date is required",
+        "timeRequired": "Time is required",
+        "timeFormat": "Time must be in HH:mm format",
+        "confirm": "Reschedule"
+      },
+      "details": {
+        "title": "Visit Details",
+        "time": "Time",
+        "status": "Status",
+        "problemDescription": "Problem Description"
+      }
+    },
+    "team": {
+      "title": "Team Management",
+      "description": "Manage your team members and their permissions",
+      "inviteMember": "Invite Member",
+      "totalMembers": "Total Members",
+      "activeMembers": "Active Members",
+      "employees": "Employees",
+      "members": "Team Members",
+      "noMembers": "No team members yet",
+      "removeSuccess": "Team member removed successfully",
+      "removeError": "Failed to remove team member",
+      "removeConfirm": "Are you sure you want to remove this team member?",
+      "loadError": "Failed to load team members. Please try again.",
+      "you": "You",
+      "inactive": "Inactive",
+      "roles": {
+        "owner": "Owner",
+        "manager": "Manager",
+        "employee": "Employee"
+      },
+      "invite": {
+        "title": "Invite Team Member",
+        "role": "Role",
+        "roleRequired": "Role is required",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "specialization": "Specialization",
+        "specializationPlaceholder": "e.g., Engine repair, Diagnostics",
+        "bio": "Bio",
+        "bioPlaceholder": "Short description...",
+        "yearsOfExperience": "Years of Experience",
+        "generateQR": "Generate QR Code",
+        "success": "QR code generated successfully",
+        "error": "Failed to generate QR code",
+        "cancel": "Cancel",
+        "close": "Close",
+        "qrInstructions": "Share this QR code with the team member to scan and join your team.",
+        "invitationLink": "Invitation Link",
+        "copy": "Copy",
+        "copied": "Copied",
+        "roles": {
+          "employee": "Employee",
+          "manager": "Manager"
+        }
+      },
+      "edit": {
+        "title": "Edit Team Member",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "role": "Role",
+        "specialization": "Specialization",
+        "bio": "Bio",
+        "isActive": "Active",
+        "save": "Save Changes",
+        "cancel": "Cancel",
+        "success": "Team member updated successfully",
+        "error": "Failed to update team member",
+        "roles": {
+          "owner": "Owner",
+          "manager": "Manager",
+          "employee": "Employee"
+        }
+      }
+    },
+    "messages": {
+      "title": "Messages",
+      "description": "Manage your service messages",
+      "searchPlaceholder": "Search conversations...",
+      "noConversations": "No conversations yet",
+      "selectConversation": "Select a conversation to start chatting",
+      "customer": "Customer",
+      "imageMessage": "Image",
+      "noMessages": "No messages yet",
+      "startConversation": "Start the conversation by sending a message",
+      "sending": "Sending...",
+      "failedToSend": "Failed to send message",
+      "close": "Close"
+    },
+    "analytics": {
+      "title": "Analytics & Reports",
+      "description": "View detailed analytics and insights about your service",
+      "loading": "Loading analytics...",
+      "noData": "No analytics data available",
+      "stats": {
+        "total": "Total Visits",
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "today": "Today's Visits"
+      },
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "charts": {
+        "statusDistribution": "Visit Status Distribution",
+        "summary": "Summary"
+      },
+      "summary": {
+        "completionRate": "Completion Rate",
+        "confirmationRate": "Confirmation Rate",
+        "cancellationRate": "Cancellation Rate"
+      },
+      "dateRange": {
+        "week": "7d",
+        "month": "30d",
+        "clear": "Clear"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Manage your service settings and preferences",
+      "tabs": {
+        "service": "Service",
+        "notifications": "Notifications",
+        "security": "Security"
+      },
+      "service": {
+        "title": "Service Settings",
+        "description": "Manage your service profile and basic information",
+        "info": "Most service settings can be managed from the \"My Service\" page. Click the link below to edit your service profile, working hours, and photos.",
+        "goToMyService": "Go to My Service →",
+        "availableSettings": "Available Settings",
+        "settings": {
+          "profile": "Service profile and description",
+          "hours": "Working hours and availability",
+          "photos": "Profile and work photos",
+          "location": "Location and address",
+          "services": "Service types offered"
+        }
+      },
+      "notifications": {
+        "title": "Notification Settings",
+        "description": "Manage how you receive notifications",
+        "updateSuccess": "Notification settings updated successfully",
+        "updateError": "Failed to update notification settings",
+        "email": {
+          "title": "Email Notifications",
+          "enable": "Enable email notifications"
+        },
+        "push": {
+          "title": "Push Notifications",
+          "enable": "Enable push notifications"
+        },
+        "types": {
+          "title": "Notification Types",
+          "newVisit": "New visit requests",
+          "reminder": "Visit reminders",
+          "message": "New messages",
+          "teamInvite": "Team invitations"
+        }
+      },
+      "security": {
+        "title": "Security Settings",
+        "description": "Manage your account security settings",
+        "profileSettings": {
+          "title": "User Profile Settings",
+          "description": "Manage your personal information, password, and account settings. Auto service settings are managed separately.",
+          "link": "Go to Profile Settings →"
+        }
+      }
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -435,8 +736,8 @@
     "yesterdayAt": "Yesterday at {time}",
     "today": "Today",
     "yesterday": "Yesterday",
-    "isTyping": "Someone is typing...",
-    "areTyping": "People are typing...",
+    "isTyping": "{name} is typing...",
+    "areTyping": "are typing...",
     "addReaction": "Add reaction",
     "close": "Close",
     "noMessages": "No messages yet",
@@ -444,5 +745,122 @@
     "sending": "Sending...",
     "failedToSend": "Failed to send message",
     "customer": "Customer"
+  },
+  "myService": {
+    "title": "My Service Profile",
+    "description": "Manage your auto service profile and settings",
+    "completeness": "Profile Completeness",
+    "publish": "Publish Profile",
+    "unpublish": "Unpublish",
+    "publishSuccess": "Profile published successfully",
+    "unpublishSuccess": "Profile unpublished successfully",
+    "publishError": "Failed to update publish status",
+    "loadError": "Failed to load profile. Please try again.",
+    "notServiceOwner": {
+      "title": "Auto Service Required",
+      "message": "You need to own an auto service to manage your profile."
+    },
+    "tabs": {
+      "info": "Service Info",
+      "profile": "Profile",
+      "availability": "Availability",
+      "photos": "Photos"
+    },
+    "info": {
+      "title": "Service Information",
+      "serviceName": "Service Name",
+      "serviceType": "Service Type",
+      "verificationStatus": "Verification Status",
+      "verified": "Verified",
+      "notVerified": "Not Verified",
+      "publishStatus": "Publish Status",
+      "published": "Published",
+      "unpublished": "Unpublished",
+      "rating": "Rating",
+      "reviews": "reviews",
+      "totalVisits": "Max Visits Per Day",
+      "experience": "Years of Experience",
+      "years": "years",
+      "contactInfo": "Contact Information",
+      "phone": "Phone",
+      "location": "Location",
+      "coordinates": "Coordinates",
+      "description": "Description",
+      "specialization": "Specialization",
+      "servicesOffered": "Services Offered"
+    },
+    "profile": {
+      "title": "Edit Profile",
+      "description": "Description",
+      "descriptionMin": "Description must be at least 10 characters",
+      "descriptionPlaceholder": "Describe your service...",
+      "specialization": "Specialization",
+      "specializationPlaceholder": "Your specialization...",
+      "yearsOfExperience": "Years of Experience",
+      "address": "Address",
+      "addressRequired": "Address is required",
+      "city": "City",
+      "cityRequired": "City is required",
+      "region": "Region",
+      "regionRequired": "Region is required",
+      "district": "District",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "phoneNumber": "Phone Number",
+      "phoneRequired": "Phone number is required",
+      "maxVisitsPerDay": "Max Visits Per Day",
+      "serviceTypes": "Service Types",
+      "serviceTypesRequired": "Select at least one service type",
+      "reset": "Reset",
+      "save": "Save Changes",
+      "updateSuccess": "Profile updated successfully",
+      "updateError": "Failed to update profile"
+    },
+    "availability": {
+      "title": "Availability Management",
+      "description": "Manage your working hours and availability exceptions",
+      "workingHours": "Working Hours",
+      "comingSoon": "Availability calendar coming soon",
+      "days": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      },
+      "open": "Open",
+      "closed": "Closed",
+      "startTime": "Start",
+      "endTime": "End",
+      "save": "Save Changes",
+      "updateSuccess": "Working hours updated successfully",
+      "updateError": "Failed to update working hours",
+      "exceptions": "Availability Exceptions",
+      "exceptionsComingSoon": "Availability exceptions management coming soon"
+    },
+    "photos": {
+      "title": "Photo Gallery",
+      "description": "Manage your profile and work photos",
+      "profilePhotos": "Profile Photos",
+      "workPhotos": "Work Photos",
+      "upload": "Upload",
+      "noPhotos": "No photos yet",
+      "uploadSuccess": "Photo uploaded successfully",
+      "uploadError": "Failed to upload photo",
+      "delete": "Delete",
+      "deleteSuccess": "Photo deleted successfully",
+      "deleteError": "Failed to delete photo",
+      "deleteConfirm": "Are you sure you want to delete this photo?",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "reorderSuccess": "Photos reordered successfully",
+      "reorderError": "Failed to reorder photos",
+      "viewPhoto": "View photo",
+      "photo": "Photo",
+      "close": "Close",
+      "dragToReorder": "Drag to reorder"
+    }
   }
 }

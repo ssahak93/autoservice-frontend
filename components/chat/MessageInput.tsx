@@ -165,7 +165,7 @@ export function MessageInput({ visitId }: MessageInputProps) {
   const isLoading = sendMessage.isPending || sendImageMessage.isPending;
 
   return (
-    <div className="border-t border-neutral-200 bg-white p-4">
+    <div className="p-4">
       {/* Image Preview */}
       {imagePreview && (
         <div className="relative mb-3 inline-block">

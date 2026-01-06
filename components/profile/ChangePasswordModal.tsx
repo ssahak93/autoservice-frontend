@@ -2,16 +2,16 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { useChangePassword } from '@/hooks/useProfile';
 import { getAnimationVariants } from '@/lib/utils/animations';
+import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '@/lib/utils/password.util';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -26,9 +26,6 @@ interface ChangePasswordModalProps {
 export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
   const t = useTranslations('profile');
   const changePassword = useChangePassword();
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const variants = getAnimationVariants();
 
   const passwordSchema = z
@@ -38,7 +35,8 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
         .min(1, t('currentPasswordRequired', { defaultValue: 'Current password is required' })),
       newPassword: z
         .string()
-        .min(8, t('passwordMinLength', { defaultValue: 'Password must be at least 8 characters' })),
+        .min(8, t('passwordMinLength', { defaultValue: 'Password must be at least 8 characters' }))
+        .regex(PASSWORD_PATTERN, t('passwordInvalid', { defaultValue: PASSWORD_ERROR_MESSAGE })),
       confirmPassword: z
         .string()
         .min(1, t('confirmPasswordRequired', { defaultValue: 'Please confirm your password' })),
@@ -124,85 +122,32 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
               {/* Form */}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* Current Password */}
-                <div className="relative">
-                  <Input
-                    label={t('currentPassword', { defaultValue: 'Current Password' })}
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    error={errors.currentPassword?.message}
-                    disabled={changePassword.isPending}
-                    autoComplete="current-password"
-                    {...register('currentPassword')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-[42px] text-neutral-500 hover:text-neutral-700"
-                    aria-label={
-                      showCurrentPassword
-                        ? t('hidePassword', { defaultValue: 'Hide password' })
-                        : t('showPassword', { defaultValue: 'Show password' })
-                    }
-                  >
-                    {showCurrentPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
+                <PasswordInput
+                  label={t('currentPassword', { defaultValue: 'Current Password' })}
+                  error={errors.currentPassword?.message}
+                  disabled={changePassword.isPending}
+                  autoComplete="current-password"
+                  {...register('currentPassword')}
+                />
 
                 {/* New Password */}
-                <div className="relative">
-                  <Input
-                    label={t('newPassword', { defaultValue: 'New Password' })}
-                    type={showNewPassword ? 'text' : 'password'}
-                    error={errors.newPassword?.message}
-                    disabled={changePassword.isPending}
-                    autoComplete="new-password"
-                    helperText={t('passwordHelper', { defaultValue: 'At least 8 characters' })}
-                    {...register('newPassword')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-[42px] text-neutral-500 hover:text-neutral-700"
-                    aria-label={
-                      showNewPassword
-                        ? t('hidePassword', { defaultValue: 'Hide password' })
-                        : t('showPassword', { defaultValue: 'Show password' })
-                    }
-                  >
-                    {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
+                <PasswordInput
+                  label={t('newPassword', { defaultValue: 'New Password' })}
+                  error={errors.newPassword?.message}
+                  disabled={changePassword.isPending}
+                  autoComplete="new-password"
+                  helperText={t('passwordHelper', { defaultValue: 'At least 8 characters' })}
+                  {...register('newPassword')}
+                />
 
                 {/* Confirm Password */}
-                <div className="relative">
-                  <Input
-                    label={t('confirmPassword', { defaultValue: 'Confirm Password' })}
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    error={errors.confirmPassword?.message}
-                    disabled={changePassword.isPending}
-                    autoComplete="new-password"
-                    {...register('confirmPassword')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-[42px] text-neutral-500 hover:text-neutral-700"
-                    aria-label={
-                      showConfirmPassword
-                        ? t('hidePassword', { defaultValue: 'Hide password' })
-                        : t('showPassword', { defaultValue: 'Show password' })
-                    }
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
+                <PasswordInput
+                  label={t('confirmPassword', { defaultValue: 'Confirm Password' })}
+                  error={errors.confirmPassword?.message}
+                  disabled={changePassword.isPending}
+                  autoComplete="new-password"
+                  {...register('confirmPassword')}
+                />
 
                 {/* Actions */}
                 <div className="flex gap-3 pt-4">

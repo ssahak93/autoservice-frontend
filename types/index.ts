@@ -10,6 +10,26 @@ export interface User {
   avatarFile?: {
     fileUrl: string;
   };
+  autoService?: {
+    id: string;
+    serviceType: 'individual' | 'company';
+    firstName: string | null;
+    lastName: string | null;
+    companyName: string | null;
+    isVerified: boolean;
+    avatarFileId: string | null;
+    avatarFile?: {
+      id: string;
+      fileUrl: string;
+    } | null;
+    avatarUrl?: string | null;
+  } | null;
+  teamMemberships?: Array<{
+    id: string;
+    autoServiceId: string;
+    role: string;
+    isActive: boolean;
+  }>;
   createdAt?: string;
   updatedAt?: string;
 }

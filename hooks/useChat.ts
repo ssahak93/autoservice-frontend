@@ -65,7 +65,8 @@ export function useSendMessage() {
     mutationFn: ({ visitId, dto }: { visitId: string; dto: SendMessageDto }) =>
       chatService.sendMessage(visitId, dto),
     onSuccess: (data, variables) => {
-      // Update infinite query cache
+      // Optimistically update cache - WebSocket will also update it, but this ensures immediate UI update
+      // The WebSocket handler will handle deduplication
       queryClient.setQueriesData(
         {
           queryKey: ['chat', 'messages', variables.visitId],
@@ -82,13 +83,13 @@ export function useSendMessage() {
             };
           }
 
-          // Check if message already exists in any page
+          // Check if message already exists in any page (from WebSocket or previous update)
           const messageExists = old.pages.some((page) =>
             page.data?.some((m: Message) => m.id === data.id)
           );
 
           if (messageExists) {
-            // Update existing message
+            // Update existing message (WebSocket might have already added it)
             return {
               ...old,
               pages: old.pages.map((page) => ({
@@ -99,11 +100,15 @@ export function useSendMessage() {
           }
 
           // Add new message to the first page (most recent)
+          // Backend returns messages in reverse chronological order (newest first)
+          // So we add to the beginning of the array
           const newPages = [...old.pages];
           if (newPages[0]) {
+            const existingMessages = newPages[0].data || [];
+            // Add to beginning since backend returns newest first
             newPages[0] = {
               ...newPages[0],
-              data: [...(newPages[0].data || []), data],
+              data: [data, ...existingMessages],
               pagination: {
                 ...newPages[0].pagination,
                 total: (newPages[0].pagination?.total || 0) + 1,
@@ -117,6 +122,13 @@ export function useSendMessage() {
           };
         }
       );
+
+      // Force a refetch to ensure UI updates
+      queryClient.invalidateQueries({
+        queryKey: ['chat', 'messages', variables.visitId],
+        exact: false,
+        refetchType: 'none', // Don't refetch, just invalidate to trigger re-render
+      });
     },
     onError: (error: Error) => {
       showToast(error.message || 'Failed to send message', 'error');
@@ -135,7 +147,8 @@ export function useSendImageMessage() {
     mutationFn: ({ visitId, file, content }: { visitId: string; file: File; content?: string }) =>
       chatService.sendImageMessage(visitId, file, content),
     onSuccess: (data, variables) => {
-      // Update infinite query cache
+      // Optimistically update cache - WebSocket will also update it, but this ensures immediate UI update
+      // The WebSocket handler will handle deduplication
       queryClient.setQueriesData(
         {
           queryKey: ['chat', 'messages', variables.visitId],
@@ -152,13 +165,13 @@ export function useSendImageMessage() {
             };
           }
 
-          // Check if message already exists in any page
+          // Check if message already exists in any page (from WebSocket or previous update)
           const messageExists = old.pages.some((page) =>
             page.data?.some((m: Message) => m.id === data.id)
           );
 
           if (messageExists) {
-            // Update existing message
+            // Update existing message (WebSocket might have already added it)
             return {
               ...old,
               pages: old.pages.map((page) => ({
@@ -169,11 +182,15 @@ export function useSendImageMessage() {
           }
 
           // Add new message to the first page (most recent)
+          // Backend returns messages in reverse chronological order (newest first)
+          // So we add to the beginning of the array
           const newPages = [...old.pages];
           if (newPages[0]) {
+            const existingMessages = newPages[0].data || [];
+            // Add to beginning since backend returns newest first
             newPages[0] = {
               ...newPages[0],
-              data: [...(newPages[0].data || []), data],
+              data: [data, ...existingMessages],
               pagination: {
                 ...newPages[0].pagination,
                 total: (newPages[0].pagination?.total || 0) + 1,
@@ -187,6 +204,13 @@ export function useSendImageMessage() {
           };
         }
       );
+
+      // Force a refetch to ensure UI updates
+      queryClient.invalidateQueries({
+        queryKey: ['chat', 'messages', variables.visitId],
+        exact: false,
+        refetchType: 'none', // Don't refetch, just invalidate to trigger re-render
+      });
     },
     onError: (error: Error) => {
       showToast(error.message || 'Failed to send image', 'error');

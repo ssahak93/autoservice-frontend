@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 
 import type { AutoService } from '@/types';
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL 
-  ? `https://${process.env.VERCEL_URL}` 
-  : 'https://autoserviceconnect.am';
+const baseUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'https://autoserviceconnect.am';
 
 export async function generateServiceMetadata(
   service: AutoService,
@@ -13,7 +14,7 @@ export async function generateServiceMetadata(
   const name = service.companyName || `${service.firstName} ${service.lastName}`;
   const description =
     service.description ||
-    `Professional auto service in ${service.city}, ${service.region}. Book your appointment online. Verified service provider${service.averageRating ? ` with ${service.averageRating.toFixed(1)} rating` : ''}.`;
+    `Professional auto service in ${service.city}, ${service.region}. Book your appointment online. Verified service provider${service.averageRating ? ` with ${Number(service.averageRating).toFixed(1)} rating` : ''}.`;
   const imageUrl = service.avatarFile?.fileUrl || `${baseUrl}/og-image.jpg`;
 
   return {
@@ -27,7 +28,9 @@ export async function generateServiceMetadata(
       'Armenia',
       'verified service',
       service.specialization || 'auto repair',
-    ].filter(Boolean).join(', '),
+    ]
+      .filter(Boolean)
+      .join(', '),
     authors: [{ name: 'Auto Service Connect' }],
     creator: 'Auto Service Connect',
     publisher: 'Auto Service Connect',
@@ -70,4 +73,3 @@ export async function generateServiceMetadata(
     },
   };
 }
-

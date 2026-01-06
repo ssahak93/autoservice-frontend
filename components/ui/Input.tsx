@@ -55,12 +55,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-describedby={error || helperText ? `${props.id || 'input'}-helper` : undefined}
             {...props}
           />
-          {/* Success/Error Icons */}
+          {/* Success Icon */}
           {success && !error && (
             <CheckCircle2 className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-success-500" />
-          )}
-          {error && (
-            <XCircle className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-error-500" />
           )}
         </div>
         {/* Error Message */}

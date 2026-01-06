@@ -69,9 +69,31 @@ export function MessageBubble({
     }
   };
 
-  const senderName = message.sender
-    ? `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim() || 'User'
-    : 'User';
+  // Determine sender name - show auto service name if it's a service message, otherwise show sender name
+  const getSenderName = () => {
+    // If it's a service message, show auto service name
+    if (message.autoService) {
+      if (message.autoService.serviceType === 'company') {
+        return message.autoService.companyName || 'Auto Service';
+      } else {
+        const name =
+          `${message.autoService.firstName || ''} ${message.autoService.lastName || ''}`.trim();
+        return name || 'Auto Service';
+      }
+    }
+    // Otherwise show sender name
+    if (message.sender) {
+      return `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim() || 'User';
+    }
+    return 'User';
+  };
+
+  const senderName = getSenderName();
+
+  // Get team member name if available
+  const teamMemberName = message.teamMember
+    ? `${message.teamMember.firstName} ${message.teamMember.lastName}`.trim()
+    : null;
 
   return (
     <div
@@ -81,9 +103,17 @@ export function MessageBubble({
       {showAvatar && (
         <div className="relative h-10 w-10 flex-shrink-0">
           <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-primary-400 to-primary-600 shadow-md ring-2 ring-white">
-            {message.sender?.avatarFile?.fileUrl ? (
+            {/* Prefer auto service avatar, then team member avatar, then sender avatar */}
+            {message.autoService?.avatarFile?.fileUrl ||
+            message.teamMember?.avatarFile?.fileUrl ||
+            message.sender?.avatarFile?.fileUrl ? (
               <Image
-                src={message.sender.avatarFile.fileUrl}
+                src={
+                  message.autoService?.avatarFile?.fileUrl ||
+                  message.teamMember?.avatarFile?.fileUrl ||
+                  message.sender?.avatarFile?.fileUrl ||
+                  ''
+                }
                 alt={senderName}
                 fill
                 className="object-cover"
@@ -93,9 +123,15 @@ export function MessageBubble({
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600 text-white">
                 <span className="text-sm font-bold">
-                  {message.sender?.firstName?.charAt(0).toUpperCase() ||
-                    message.sender?.lastName?.charAt(0).toUpperCase() ||
-                    'U'}
+                  {message.autoService?.serviceType === 'company'
+                    ? message.autoService.companyName?.charAt(0).toUpperCase() || 'A'
+                    : message.autoService?.firstName?.charAt(0).toUpperCase() ||
+                      message.autoService?.lastName?.charAt(0).toUpperCase() ||
+                      message.teamMember?.firstName?.charAt(0).toUpperCase() ||
+                      message.teamMember?.lastName?.charAt(0).toUpperCase() ||
+                      message.sender?.firstName?.charAt(0).toUpperCase() ||
+                      message.sender?.lastName?.charAt(0).toUpperCase() ||
+                      'U'}
                 </span>
               </div>
             )}
@@ -115,10 +151,24 @@ export function MessageBubble({
         className={`flex flex-1 flex-col gap-1 ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%]`}
       >
         {/* Sender Name and Time (only for other users or when not grouped) */}
-        {!isOwnMessage && showName && !isGrouped && message.sender && (
-          <div className="flex items-baseline gap-2 px-1">
-            <span className="text-xs font-semibold text-neutral-700">{senderName}</span>
-            <span className="text-xs text-neutral-500">{timeString}</span>
+        {!isOwnMessage && showName && !isGrouped && (message.sender || message.autoService) && (
+          <div className="flex flex-col gap-0.5 px-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs font-semibold text-neutral-700">{senderName}</span>
+              {teamMemberName && (
+                <span className="text-xs text-neutral-500">({teamMemberName})</span>
+              )}
+              <span className="text-xs text-neutral-500">{timeString}</span>
+            </div>
+            {message.autoService && teamMemberName && (
+              <span className="text-xs text-neutral-400">
+                {message.teamMember?.role === 'owner'
+                  ? 'Owner'
+                  : message.teamMember?.role === 'manager'
+                    ? 'Manager'
+                    : 'Employee'}
+              </span>
+            )}
           </div>
         )}
 

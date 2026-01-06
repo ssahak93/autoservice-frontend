@@ -112,4 +112,96 @@ export const visitsService = {
     );
     return response.data;
   },
+
+  // Auto service methods
+  async getAutoServiceList(params?: {
+    status?: string;
+    date?: string;
+    page?: number;
+    limit?: number;
+    autoServiceId?: string;
+  }): Promise<PaginatedResponse<Visit>> {
+    const response = await apiClient.get<PaginatedResponse<Visit>>(
+      API_ENDPOINTS.VISITS.AUTO_SERVICE_LIST,
+      {
+        params,
+      }
+    );
+    return response.data;
+  },
+
+  async getAutoServiceStatistics(params?: {
+    startDate?: string;
+    endDate?: string;
+    autoServiceId?: string;
+  }): Promise<{
+    total: number;
+    pending: number;
+    confirmed: number;
+    completed: number;
+    cancelled: number;
+    today: number;
+  }> {
+    const response = await apiClient.get<{
+      total: number;
+      pending: number;
+      confirmed: number;
+      completed: number;
+      cancelled: number;
+      today: number;
+    }>(API_ENDPOINTS.VISITS.AUTO_SERVICE_STATISTICS, {
+      params,
+    });
+    return response.data;
+  },
+
+  // Auto service visit actions
+  async acceptVisit(
+    id: string,
+    data?: {
+      confirmedDate?: string;
+      confirmedTime?: string;
+      notes?: string;
+    }
+  ): Promise<Visit> {
+    const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
+      API_ENDPOINTS.VISITS.UPDATE_STATUS(id),
+      {
+        status: 'confirmed',
+        ...data,
+      }
+    );
+    if ('success' in response.data && response.data.success && 'data' in response.data) {
+      return response.data.data;
+    }
+    return response.data as Visit;
+  },
+
+  async completeVisit(id: string, notes?: string): Promise<Visit> {
+    const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
+      API_ENDPOINTS.VISITS.COMPLETE(id),
+      notes ? { notes } : {}
+    );
+    if ('success' in response.data && response.data.success && 'data' in response.data) {
+      return response.data.data;
+    }
+    return response.data as Visit;
+  },
+
+  async rescheduleVisit(
+    id: string,
+    data: {
+      scheduledDate: string;
+      scheduledTime: string;
+    }
+  ): Promise<Visit> {
+    const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
+      API_ENDPOINTS.VISITS.RESCHEDULE(id),
+      data
+    );
+    if ('success' in response.data && response.data.success && 'data' in response.data) {
+      return response.data.data;
+    }
+    return response.data as Visit;
+  },
 };

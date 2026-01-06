@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
+import { useAuth } from '@/hooks/useAuth';
 import { Link } from '@/i18n/routing';
 
 interface MobileMenuProps {
@@ -26,6 +27,10 @@ export function MobileMenu({
   onLogout,
 }: MobileMenuProps) {
   const t = useTranslations('navigation');
+  const { user } = useAuth();
+
+  // Check if user owns an auto service
+  const isServiceOwner = user?.autoService !== null && user?.autoService !== undefined;
 
   if (!isOpen) return null;
 
@@ -50,6 +55,15 @@ export function MobileMenu({
         </Link>
         {isAuthenticated && (
           <>
+            {isServiceOwner && (
+              <Link
+                href="/dashboard"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('dashboard')}
+              </Link>
+            )}
             <Link
               href="/visits"
               className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"

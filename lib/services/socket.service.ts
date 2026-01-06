@@ -25,7 +25,7 @@ class SocketService {
   private isRefreshing = false;
   private refreshPromise: Promise<string | null> | null = null;
 
-  connect(token: string): Socket {
+  async connect(token: string): Promise<Socket> {
     // If socket is already connected with the same token, return it
     if (this.socket?.connected && this.currentToken === token) {
       return this.socket;
@@ -44,14 +44,38 @@ class SocketService {
       }
     }
 
-    this.currentToken = token;
-    const socketUrl = `${getSocketUrl()}/chat`;
+    // Check if token is expired before connecting
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000; // Convert to milliseconds
+      const now = Date.now();
+      const timeUntilExpiry = exp - now;
 
-    this.socket = io(socketUrl, {
+      // If token expires in less than 5 minutes, try to refresh it
+      if (timeUntilExpiry < 5 * 60 * 1000) {
+        const newToken = await this.refreshToken();
+        if (newToken) {
+          token = newToken;
+        }
+      }
+    } catch (_error) {
+      // If we can't parse the token, proceed anyway (it will fail on server if invalid)
+    }
+
+    this.currentToken = token;
+    const socketUrl = getSocketUrl();
+    // Connect to namespace directly in URL (like working project)
+    const namespaceUrl = `${socketUrl}/chat`;
+
+    this.socket = io(namespaceUrl, {
+      path: '/socket.io',
       auth: {
         token,
       },
-      transports: ['websocket', 'polling'], // Try websocket first, fallback to polling
+      query: {
+        token, // Also pass token in query for compatibility
+      },
+      transports: ['polling', 'websocket'], // Try polling first (more reliable), then websocket
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
@@ -67,18 +91,25 @@ class SocketService {
 
     // Don't manually reconnect - let socket.io handle it automatically
     // The 'reconnection: true' option will handle reconnections
-    const handleDisconnect = () => {
+    const handleDisconnect = (_reason: string) => {
       // Socket.io will automatically attempt to reconnect
       // No need to manually call connect()
     };
 
     const handleConnectError = async (error: Error) => {
+      console.error('[Socket] Connection error:', {
+        message: error.message,
+        error: error,
+        socketId: this.socket?.id,
+        connected: this.socket?.connected,
+      });
       // Check if error is due to expired JWT
       const errorMessage = error.message || '';
       if (
         errorMessage.includes('jwt expired') ||
         errorMessage.includes('jwt malformed') ||
-        errorMessage.includes('invalid token')
+        errorMessage.includes('invalid token') ||
+        errorMessage.includes('Unauthorized')
       ) {
         // Token expired, try to refresh
         try {
@@ -94,7 +125,7 @@ class SocketService {
             // and reconnect automatically via useEffect dependency on accessToken
             return;
           }
-        } catch (refreshError) {
+        } catch (_refreshError) {
           // Refresh failed, disconnect and stop reconnection attempts
           this.socket?.disconnect();
           this.socket?.removeAllListeners();

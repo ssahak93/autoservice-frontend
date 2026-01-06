@@ -3,13 +3,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useRouter } from '@/i18n/routing';
+import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '@/lib/utils/password.util';
+import { PHONE_PATTERN, PHONE_ERROR_MESSAGE, formatPhoneForBackend } from '@/lib/utils/phone.util';
 
 export default function RegisterPage() {
   const t = useTranslations('auth');
@@ -22,7 +26,10 @@ export default function RegisterPage() {
         .string()
         .min(1, t('emailRequired'))
         .email(t('invalidEmail', { defaultValue: 'Invalid email address' })),
-      password: z.string().min(8, t('passwordMinLength')),
+      password: z
+        .string()
+        .min(8, t('passwordMinLength'))
+        .regex(PASSWORD_PATTERN, t('passwordInvalid', { defaultValue: PASSWORD_ERROR_MESSAGE })),
       confirmPassword: z
         .string()
         .min(1, t('confirmPasswordRequired', { defaultValue: 'Please confirm your password' })),
@@ -30,7 +37,13 @@ export default function RegisterPage() {
         .string()
         .min(1, t('firstNameRequired', { defaultValue: 'First name is required' })),
       lastName: z.string().min(1, t('lastNameRequired', { defaultValue: 'Last name is required' })),
-      phoneNumber: z.string().optional(),
+      phoneNumber: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || PHONE_PATTERN.test(val),
+          t('invalidPhoneNumber', { defaultValue: PHONE_ERROR_MESSAGE })
+        ),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: t('passwordsDontMatch', { defaultValue: "Passwords don't match" }),
@@ -42,6 +55,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -69,6 +83,10 @@ export default function RegisterPage() {
   const onSubmit = (data: RegisterFormData) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirmPassword, ...registerData } = data;
+    // Format phone number for backend (add +374 prefix)
+    if (registerData.phoneNumber) {
+      registerData.phoneNumber = formatPhoneForBackend(registerData.phoneNumber);
+    }
     registerUser(registerData);
   };
 
@@ -119,19 +137,25 @@ export default function RegisterPage() {
             {...register('email')}
           />
 
-          <Input
-            label={t('phoneNumber')}
-            type="tel"
-            placeholder="+374 XX XXX XXX"
-            error={errors.phoneNumber?.message}
-            disabled={isRegistering || isSubmitting}
-            autoComplete="tel"
-            {...register('phoneNumber')}
+          <Controller
+            name="phoneNumber"
+            control={control}
+            render={({ field }) => (
+              <PhoneInput
+                label={t('phoneNumber')}
+                value={field.value || ''}
+                onChange={field.onChange}
+                error={errors.phoneNumber?.message}
+                disabled={isRegistering || isSubmitting}
+                helperText={t('phoneNumberHelper', {
+                  defaultValue: 'Optional. Enter 8 or 9 digits (e.g., 98222680 or 098222680)',
+                })}
+              />
+            )}
           />
 
-          <Input
+          <PasswordInput
             label={t('password')}
-            type="password"
             placeholder="••••••••"
             error={errors.password?.message}
             disabled={isRegistering || isSubmitting}
@@ -140,9 +164,8 @@ export default function RegisterPage() {
             {...register('password')}
           />
 
-          <Input
+          <PasswordInput
             label={t('confirmPassword', { defaultValue: 'Confirm Password' })}
-            type="password"
             placeholder="••••••••"
             error={errors.confirmPassword?.message}
             disabled={isRegistering || isSubmitting}

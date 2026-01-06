@@ -8,6 +8,7 @@ import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useRouter } from '@/i18n/routing';
 
@@ -85,9 +86,8 @@ export default function LoginPage() {
             {...register('email')}
           />
 
-          <Input
+          <PasswordInput
             label={t('password')}
-            type="password"
             placeholder="••••••••"
             error={errors.password?.message}
             disabled={isLoggingIn || isSubmitting}

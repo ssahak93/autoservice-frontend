@@ -22,42 +22,53 @@ export function useSocket() {
     }
 
     // Connect socket (will reuse existing connection if token is the same)
-    const socketInstance = socketService.connect(accessToken);
-    setSocket(socketInstance);
+    // Note: connect is now async to handle token refresh
+    let socketInstance: Socket | null = null;
+    let isMounted = true;
 
-    // Update connection state immediately if already connected
-    if (socketInstance.connected) {
-      setIsConnected(true);
-    }
+    void socketService.connect(accessToken).then((socket) => {
+      if (!isMounted) return;
+      socketInstance = socket;
+      setSocket(socket);
 
-    const handleConnect = () => {
-      setIsConnected(true);
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      // Update connection state immediately if already connected
+      if (socket.connected) {
+        setIsConnected(true);
       }
-    };
 
-    const handleDisconnect = () => {
-      setIsConnected(false);
-    };
+      const handleConnect = () => {
+        setIsConnected(true);
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+        }
+      };
 
-    const handleConnectError = () => {
-      setIsConnected(false);
-    };
+      const handleDisconnect = (_reason: string) => {
+        setIsConnected(false);
+      };
 
-    // Add event listeners
-    socketInstance.on('connect', handleConnect);
-    socketInstance.on('disconnect', handleDisconnect);
-    socketInstance.on('connect_error', handleConnectError);
+      const handleConnectError = (_error: Error) => {
+        setIsConnected(false);
+      };
+
+      // Add event listeners
+      socket.on('connect', handleConnect);
+      socket.on('disconnect', handleDisconnect);
+      socket.on('connect_error', handleConnectError);
+    });
 
     return () => {
+      isMounted = false;
       // Remove event listeners on cleanup
-      socketInstance.off('connect', handleConnect);
-      socketInstance.off('disconnect', handleDisconnect);
-      socketInstance.off('connect_error', handleConnectError);
-      const currentTimeout = reconnectTimeoutRef.current;
-      if (currentTimeout) {
-        clearTimeout(currentTimeout);
+      if (socketInstance) {
+        socketInstance.off('connect');
+        socketInstance.off('disconnect');
+        socketInstance.off('connect_error');
+      }
+      // Copy ref value to variable for cleanup
+      const timeoutId = reconnectTimeoutRef.current;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
     };
   }, [accessToken]);

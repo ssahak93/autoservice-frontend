@@ -1,6 +1,7 @@
 import type { AxiosError } from 'axios';
 
 import { apiClient } from '@/lib/api/client';
+import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
 export interface MessageReaction {
   id: string;
@@ -17,6 +18,8 @@ export interface Message {
   id: string;
   visitId: string;
   senderId: string;
+  autoServiceId?: string | null;
+  teamMemberId?: string | null;
   content: string;
   messageType: 'text' | 'image' | 'sticker';
   imageFileId?: string;
@@ -36,6 +39,25 @@ export interface Message {
       fileUrl: string;
     };
   };
+  autoService?: {
+    id: string;
+    serviceType: string;
+    companyName: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    avatarFile?: {
+      fileUrl: string;
+    } | null;
+  } | null;
+  teamMember?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    avatarFile?: {
+      fileUrl: string;
+    } | null;
+  } | null;
 }
 
 export interface SendMessageDto {
@@ -171,6 +193,62 @@ export const chatService = {
     const response = await apiClient.get<
       Record<string, Array<{ id: string; firstName: string | null; lastName: string | null }>>
     >(`/chat/visits/messages/${messageId}/reactions`);
+    return response.data;
+  },
+
+  /**
+   * Get all conversations for auto service
+   */
+  async getConversations(autoServiceId?: string): Promise<{
+    data: Array<{
+      visitId: string;
+      visit: {
+        id: string;
+        scheduledDate: string;
+        scheduledTime: string;
+        status: string;
+      };
+      customer: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl: string | null;
+      };
+      lastMessage: {
+        id: string;
+        content: string;
+        createdAt: string;
+        senderId: string;
+      } | null;
+      unreadCount: number;
+    }>;
+  }> {
+    const response = await apiClient.get<{
+      data: Array<{
+        visitId: string;
+        visit: {
+          id: string;
+          scheduledDate: string;
+          scheduledTime: string;
+          status: string;
+        };
+        customer: {
+          id: string;
+          firstName: string;
+          lastName: string;
+          avatarUrl: string | null;
+        };
+        lastMessage: {
+          id: string;
+          content: string;
+          createdAt: string;
+          senderId: string;
+        } | null;
+        unreadCount: number;
+      }>;
+    }>(API_ENDPOINTS.CHAT.CONVERSATIONS, {
+      params: autoServiceId ? { autoServiceId } : undefined,
+    });
     return response.data;
   },
 };

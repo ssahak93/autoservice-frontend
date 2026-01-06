@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Mail, Phone, User as UserIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -15,9 +15,16 @@ import { ChangePasswordModal } from '@/components/profile/ChangePasswordModal';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpdateProfile } from '@/hooks/useProfile';
 import { getAnimationVariants } from '@/lib/utils/animations';
+import {
+  PHONE_PATTERN,
+  PHONE_ERROR_MESSAGE,
+  formatPhoneForBackend,
+  parsePhoneFromBackend,
+} from '@/lib/utils/phone.util';
 
 /**
  * Profile Page Component
@@ -42,8 +49,8 @@ export default function ProfilePage() {
       .string()
       .optional()
       .refine(
-        (val) => !val || /^\+?[1-9]\d{1,14}$/.test(val),
-        t('invalidPhoneNumber', { defaultValue: 'Invalid phone number format' })
+        (val) => !val || PHONE_PATTERN.test(val),
+        t('invalidPhoneNumber', { defaultValue: PHONE_ERROR_MESSAGE })
       ),
   });
 
@@ -52,6 +59,7 @@ export default function ProfilePage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isDirty },
     reset,
   } = useForm<ProfileFormData>({
@@ -65,7 +73,7 @@ export default function ProfilePage() {
       reset({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        phoneNumber: user.phoneNumber || '',
+        phoneNumber: parsePhoneFromBackend(user.phoneNumber),
       });
     }
   }, [user, reset]);
@@ -75,7 +83,7 @@ export default function ProfilePage() {
       await updateProfile.mutateAsync({
         firstName: data.firstName,
         lastName: data.lastName,
-        phoneNumber: data.phoneNumber || undefined,
+        phoneNumber: data.phoneNumber ? formatPhoneForBackend(data.phoneNumber) : undefined,
       });
     } catch (error) {
       // Error is handled in the hook
@@ -251,17 +259,22 @@ export default function ProfilePage() {
 
                 {/* Phone Number */}
                 <div>
-                  <Input
-                    label={t('phoneNumber')}
-                    type="tel"
-                    placeholder={t('phoneNumberPlaceholder', { defaultValue: '+374 XX XXX XXX' })}
-                    error={errors.phoneNumber?.message}
-                    disabled={updateProfile.isPending}
-                    autoComplete="tel"
-                    helperText={t('phoneNumberHelper', {
-                      defaultValue: 'Optional. Include country code',
-                    })}
-                    {...register('phoneNumber')}
+                  <Controller
+                    name="phoneNumber"
+                    control={control}
+                    render={({ field }) => (
+                      <PhoneInput
+                        label={t('phoneNumber')}
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        error={errors.phoneNumber?.message}
+                        disabled={updateProfile.isPending}
+                        helperText={t('phoneNumberHelper', {
+                          defaultValue:
+                            'Optional. Enter 8 or 9 digits (e.g., 98222680 or 098222680)',
+                        })}
+                      />
+                    )}
                   />
                 </div>
 

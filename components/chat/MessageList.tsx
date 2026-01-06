@@ -4,7 +4,7 @@ import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -51,7 +51,21 @@ export function MessageList({ visitId }: MessageListProps) {
   const { socket, isConnected } = useSocket();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [typingUsers, setTypingUsers] = useState<
+    Map<
+      string,
+      {
+        firstName: string | null;
+        lastName: string | null;
+        autoService?: {
+          companyName: string | null;
+          firstName: string | null;
+          lastName: string | null;
+        } | null;
+        teamMember?: { firstName: string | null; lastName: string | null; role: string } | null;
+      }
+    >
+  >(new Map());
   const markAsReadTimeoutRef = useRef<NodeJS.Timeout>();
   const lastMarkedAsReadRef = useRef<number>(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -105,21 +119,38 @@ export function MessageList({ visitId }: MessageListProps) {
   }, [messages, user?.id, t]);
 
   // WebSocket: Join visit room and listen for messages
-  useEffect(() => {
-    if (!socket || !isConnected || !visitId) return;
+  // Use a ref to track if we've already set up listeners to avoid duplicates
+  const listenersSetupRef = useRef(false);
+  const currentVisitIdRef = useRef<string | null>(null);
+  const setupListenersRef = useRef<(() => void) | null>(null);
+
+  // Function to set up listeners and join room
+  const setupListenersAndJoin = useCallback(() => {
+    if (!socket || !visitId) {
+      return;
+    }
+
+    // Wait for socket to be connected
+    if (!socket.connected && !isConnected) {
+      return;
+    }
+
+    // If visitId changed, reset the flag
+    if (currentVisitIdRef.current !== visitId) {
+      listenersSetupRef.current = false;
+      currentVisitIdRef.current = visitId;
+    }
+
+    // Only set up listeners once per visitId
+    if (listenersSetupRef.current && currentVisitIdRef.current === visitId) {
+      return;
+    }
 
     let isJoined = false;
 
-    // Join visit room
-    socket.emit('join-visit', { visitId }, (response: { success?: boolean }) => {
-      if (response?.success) {
-        isJoined = true;
-      }
-    });
-
-    // Listen for new messages
+    // Listen for new messages - set up listeners FIRST to avoid missing messages
     const handleNewMessage = (message: Message) => {
-      // Update infinite query cache
+      // Update infinite query cache - match any query key that starts with ['chat', 'messages', visitId]
       queryClient.setQueriesData(
         {
           queryKey: ['chat', 'messages', visitId],
@@ -153,11 +184,25 @@ export function MessageList({ visitId }: MessageListProps) {
           }
 
           // Add new message to the first page (most recent)
+          // Backend returns messages in reverse chronological order (newest first)
+          // So we add to the beginning of the array
           const newPages = [...old.pages];
           if (newPages[0]) {
+            // Check if message should be at the beginning (newest) or end
+            const existingMessages = newPages[0].data || [];
+            const messageDate = new Date(message.createdAt);
+            const firstMessageDate =
+              existingMessages.length > 0 ? new Date(existingMessages[0].createdAt) : null;
+
+            // If new message is newer than first message, add to beginning
+            // Otherwise add to end (shouldn't happen, but safety check)
+            const shouldAddToBeginning = !firstMessageDate || messageDate >= firstMessageDate;
+
             newPages[0] = {
               ...newPages[0],
-              data: [...(newPages[0].data || []), message],
+              data: shouldAddToBeginning
+                ? [message, ...existingMessages]
+                : [...existingMessages, message],
               pagination: {
                 ...newPages[0].pagination,
                 total: (newPages[0].pagination?.total || 0) + 1,
@@ -171,6 +216,14 @@ export function MessageList({ visitId }: MessageListProps) {
           };
         }
       );
+
+      // Force a refetch to ensure UI updates - sometimes setQueriesData doesn't trigger re-render
+      queryClient.invalidateQueries({
+        queryKey: ['chat', 'messages', visitId],
+        exact: false,
+        refetchType: 'none', // Don't refetch, just invalidate to trigger re-render
+      });
+
       // Update unread count manually instead of invalidating
       queryClient.setQueryData(['chat', 'unread', visitId], (old: number = 0) => {
         // Only increment if message is from other user
@@ -182,12 +235,49 @@ export function MessageList({ visitId }: MessageListProps) {
     };
 
     // Listen for typing indicators
-    const handleTyping = (data: { userId: string; visitId: string; isTyping: boolean }) => {
+    const handleTyping = (data: {
+      userId: string;
+      visitId: string;
+      isTyping: boolean;
+      userInfo?: { firstName: string | null; lastName: string | null };
+      autoService?: {
+        companyName: string | null;
+        firstName: string | null;
+        lastName: string | null;
+      } | null;
+      teamMember?: { firstName: string | null; lastName: string | null; role: string } | null;
+    }) => {
       if (data.visitId !== visitId || data.userId === user?.id) return; // Ignore own typing
       setTypingUsers((prev) => {
-        const next = new Set(prev);
+        const next = new Map(prev);
         if (data.isTyping) {
-          next.add(data.userId);
+          // Use provided user info from backend (preferred), or try to get from recent messages
+          let userInfo = data.userInfo || { firstName: null, lastName: null };
+          let autoService = data.autoService || null;
+          let teamMember = data.teamMember || null;
+
+          // If backend didn't provide user info, try to get from recent messages
+          if (!userInfo.firstName && !userInfo.lastName) {
+            const userMessage = messages.find((m) => m.senderId === data.userId);
+            if (userMessage?.sender) {
+              userInfo = {
+                firstName: userMessage.sender.firstName,
+                lastName: userMessage.sender.lastName,
+              };
+            }
+            if (!autoService && userMessage?.autoService) {
+              autoService = userMessage.autoService;
+            }
+            if (!teamMember && userMessage?.teamMember) {
+              teamMember = userMessage.teamMember;
+            }
+          }
+
+          next.set(data.userId, {
+            ...userInfo,
+            autoService,
+            teamMember,
+          });
         } else {
           next.delete(data.userId);
         }
@@ -265,21 +355,96 @@ export function MessageList({ visitId }: MessageListProps) {
       queryClient.setQueryData(['chat', 'unread', visitId], 0); // Clear unread count
     };
 
+    // Set up event listeners BEFORE joining room to ensure we don't miss messages
+    // Remove any existing listeners first to avoid duplicates
+    socket.off('new-message', handleNewMessage);
+    socket.off('user-typing', handleTyping);
+    socket.off('reaction-updated', handleReactionUpdate);
+    socket.off('messages-read', handleMessagesRead);
+
+    // Now add the listeners
     socket.on('new-message', handleNewMessage);
     socket.on('user-typing', handleTyping);
     socket.on('reaction-updated', handleReactionUpdate);
     socket.on('messages-read', handleMessagesRead);
 
-    return () => {
-      if (isJoined) {
-        socket.emit('leave-visit', { visitId });
+    // Mark listeners as set up
+    listenersSetupRef.current = true;
+
+    // Join visit room AFTER setting up listeners
+    socket.emit('join-visit', { visitId }, (response: { success?: boolean; error?: string }) => {
+      if (response?.success) {
+        isJoined = true;
+      } else {
+        // Reset flag on error so we can retry
+        listenersSetupRef.current = false;
       }
+    });
+
+    // Store cleanup function
+    const cleanup = () => {
+      listenersSetupRef.current = false;
       socket.off('new-message', handleNewMessage);
       socket.off('user-typing', handleTyping);
       socket.off('reaction-updated', handleReactionUpdate);
       socket.off('messages-read', handleMessagesRead);
+      if (isJoined) {
+        socket.emit('leave-visit', { visitId });
+      }
     };
-  }, [socket, isConnected, visitId, queryClient, user?.id]);
+
+    return cleanup;
+  }, [socket, isConnected, visitId, queryClient, user?.id, messages]);
+
+  // Main useEffect to trigger setup when socket/visitId changes
+  useEffect(() => {
+    // Cleanup previous setup if exists
+    if (setupListenersRef.current) {
+      setupListenersRef.current();
+      setupListenersRef.current = null;
+    }
+
+    // Try to setup immediately if socket is ready
+    const cleanup = setupListenersAndJoin();
+    if (cleanup) {
+      setupListenersRef.current = cleanup;
+    }
+
+    // Also listen for connect event to retry setup
+    if (socket && visitId) {
+      const handleConnect = () => {
+        // Cleanup previous setup
+        if (setupListenersRef.current) {
+          setupListenersRef.current();
+          setupListenersRef.current = null;
+        }
+        listenersSetupRef.current = false; // Reset flag to allow re-setup
+        const newCleanup = setupListenersAndJoin();
+        if (newCleanup) {
+          setupListenersRef.current = newCleanup;
+        }
+      };
+
+      socket.on('connect', handleConnect);
+
+      return () => {
+        socket.off('connect', handleConnect);
+        // Cleanup on unmount
+        if (setupListenersRef.current) {
+          setupListenersRef.current();
+          setupListenersRef.current = null;
+        }
+      };
+    }
+
+    return () => {
+      // Cleanup on unmount
+      if (setupListenersRef.current) {
+        setupListenersRef.current();
+        setupListenersRef.current = null;
+      }
+    };
+  }, [socket, isConnected, visitId, queryClient, user?.id, setupListenersAndJoin]);
 
   // Initial scroll to bottom when messages are loaded
   useEffect(() => {
@@ -412,7 +577,10 @@ export function MessageList({ visitId }: MessageListProps) {
   }
 
   return (
-    <div ref={messagesContainerRef} className="flex h-full flex-col overflow-y-auto px-4 py-4">
+    <div
+      ref={messagesContainerRef}
+      className="flex h-full flex-col overflow-y-auto bg-gray-50 px-4 py-4 dark:bg-gray-900/50"
+    >
       {/* Loading indicator for older messages */}
       {isFetchingNextPage && (
         <div className="flex justify-center py-2">
@@ -474,9 +642,44 @@ export function MessageList({ visitId }: MessageListProps) {
             />
           </div>
           <span>
-            {typingUsers.size === 1
-              ? t('isTyping', { defaultValue: 'Someone is typing...' })
-              : t('areTyping', { defaultValue: 'People are typing...' })}
+            {Array.from(typingUsers.entries())
+              .map(([_userId, userInfo], index, array) => {
+                // Get display name
+                let displayName = 'Someone';
+                if (userInfo.autoService && userInfo.teamMember) {
+                  // Team member typing
+                  const serviceName =
+                    userInfo.autoService.companyName ||
+                    `${userInfo.autoService.firstName || ''} ${userInfo.autoService.lastName || ''}`.trim() ||
+                    'Auto Service';
+                  displayName = `${userInfo.teamMember.firstName || 'Team member'} (${serviceName})`;
+                } else if (userInfo.autoService) {
+                  // Auto service owner typing
+                  displayName =
+                    userInfo.autoService.companyName ||
+                    `${userInfo.autoService.firstName || ''} ${userInfo.autoService.lastName || ''}`.trim() ||
+                    'Auto Service';
+                } else if (userInfo.firstName || userInfo.lastName) {
+                  // Regular user typing
+                  displayName =
+                    `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || 'User';
+                }
+
+                if (array.length === 1) {
+                  return t('isTyping', {
+                    name: displayName,
+                    defaultValue: `${displayName} is typing...`,
+                  });
+                } else if (index === 0) {
+                  return displayName;
+                } else if (index === array.length - 1) {
+                  return ` and ${displayName}`;
+                } else {
+                  return `, ${displayName}`;
+                }
+              })
+              .join('')}
+            {typingUsers.size > 1 && ` ${t('areTyping', { defaultValue: 'are typing...' })}`}
           </span>
         </motion.div>
       )}
