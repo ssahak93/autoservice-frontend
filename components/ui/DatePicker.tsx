@@ -1,13 +1,15 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
+// Import only needed locales for tree shaking
 import { enUS } from 'date-fns/locale/en-US';
 import { hy } from 'date-fns/locale/hy';
 import { ru } from 'date-fns/locale/ru';
 import { Calendar } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
-import { forwardRef, useMemo } from 'react';
+import { forwardRef, useMemo, useState, useEffect } from 'react';
 import ReactDatePicker, { registerLocale } from 'react-datepicker';
 
 import { availabilityService, type DateLoad } from '@/lib/services/availability.service';
@@ -94,6 +96,8 @@ export interface DatePickerProps {
   name?: string;
   autoServiceId?: string; // For availability checking
   showAvailability?: boolean; // Whether to show availability status
+  inline?: boolean; // Whether to show calendar inline (for modals)
+  withPortal?: boolean; // Whether to render in portal (for modals)
 }
 
 /**
@@ -124,6 +128,8 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       name,
       autoServiceId,
       showAvailability = true,
+      inline = false,
+      withPortal = false,
     },
     ref
   ) => {
@@ -170,30 +176,40 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       }
     }, [locale]);
 
-    // Set default minDate to today if not provided
-    const defaultMinDate = minDate || (showTimeSelect ? undefined : new Date());
+    // Track if component is mounted to prevent hydration mismatch
+    const [isMounted, setIsMounted] = useState(false);
 
-    // Calculate date range for availability (next 60 days)
+    useEffect(() => {
+      setIsMounted(true);
+    }, []);
+
+    // Set default minDate to today if not provided (only after mount to prevent hydration mismatch)
+    const defaultMinDate = minDate || (showTimeSelect || !isMounted ? undefined : new Date());
+
+    // Calculate date range for availability (next 60 days) - only after mount
     const startDate = useMemo(() => {
+      if (!isMounted) return '';
       const date = new Date();
       date.setHours(0, 0, 0, 0);
       return format(date, 'yyyy-MM-dd');
-    }, []);
+    }, [isMounted]);
 
     const endDate = useMemo(() => {
+      if (!isMounted) return '';
       const date = new Date();
       date.setDate(date.getDate() + 60);
       return format(date, 'yyyy-MM-dd');
-    }, []);
+    }, [isMounted]);
 
-    // Fetch availability if autoServiceId is provided
+    // Fetch availability if autoServiceId is provided (only after mount)
     const { data: availability } = useQuery({
       queryKey: ['availability', autoServiceId, startDate, endDate],
       queryFn: () =>
         autoServiceId && showAvailability
           ? availabilityService.getAvailability(autoServiceId, startDate, endDate)
           : null,
-      enabled: !!autoServiceId && showAvailability,
+      enabled:
+        !!autoServiceId && showAvailability && isMounted && startDate !== '' && endDate !== '',
       staleTime: 5 * 60 * 1000, // 5 minutes
       retry: false, // Don't retry on 404 errors
     });
@@ -283,20 +299,26 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
             calendarClassName="!rounded-lg !border-2 !border-neutral-200 !shadow-xl"
             dayClassName={getDayClassName}
             selectedDayClassName="!bg-primary-500 !text-white hover:!bg-primary-600 !font-semibold"
+            inline={inline}
+            withPortal={withPortal}
             customInput={
-              <CustomDateInput
-                value="" // React-datepicker will override this, we use selectedDate instead
-                selectedDate={value}
-                locale={locale}
-                placeholder={placeholder}
-                error={error}
-                disabled={disabled || isOwnService}
-                className={className}
-              />
+              !inline ? (
+                <CustomDateInput
+                  value="" // React-datepicker will override this, we use selectedDate instead
+                  selectedDate={value}
+                  locale={locale}
+                  placeholder={placeholder}
+                  error={error}
+                  disabled={disabled || isOwnService}
+                  className={className}
+                />
+              ) : undefined
             }
             ref={ref as React.LegacyRef<ReactDatePicker>}
           />
-          <Calendar className="pointer-events-none absolute left-3 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+          {!inline && (
+            <Calendar className="pointer-events-none absolute left-3 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+          )}
         </div>
 
         {/* Own service warning */}

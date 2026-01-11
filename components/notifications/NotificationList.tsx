@@ -137,7 +137,7 @@ export function NotificationList({ compact = false }: NotificationListProps) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2, delay: index * 0.05 }}
               >
-                <NotificationItem notification={notification} />
+                <NotificationItem notification={notification} compact={compact} />
               </motion.div>
             ))}
           </motion.div>
@@ -171,4 +171,3 @@ export function NotificationList({ compact = false }: NotificationListProps) {
     </div>
   );
 }
-

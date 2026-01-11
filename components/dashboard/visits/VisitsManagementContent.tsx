@@ -1,19 +1,48 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { useAutoServiceVisits } from '@/hooks/useDashboard';
 import { visitsService } from '@/lib/services/visits.service';
+import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { Visit } from '@/types';
 
-import { AcceptVisitModal } from './AcceptVisitModal';
-import { CancelVisitModal } from './CancelVisitModal';
-import { CompleteVisitModal } from './CompleteVisitModal';
-import { RescheduleVisitModal } from './RescheduleVisitModal';
-import { VisitDetailsModal } from './VisitDetailsModal';
+// Lazy load modals to reduce initial bundle size
+const AcceptVisitModal = dynamic(
+  () => import('./AcceptVisitModal').then((mod) => ({ default: mod.AcceptVisitModal })),
+  {
+    ssr: false,
+  }
+);
+const CancelVisitModal = dynamic(
+  () => import('./CancelVisitModal').then((mod) => ({ default: mod.CancelVisitModal })),
+  {
+    ssr: false,
+  }
+);
+const CompleteVisitModal = dynamic(
+  () => import('./CompleteVisitModal').then((mod) => ({ default: mod.CompleteVisitModal })),
+  {
+    ssr: false,
+  }
+);
+const RescheduleVisitModal = dynamic(
+  () => import('./RescheduleVisitModal').then((mod) => ({ default: mod.RescheduleVisitModal })),
+  {
+    ssr: false,
+  }
+);
+const VisitDetailsModal = dynamic(
+  () => import('./VisitDetailsModal').then((mod) => ({ default: mod.VisitDetailsModal })),
+  {
+    ssr: false,
+  }
+);
+
 import { VisitFilters } from './VisitFilters';
 import { VisitList } from './VisitList';
 
@@ -23,6 +52,7 @@ export function VisitsManagementContent() {
   const t = useTranslations('dashboard.visits');
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
+  const { selectedAutoServiceId } = useAutoServiceStore();
 
   const [filters, setFilters] = useState<{
     status?: string;
@@ -70,11 +100,15 @@ export function VisitsManagementContent() {
       confirmedTime?: string;
       notes?: string;
     }) =>
-      visitsService.acceptVisit(data.id, {
-        confirmedDate: data.confirmedDate,
-        confirmedTime: data.confirmedTime,
-        notes: data.notes,
-      }),
+      visitsService.acceptVisit(
+        data.id,
+        {
+          confirmedDate: data.confirmedDate,
+          confirmedTime: data.confirmedTime,
+          notes: data.notes,
+        },
+        selectedAutoServiceId || undefined
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'visits'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'statistics'] });
@@ -92,7 +126,7 @@ export function VisitsManagementContent() {
   // Complete visit mutation
   const completeMutation = useMutation({
     mutationFn: (data: { id: string; notes?: string }) =>
-      visitsService.completeVisit(data.id, data.notes),
+      visitsService.completeVisit(data.id, data.notes, selectedAutoServiceId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'visits'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'statistics'] });
@@ -128,10 +162,14 @@ export function VisitsManagementContent() {
   // Reschedule visit mutation
   const rescheduleMutation = useMutation({
     mutationFn: (data: { id: string; scheduledDate: string; scheduledTime: string }) =>
-      visitsService.rescheduleVisit(data.id, {
-        scheduledDate: data.scheduledDate,
-        scheduledTime: data.scheduledTime,
-      }),
+      visitsService.rescheduleVisit(
+        data.id,
+        {
+          scheduledDate: data.scheduledDate,
+          scheduledTime: data.scheduledTime,
+        },
+        selectedAutoServiceId || undefined
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'visits'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'statistics'] });

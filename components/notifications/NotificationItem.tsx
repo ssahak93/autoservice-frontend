@@ -1,8 +1,20 @@
 'use client';
 
-import { format } from 'date-fns';
-import { Bell, CheckCircle2, MessageSquare, Calendar, Star, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
+import { motion } from 'framer-motion';
+import {
+  Bell,
+  CheckCircle2,
+  MessageSquare,
+  Calendar,
+  Star,
+  X,
+  ExternalLink,
+  ArrowRight,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 
 import { useMarkNotificationAsRead, useDeleteNotification } from '@/hooks/useNotifications';
@@ -10,6 +22,7 @@ import type { Notification } from '@/lib/services/notifications.service';
 
 interface NotificationItemProps {
   notification: Notification;
+  compact?: boolean;
 }
 
 const notificationIcons = {
@@ -30,8 +43,9 @@ const notificationColors = {
   system: 'text-neutral-500',
 };
 
-export function NotificationItem({ notification }: NotificationItemProps) {
+export function NotificationItem({ notification, compact = false }: NotificationItemProps) {
   const t = useTranslations('notifications');
+  const locale = useLocale();
   const markAsRead = useMarkNotificationAsRead();
   const deleteNotification = useDeleteNotification();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -39,13 +53,37 @@ export function NotificationItem({ notification }: NotificationItemProps) {
   const Icon = notificationIcons[notification.type] || Bell;
   const colorClass = notificationColors[notification.type] || 'text-neutral-500';
 
+  // Extract related IDs from notification data
+  const visitId = notification.data?.visitId as string | undefined;
+  const messageId = notification.data?.messageId as string | undefined;
+
+  // Determine navigation link based on notification type
+  const getNotificationLink = () => {
+    if (visitId) {
+      // For visit-related notifications, link to visits page or dashboard visits
+      if (notification.type.includes('visit')) {
+        return `/${locale}/visits`;
+      }
+      return `/${locale}/dashboard/visits`;
+    }
+    if (messageId || notification.type === 'new_message') {
+      return `/${locale}/dashboard/messages`;
+    }
+    return null;
+  };
+
+  const notificationLink = getNotificationLink();
+
   const handleMarkAsRead = () => {
     if (!notification.isRead) {
       markAsRead.mutate(notification.id);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     setIsDeleting(true);
     try {
       await deleteNotification.mutateAsync(notification.id);
@@ -54,63 +92,99 @@ export function NotificationItem({ notification }: NotificationItemProps) {
     }
   };
 
-  return (
+  const handleClick = () => {
+    handleMarkAsRead();
+  };
+
+  const content = (
     <div
-      className={`glass-light rounded-lg p-4 transition-all hover:shadow-md ${
-        !notification.isRead ? 'border-l-4 border-primary-500 bg-primary-50/50' : ''
+      className={`glass-light group relative cursor-pointer rounded-lg p-4 transition-all hover:shadow-lg ${
+        !notification.isRead
+          ? 'border-l-4 border-primary-500 bg-primary-50/50'
+          : 'hover:bg-neutral-50'
       }`}
-      onClick={handleMarkAsRead}
+      onClick={handleClick}
     >
       <div className="flex items-start gap-3">
         {/* Icon */}
-        <div className={`flex-shrink-0 ${colorClass}`}>
+        <motion.div
+          className={`flex-shrink-0 ${colorClass}`}
+          whileHover={{ scale: 1.1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        >
           <Icon className="h-5 w-5" />
-        </div>
+        </motion.div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center justify-between gap-2">
-            <h4 className={`font-semibold ${!notification.isRead ? 'text-neutral-900' : 'text-neutral-700'}`}>
+            <h4
+              className={`font-semibold ${!notification.isRead ? 'text-neutral-900' : 'text-neutral-700'}`}
+            >
               {notification.title}
             </h4>
-            {notification.isRead && (
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-success-500" />
+            <div className="flex items-center gap-2">
+              {notification.isRead && (
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-success-500" />
+              )}
+              {notificationLink && (
+                <ArrowRight className="h-4 w-4 flex-shrink-0 text-neutral-400 transition-colors group-hover:text-primary-500" />
+              )}
+            </div>
+          </div>
+          <p className="mb-2 line-clamp-2 text-sm text-neutral-600">{notification.message}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-neutral-500">
+              {format(new Date(notification.createdAt), 'PPp')}
+            </p>
+            {notificationLink && !compact && (
+              <span className="flex items-center gap-1 text-xs font-medium text-primary-600">
+                {t('viewDetails', { defaultValue: 'View details' })}
+                <ExternalLink className="h-3 w-3" />
+              </span>
             )}
           </div>
-          <p className="mb-2 text-sm text-neutral-600">{notification.message}</p>
-          <p className="text-xs text-neutral-500">
-            {format(new Date(notification.createdAt), 'PPp')}
-          </p>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-shrink-0 gap-1">
+        <div className="flex flex-shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
           {!notification.isRead && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={(e) => {
                 e.stopPropagation();
                 handleMarkAsRead();
               }}
-              className="rounded p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+              className="rounded p-1 text-neutral-400 transition-colors hover:bg-primary-100 hover:text-primary-600"
               aria-label={t('markAsRead')}
             >
               <CheckCircle2 className="h-4 w-4" />
-            </button>
+            </motion.button>
           )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete();
-            }}
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleDelete}
             disabled={isDeleting}
-            className="rounded p-1 text-neutral-400 transition-colors hover:bg-error-50 hover:text-error-600"
+            className="rounded p-1 text-neutral-400 transition-colors hover:bg-error-50 hover:text-error-600 disabled:opacity-50"
             aria-label={t('delete')}
           >
             <X className="h-4 w-4" />
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>
   );
-}
 
+  // Wrap in Link if there's a navigation link
+  if (notificationLink) {
+    return (
+      <Link href={notificationLink} className="block">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
+}

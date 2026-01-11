@@ -1,12 +1,33 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import { Skeleton } from '@/components/common/Skeleton';
 import { useDashboardStatistics } from '@/hooks/useDashboard';
 
-import { AnalyticsCharts } from './AnalyticsCharts';
-import { DateRangePicker } from './DateRangePicker';
+// Lazy load heavy components
+const AnalyticsCharts = dynamic(
+  () => import('./AnalyticsCharts').then((mod) => ({ default: mod.AnalyticsCharts })),
+  {
+    loading: () => (
+      <div className="space-y-6">
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
+const DateRangePicker = dynamic(
+  () => import('./DateRangePicker').then((mod) => ({ default: mod.DateRangePicker })),
+  {
+    ssr: false,
+  }
+);
+
 import { StatisticsCards } from './StatisticsCards';
 
 export function AnalyticsContent() {

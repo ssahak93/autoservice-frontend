@@ -91,6 +91,9 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             onBlur={handleBlur}
             disabled={disabled}
             placeholder="098222680"
+            aria-invalid={error ? 'true' : 'false'}
+            aria-describedby={error || helperText ? `${props.id || 'phone'}-helper` : undefined}
+            aria-label={label || props['aria-label'] || 'Phone number'}
             className={cn(
               'w-full rounded-lg border bg-white px-4 py-2 pl-16 text-gray-900 dark:bg-gray-700 dark:text-white',
               'placeholder:text-gray-400 dark:placeholder:text-gray-500',
@@ -105,10 +108,23 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
           />
         </div>
 
-        {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && (
+          <p
+            id={`${props.id || 'phone'}-helper`}
+            className="mt-1 text-sm text-red-600 dark:text-red-400"
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
 
         {helperText && !error && (
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{helperText}</p>
+          <p
+            id={`${props.id || 'phone'}-helper`}
+            className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+          >
+            {helperText}
+          </p>
         )}
       </div>
     );

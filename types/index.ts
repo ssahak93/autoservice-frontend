@@ -10,6 +10,7 @@ export interface User {
   avatarFile?: {
     fileUrl: string;
   };
+  // For backward compatibility - first auto service
   autoService?: {
     id: string;
     serviceType: 'individual' | 'company';
@@ -24,6 +25,21 @@ export interface User {
     } | null;
     avatarUrl?: string | null;
   } | null;
+  // All auto services owned by user
+  autoServices?: Array<{
+    id: string;
+    serviceType: 'individual' | 'company';
+    firstName: string | null;
+    lastName: string | null;
+    companyName: string | null;
+    isVerified: boolean;
+    avatarFileId: string | null;
+    avatarFile?: {
+      id: string;
+      fileUrl: string;
+    } | null;
+    avatarUrl?: string | null;
+  }>;
   teamMemberships?: Array<{
     id: string;
     autoServiceId: string;

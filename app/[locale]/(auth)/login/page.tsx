@@ -46,7 +46,9 @@ export default function LoginPage() {
       if (redirectUrl) {
         // Remove the saved URL and redirect there
         sessionStorage.removeItem('redirectAfterLogin');
-        router.push(redirectUrl);
+        // Strip locale prefix if present (for backward compatibility)
+        const normalizedUrl = redirectUrl.replace(/^\/(hy|en|ru)(\/|$)/, '/');
+        router.push(normalizedUrl);
       } else {
         // Default redirect to services
         router.push('/services');

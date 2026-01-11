@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -33,11 +34,26 @@ export function AcceptVisitModal({
 
   const schema = z.object({
     confirmedDate: z.string().optional(),
-    confirmedTime: z.string().optional(),
-    notes: z.string().optional(),
+    confirmedTime: z
+      .string()
+      .optional()
+      .refine((val) => !val || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val), {
+        message: t('accept.invalidTime', { defaultValue: 'Time must be in HH:mm format' }),
+      }),
+    notes: z
+      .string()
+      .max(
+        500,
+        t('accept.notesMaxLength', { defaultValue: 'Notes must be less than 500 characters' })
+      )
+      .optional(),
   });
 
   type FormData = z.infer<typeof schema>;
+
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    visit.scheduledDate ? new Date(visit.scheduledDate) : null
+  );
 
   const { register, handleSubmit, setValue, watch, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -47,6 +63,20 @@ export function AcceptVisitModal({
       notes: '',
     },
   });
+
+  // Update selectedDate when visit changes
+  useEffect(() => {
+    if (visit.scheduledDate) {
+      setSelectedDate(new Date(visit.scheduledDate));
+      setValue('confirmedDate', visit.scheduledDate, { shouldValidate: false });
+    } else {
+      setSelectedDate(null);
+      setValue('confirmedDate', undefined, { shouldValidate: false });
+    }
+    if (visit.scheduledTime) {
+      setValue('confirmedTime', visit.scheduledTime, { shouldValidate: false });
+    }
+  }, [visit.scheduledDate, visit.scheduledTime, setValue]);
 
   const onSubmit = (data: FormData) => {
     onAccept({
@@ -100,12 +130,17 @@ export function AcceptVisitModal({
                     {t('accept.confirmedDate', { defaultValue: 'Confirmed Date (optional)' })}
                   </label>
                   <DatePicker
-                    selected={
-                      watch('confirmedDate') ? new Date(watch('confirmedDate') || '') : null
-                    }
-                    onChange={(date) =>
-                      setValue('confirmedDate', date ? date.toISOString().split('T')[0] : undefined)
-                    }
+                    value={selectedDate}
+                    onChange={(date) => {
+                      setSelectedDate(date);
+                      setValue(
+                        'confirmedDate',
+                        date ? date.toISOString().split('T')[0] : undefined,
+                        {
+                          shouldValidate: true,
+                        }
+                      );
+                    }}
                     placeholder={t('accept.selectDate', { defaultValue: 'Select date' })}
                   />
                 </div>

@@ -76,10 +76,13 @@ export const visitsService = {
     return response.data.data;
   },
 
-  async updateStatus(id: string, status: Visit['status']): Promise<Visit> {
+  async updateStatus(id: string, status: Visit['status'], autoServiceId?: string): Promise<Visit> {
     const response = await apiClient.put<{ success: boolean; data: Visit }>(
       API_ENDPOINTS.VISITS.UPDATE_STATUS(id),
-      { status }
+      { status },
+      {
+        params: autoServiceId ? { autoServiceId } : undefined,
+      }
     );
     return response.data.data;
   },
@@ -95,10 +98,13 @@ export const visitsService = {
     return response.data as Visit;
   },
 
-  async cancel(id: string, reason?: string): Promise<Visit> {
+  async cancel(id: string, reason: string): Promise<Visit> {
+    if (!reason || reason.trim().length < 3) {
+      throw new Error('Cancellation reason is required and must be at least 3 characters');
+    }
     const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
       API_ENDPOINTS.VISITS.CANCEL(id),
-      { reason }
+      { reason: reason.trim() }
     );
     if ('success' in response.data && response.data.success && 'data' in response.data) {
       return response.data.data;
@@ -162,25 +168,67 @@ export const visitsService = {
       confirmedDate?: string;
       confirmedTime?: string;
       notes?: string;
-    }
+    },
+    autoServiceId?: string
   ): Promise<Visit> {
-    const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
-      API_ENDPOINTS.VISITS.UPDATE_STATUS(id),
-      {
+    try {
+      const payload: {
+        status: string;
+        confirmedDate?: string;
+        confirmedTime?: string;
+        notes?: string;
+      } = {
         status: 'confirmed',
-        ...data,
+      };
+
+      if (data?.confirmedDate) {
+        payload.confirmedDate = data.confirmedDate;
       }
-    );
-    if ('success' in response.data && response.data.success && 'data' in response.data) {
-      return response.data.data;
+      if (data?.confirmedTime) {
+        payload.confirmedTime = data.confirmedTime;
+      }
+      if (data?.notes) {
+        payload.notes = data.notes;
+      }
+
+      const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
+        API_ENDPOINTS.VISITS.UPDATE_STATUS(id),
+        payload,
+        {
+          params: autoServiceId ? { autoServiceId } : undefined,
+        }
+      );
+      if ('success' in response.data && response.data.success && 'data' in response.data) {
+        return response.data.data;
+      }
+      return response.data as Visit;
+    } catch (error) {
+      const axiosError = error as {
+        response?: {
+          data?: { error?: { message?: string }; message?: string };
+          status?: number;
+        };
+      };
+
+      if (axiosError.response?.status === 400) {
+        const errorMessage =
+          axiosError.response.data?.error?.message ||
+          axiosError.response.data?.message ||
+          'Failed to accept visit';
+        throw new Error(errorMessage);
+      }
+
+      throw error;
     }
-    return response.data as Visit;
   },
 
-  async completeVisit(id: string, notes?: string): Promise<Visit> {
+  async completeVisit(id: string, notes?: string, autoServiceId?: string): Promise<Visit> {
     const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
       API_ENDPOINTS.VISITS.COMPLETE(id),
-      notes ? { notes } : {}
+      notes ? { notes } : {},
+      {
+        params: autoServiceId ? { autoServiceId } : undefined,
+      }
     );
     if ('success' in response.data && response.data.success && 'data' in response.data) {
       return response.data.data;
@@ -193,15 +241,61 @@ export const visitsService = {
     data: {
       scheduledDate: string;
       scheduledTime: string;
-    }
+    },
+    autoServiceId?: string
   ): Promise<Visit> {
-    const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
-      API_ENDPOINTS.VISITS.RESCHEDULE(id),
-      data
-    );
-    if ('success' in response.data && response.data.success && 'data' in response.data) {
-      return response.data.data;
+    try {
+      const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
+        API_ENDPOINTS.VISITS.RESCHEDULE(id),
+        data,
+        {
+          params: autoServiceId ? { autoServiceId } : undefined,
+        }
+      );
+      if ('success' in response.data && response.data.success && 'data' in response.data) {
+        return response.data.data;
+      }
+      return response.data as Visit;
+    } catch (error) {
+      const axiosError = error as {
+        response?: {
+          data?: { error?: { message?: string }; message?: string };
+          status?: number;
+        };
+      };
+
+      if (axiosError.response?.status === 400) {
+        const errorMessage =
+          axiosError.response.data?.error?.message ||
+          axiosError.response.data?.message ||
+          'Failed to reschedule visit';
+        throw new Error(errorMessage);
+      }
+
+      throw error;
     }
-    return response.data as Visit;
+  },
+
+  async getHistory(id: string): Promise<VisitHistoryEntry[]> {
+    const response = await apiClient.get<VisitHistoryEntry[]>(API_ENDPOINTS.VISITS.HISTORY(id));
+    return response.data;
   },
 };
+
+export interface VisitHistoryEntry {
+  id: string;
+  visitId: string;
+  changedBy: string;
+  changedByType: 'user' | 'service' | 'system';
+  changeType: string;
+  oldValue: string | null;
+  newValue: string | null;
+  description: string | null;
+  createdAt: string;
+  visit?: {
+    id: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    status: string;
+  };
+}

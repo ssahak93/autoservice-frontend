@@ -8,8 +8,10 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 import { useServiceReviews } from '@/hooks/useReviews';
 
+import { CreateReviewModal } from './CreateReviewModal';
 import { ReviewCard } from './ReviewCard';
 
 interface ReviewListProps {
@@ -20,8 +22,10 @@ type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
 
 export function ReviewList({ serviceId }: ReviewListProps) {
   const t = useTranslations('reviews');
+  const { user } = useAuth();
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [page, setPage] = useState(1);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const limit = 10;
 
   const { data, isLoading, isFetching } = useServiceReviews(serviceId, {
@@ -50,11 +54,7 @@ export function ReviewList({ serviceId }: ReviewListProps) {
 
   if (!reviews || reviews.length === 0) {
     return (
-      <EmptyState
-        icon={Star}
-        title={t('noReviews')}
-        description={t('noReviewsDescription')}
-      />
+      <EmptyState icon={Star} title={t('noReviews')} description={t('noReviewsDescription')} />
     );
   }
 
@@ -65,7 +65,18 @@ export function ReviewList({ serviceId }: ReviewListProps) {
         <h3 className="font-display text-2xl font-semibold">
           {t('reviews')} ({pagination?.total || 0})
         </h3>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {user && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-1"
+            >
+              <Star className="h-4 w-4" />
+              {t('writeReview')}
+            </Button>
+          )}
           {sortOptions.map((option) => (
             <Button
               key={option.value}
@@ -129,7 +140,15 @@ export function ReviewList({ serviceId }: ReviewListProps) {
           </Button>
         </div>
       )}
+
+      {/* Create Review Modal */}
+      {showCreateModal && (
+        <CreateReviewModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          serviceId={serviceId}
+        />
+      )}
     </div>
   );
 }
-

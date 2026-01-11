@@ -51,27 +51,47 @@ export interface QRInvitationResponse {
 }
 
 export const teamService = {
-  async getTeam(): Promise<TeamMember[]> {
-    const response = await apiClient.get<TeamMember[]>(API_ENDPOINTS.TEAM.LIST);
+  async getTeam(autoServiceId?: string): Promise<TeamMember[]> {
+    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+    const response = await apiClient.get<TeamMember[]>(API_ENDPOINTS.TEAM.LIST, config);
     return response.data;
   },
 
-  async generateInvitationQR(data: InviteTeamMemberRequest): Promise<QRInvitationResponse> {
+  async generateInvitationQR(
+    data: InviteTeamMemberRequest,
+    autoServiceId?: string
+  ): Promise<QRInvitationResponse> {
+    const params = autoServiceId ? { autoServiceId } : {};
     const response = await apiClient.post<QRInvitationResponse>(
       API_ENDPOINTS.TEAM.GENERATE_QR,
-      data
+      data,
+      { params }
     );
     return response.data;
   },
 
-  async updateTeamMember(memberId: string, data: UpdateTeamMemberRequest): Promise<TeamMember> {
-    const response = await apiClient.put<TeamMember>(API_ENDPOINTS.TEAM.UPDATE(memberId), data);
+  async updateTeamMember(
+    memberId: string,
+    data: UpdateTeamMemberRequest,
+    autoServiceId?: string
+  ): Promise<TeamMember> {
+    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+    const response = await apiClient.put<TeamMember>(
+      API_ENDPOINTS.TEAM.UPDATE(memberId),
+      data,
+      config
+    );
     return response.data;
   },
 
-  async removeTeamMember(memberId: string): Promise<{ success: boolean; message: string }> {
+  async removeTeamMember(
+    memberId: string,
+    autoServiceId?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
     const response = await apiClient.delete<{ success: boolean; message: string }>(
-      API_ENDPOINTS.TEAM.REMOVE(memberId)
+      API_ENDPOINTS.TEAM.REMOVE(memberId),
+      config
     );
     return response.data;
   },

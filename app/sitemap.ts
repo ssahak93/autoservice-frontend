@@ -1,9 +1,28 @@
 import { MetadataRoute } from 'next';
 
-// TODO: Replace with actual API call to get services
-async function getAllServices() {
-  // This should fetch from your API
-  return [];
+interface SitemapProfile {
+  id: string;
+  updatedAt: string;
+}
+
+async function getAllServices(): Promise<SitemapProfile[]> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const response = await fetch(`${apiUrl}/api/auto-services/sitemap/list`, {
+      next: { revalidate: 3600 }, // Revalidate every hour
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch services for sitemap:', response.statusText);
+      return [];
+    }
+
+    const data = await response.json();
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching services for sitemap:', error);
+    return [];
+  }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -57,4 +76,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticPages, ...localizedStaticPages, ...serviceUrls];
 }
-

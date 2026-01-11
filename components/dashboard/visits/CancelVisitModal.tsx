@@ -29,10 +29,10 @@ export function CancelVisitModal({
   const [reason, setReason] = useState('');
 
   const handleSubmit = () => {
-    if (!reason.trim()) {
+    if (!reason.trim() || reason.trim().length < 3) {
       return;
     }
-    onCancel(reason);
+    onCancel(reason.trim());
     setReason('');
   };
 
@@ -89,11 +89,19 @@ export function CancelVisitModal({
                     onChange={(e) => setReason(e.target.value)}
                     rows={3}
                     required
+                    minLength={3}
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     placeholder={t('cancelModal.reasonPlaceholder', {
-                      defaultValue: 'Please provide a reason...',
+                      defaultValue: 'Please provide a reason (minimum 3 characters)...',
                     })}
                   />
+                  {reason.length > 0 && reason.length < 3 && (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                      {t('cancelModal.minLength', {
+                        defaultValue: 'Reason must be at least 3 characters',
+                      })}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -104,7 +112,7 @@ export function CancelVisitModal({
                     variant="danger"
                     onClick={handleSubmit}
                     isLoading={isLoading}
-                    disabled={!reason.trim()}
+                    disabled={!reason.trim() || reason.trim().length < 3}
                     fullWidth
                   >
                     {t('cancelModal.confirm', { defaultValue: 'Cancel Visit' })}

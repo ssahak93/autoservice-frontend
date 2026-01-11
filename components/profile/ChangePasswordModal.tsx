@@ -36,7 +36,12 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
       newPassword: z
         .string()
         .min(8, t('passwordMinLength', { defaultValue: 'Password must be at least 8 characters' }))
-        .regex(PASSWORD_PATTERN, t('passwordInvalid', { defaultValue: PASSWORD_ERROR_MESSAGE })),
+        .regex(
+          PASSWORD_PATTERN,
+          t('passwordInvalid', {
+            defaultValue: PASSWORD_ERROR_MESSAGE,
+          })
+        ),
       confirmPassword: z
         .string()
         .min(1, t('confirmPasswordRequired', { defaultValue: 'Please confirm your password' })),

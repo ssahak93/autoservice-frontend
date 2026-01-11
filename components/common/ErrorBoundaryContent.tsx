@@ -8,6 +8,7 @@ import { useRouter } from '@/i18n/routing';
 
 interface ErrorBoundaryContentProps {
   error: Error | null;
+  errorInfo?: React.ErrorInfo | null;
   onReset: () => void;
 }
 
@@ -16,7 +17,11 @@ interface ErrorBoundaryContentProps {
  *
  * Now used within NextIntlClientProvider, so translations are available.
  */
-export function ErrorBoundaryContent({ error, onReset }: ErrorBoundaryContentProps) {
+export function ErrorBoundaryContent({
+  error,
+  errorInfo: _errorInfo,
+  onReset,
+}: ErrorBoundaryContentProps) {
   const t = useTranslations('errorBoundary');
   const router = useRouter();
 

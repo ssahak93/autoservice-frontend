@@ -12,6 +12,7 @@ export interface AutoServiceOption {
   avatarFile?: {
     fileUrl: string;
   };
+  hasProfile?: boolean;
 }
 
 interface AutoServiceState {

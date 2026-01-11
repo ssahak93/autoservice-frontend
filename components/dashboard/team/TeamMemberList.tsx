@@ -1,10 +1,12 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { Edit, Trash2, User, Shield, Briefcase, Crown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/Button';
 import type { TeamMember } from '@/lib/services/team.service';
+import { getTransition } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
 
 interface TeamMemberListProps {
@@ -69,16 +71,21 @@ export function TeamMemberList({
         {t('members', { defaultValue: 'Team Members' })}
       </h2>
       <div className="space-y-3">
-        {members.map((member) => {
+        {members.map((member, index) => {
           const isCurrentUser = member.userId === currentUserId;
           const canEdit = isOwner || (isManager && member.role !== 'owner') || isCurrentUser;
           const canRemove = isOwner && member.role !== 'owner' && !isCurrentUser;
+          const transition = getTransition(0.2);
 
           return (
-            <div
+            <motion.div
               key={member.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ ...transition, delay: index * 0.05 }}
+              whileHover={{ x: 4, transition: { duration: 0.2 } }}
               className={cn(
-                'flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800',
+                'flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800',
                 !member.isActive && 'opacity-60'
               )}
             >
@@ -88,8 +95,9 @@ export function TeamMemberList({
                   {member.avatarUrl ? (
                     <img
                       src={member.avatarUrl}
-                      alt={`${member.firstName} ${member.lastName}`}
+                      alt={`${member.firstName || ''} ${member.lastName || ''}`}
                       className="h-12 w-12 rounded-full object-cover"
+                      suppressHydrationWarning
                     />
                   ) : (
                     <User className="h-6 w-6 text-primary-600 dark:text-primary-400" />
@@ -100,7 +108,7 @@ export function TeamMemberList({
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {member.firstName} {member.lastName}
+                      {member.firstName || ''} {member.lastName || ''}
                     </h3>
                     {isCurrentUser && (
                       <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
@@ -130,19 +138,41 @@ export function TeamMemberList({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2">
+              <div
+                className="flex items-center gap-2"
+                role="group"
+                aria-label={t('actions.group', { defaultValue: 'Team member actions' })}
+              >
                 {canEdit && (
-                  <Button variant="outline" size="sm" onClick={() => onEdit(member)}>
-                    <Edit className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(member)}
+                    aria-label={t('actions.editMember', {
+                      firstName: member.firstName,
+                      lastName: member.lastName,
+                      defaultValue: `Edit ${member.firstName} ${member.lastName}`,
+                    })}
+                  >
+                    <Edit className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 )}
                 {canRemove && (
-                  <Button variant="outline" size="sm" onClick={() => onRemove(member)}>
-                    <Trash2 className="h-4 w-4 text-red-600" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onRemove(member)}
+                    aria-label={t('actions.removeMember', {
+                      firstName: member.firstName,
+                      lastName: member.lastName,
+                      defaultValue: `Remove ${member.firstName} ${member.lastName} from team`,
+                    })}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
                   </Button>
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>

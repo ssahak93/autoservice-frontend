@@ -1,14 +1,31 @@
 'use client';
 
-import { format, isToday, isPast, isFuture, parseISO } from 'date-fns';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
+import { isFuture } from 'date-fns/isFuture';
+import { isPast } from 'date-fns/isPast';
+import { isToday } from 'date-fns/isToday';
+// Import only needed locales for tree shaking
 import { enUS } from 'date-fns/locale/en-US';
 import { hy } from 'date-fns/locale/hy';
 import { ru } from 'date-fns/locale/ru';
-import { Calendar, CheckCircle2, XCircle, AlertCircle, Clock, History, Edit } from 'lucide-react';
+import { parseISO } from 'date-fns/parseISO';
+import {
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Clock,
+  History,
+  Edit,
+  Star,
+} from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useState, useMemo } from 'react';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
+import { LeaveReviewModal } from '@/components/reviews/LeaveReviewModal';
 import { Button } from '@/components/ui/Button';
 import { BookVisitModal } from '@/components/visits/BookVisitModal';
 import { VisitChatButton } from '@/components/visits/VisitChatButton';
@@ -37,16 +54,19 @@ function VisitCard({
   formatDate,
   onEdit,
   onCancel,
+  onLeaveReview,
 }: {
   visit: Visit;
   t: ReturnType<typeof useTranslations<'visits'>>;
   formatDate: (dateStr: string | undefined) => string;
   onEdit?: () => void;
   onCancel?: () => void;
+  onLeaveReview?: () => void;
 }) {
   const StatusIcon = statusIcons[visit.status];
   const canEdit = visit.status === 'pending' || visit.status === 'confirmed';
   const canCancel = visit.status !== 'completed' && visit.status !== 'cancelled';
+  const canReview = visit.status === 'completed';
 
   return (
     <div className="glass-light rounded-xl p-6 transition-shadow hover:shadow-lg">
@@ -134,8 +154,19 @@ function VisitCard({
           </div>
 
           {/* Action buttons */}
-          {(canEdit || canCancel) && (
+          {(canEdit || canCancel || canReview) && (
             <div className="flex flex-wrap gap-2 border-t border-neutral-200 pt-2">
+              {canReview && onLeaveReview && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={onLeaveReview}
+                  className="flex items-center gap-1"
+                >
+                  <Star className="h-4 w-4" />
+                  {t('leaveReview', { defaultValue: 'Leave Review' })}
+                </Button>
+              )}
               {canEdit && onEdit && (
                 <Button
                   variant="outline"
@@ -170,6 +201,7 @@ export default function VisitsPage() {
   const t = useTranslations('visits');
   const locale = useLocale();
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [reviewingVisit, setReviewingVisit] = useState<Visit | null>(null);
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
   const [cancellingVisit, setCancellingVisit] = useState<Visit | null>(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -252,6 +284,13 @@ export default function VisitsPage() {
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8">
+        {/* Create Service Banner */}
+        <div className="mb-6">
+          <div suppressHydrationWarning>
+            <CreateServiceBanner />
+          </div>
+        </div>
+
         <div className="mb-8">
           <h1 className="font-display text-4xl font-bold text-neutral-900">{t('title')}</h1>
           <p className="mt-2 text-neutral-600">{t('subtitle')}</p>
@@ -437,6 +476,15 @@ export default function VisitsPage() {
             onSuccess={() => {
               setEditingVisit(null);
             }}
+          />
+        )}
+
+        {/* Leave Review Modal */}
+        {reviewingVisit && (
+          <LeaveReviewModal
+            isOpen={!!reviewingVisit}
+            onClose={() => setReviewingVisit(null)}
+            visit={reviewingVisit}
           />
         )}
 

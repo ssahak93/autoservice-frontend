@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -39,7 +39,17 @@ export function RescheduleVisitModal({
   const schema = z.object({
     scheduledDate: z
       .string()
-      .min(1, t('reschedule.dateRequired', { defaultValue: 'Date is required' })),
+      .min(1, t('reschedule.dateRequired', { defaultValue: 'Date is required' }))
+      .refine(
+        (val) => {
+          if (!val) return false;
+          const date = new Date(val);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return date >= today;
+        },
+        { message: t('reschedule.datePast', { defaultValue: 'Date cannot be in the past' }) }
+      ),
     scheduledTime: z
       .string()
       .min(1, t('reschedule.timeRequired', { defaultValue: 'Time is required' }))
@@ -68,6 +78,8 @@ export function RescheduleVisitModal({
     if (date) {
       const formattedDate = date.toISOString().split('T')[0];
       setValue('scheduledDate', formattedDate, { shouldValidate: true });
+    } else {
+      setValue('scheduledDate', '', { shouldValidate: true });
     }
   };
 
@@ -75,6 +87,25 @@ export function RescheduleVisitModal({
     setSelectedTime(time);
     setValue('scheduledTime', time, { shouldValidate: true });
   };
+
+  // Update selectedDate and selectedTime when visit changes
+  useEffect(() => {
+    if (visit.scheduledDate) {
+      const date = new Date(visit.scheduledDate);
+      setSelectedDate(date);
+      setValue('scheduledDate', visit.scheduledDate, { shouldValidate: false });
+    } else {
+      setSelectedDate(null);
+      setValue('scheduledDate', '', { shouldValidate: false });
+    }
+    if (visit.scheduledTime) {
+      setSelectedTime(visit.scheduledTime);
+      setValue('scheduledTime', visit.scheduledTime, { shouldValidate: false });
+    } else {
+      setSelectedTime('');
+      setValue('scheduledTime', '', { shouldValidate: false });
+    }
+  }, [visit.scheduledDate, visit.scheduledTime, setValue]);
 
   const onSubmit = (data: FormData) => {
     onReschedule({
@@ -127,7 +158,7 @@ export function RescheduleVisitModal({
                     {t('reschedule.newDate', { defaultValue: 'New Date' })} *
                   </label>
                   <DatePicker
-                    selected={selectedDate}
+                    value={selectedDate}
                     onChange={handleDateChange}
                     placeholder={t('reschedule.selectDate', { defaultValue: 'Select date' })}
                     minDate={new Date()}

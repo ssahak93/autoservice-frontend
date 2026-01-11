@@ -1,7 +1,11 @@
 'use client';
 
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { format, isToday, isYesterday, isSameDay } from 'date-fns';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
+import { isSameDay } from 'date-fns/isSameDay';
+import { isToday } from 'date-fns/isToday';
+import { isYesterday } from 'date-fns/isYesterday';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';

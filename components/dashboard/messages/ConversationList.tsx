@@ -1,9 +1,12 @@
 'use client';
 
-import { format } from 'date-fns';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
+import { motion } from 'framer-motion';
 import { User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { getTransition } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
 
 import type { Conversation } from './MessagesManagementContent';
@@ -21,20 +24,27 @@ export function ConversationList({
 }: ConversationListProps) {
   const t = useTranslations('dashboard.messages');
 
+  const transition = getTransition(0.15);
+
   return (
     <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
-      {conversations.map((conversation) => {
+      {conversations.map((conversation, index) => {
         const isSelected = conversation.visitId === selectedVisitId;
         const customerName =
           `${conversation.visit.user.firstName || ''} ${conversation.visit.user.lastName || ''}`.trim() ||
           t('customer', { defaultValue: 'Customer' });
 
         return (
-          <button
+          <motion.button
             key={conversation.visitId}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...transition, delay: index * 0.03 }}
+            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => onSelect(conversation.visitId)}
             className={cn(
-              'w-full rounded-lg border p-4 text-left transition-colors',
+              'w-full touch-manipulation rounded-lg border p-4 text-left transition-colors',
               isSelected
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                 : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700'
@@ -97,7 +107,7 @@ export function ConversationList({
                 </div>
               </div>
             </div>
-          </button>
+          </motion.button>
         );
       })}
     </div>

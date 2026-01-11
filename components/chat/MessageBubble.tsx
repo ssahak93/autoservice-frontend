@@ -1,6 +1,9 @@
 'use client';
 
-import { format, isToday, isYesterday } from 'date-fns';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
+import { isToday } from 'date-fns/isToday';
+import { isYesterday } from 'date-fns/isYesterday';
 import { Smile, Check, CheckCheck } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';

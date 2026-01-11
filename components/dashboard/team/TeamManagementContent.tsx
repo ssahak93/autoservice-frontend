@@ -2,38 +2,89 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Users } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
+import { autoServicesService } from '@/lib/services/auto-services.service';
 import { teamService, type TeamMember } from '@/lib/services/team.service';
+import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
-import { EditTeamMemberModal } from './EditTeamMemberModal';
-import { InviteTeamMemberModal } from './InviteTeamMemberModal';
+// Lazy load modals to reduce initial bundle size
+const EditTeamMemberModal = dynamic(
+  () => import('./EditTeamMemberModal').then((mod) => ({ default: mod.EditTeamMemberModal })),
+  {
+    ssr: false,
+  }
+);
+const InviteTeamMemberModal = dynamic(
+  () => import('./InviteTeamMemberModal').then((mod) => ({ default: mod.InviteTeamMemberModal })),
+  {
+    ssr: false,
+  }
+);
+
 import { TeamMemberList } from './TeamMemberList';
 
 export function TeamManagementContent() {
   const t = useTranslations('dashboard.team');
   const { user } = useAuth();
+  const { selectedAutoServiceId, setAvailableAutoServices, setSelectedAutoServiceId } =
+    useAutoServiceStore();
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component only renders after client-side hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Fetch available auto services to ensure selectedAutoServiceId is set
+  const { data: availableServices = [] } = useQuery({
+    queryKey: ['availableAutoServices'],
+    queryFn: () => autoServicesService.getAvailableAutoServices(),
+    enabled: !!user,
+  });
+
+  // Initialize available auto services and ensure a service is selected
+  useEffect(() => {
+    if (availableServices.length > 0) {
+      setAvailableAutoServices(availableServices);
+      // If no service is selected, select the first one
+      if (!selectedAutoServiceId && availableServices.length > 0) {
+        const firstOwnedService = availableServices.find((s) => s.role === 'owner');
+        if (firstOwnedService) {
+          setSelectedAutoServiceId(firstOwnedService.id);
+        }
+      }
+    }
+  }, [
+    availableServices,
+    selectedAutoServiceId,
+    setAvailableAutoServices,
+    setSelectedAutoServiceId,
+  ]);
 
   const {
     data: teamMembers = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['team'],
-    queryFn: () => teamService.getTeam(),
+    queryKey: ['team', selectedAutoServiceId],
+    queryFn: () => teamService.getTeam(selectedAutoServiceId || undefined),
+    enabled: !!user && !!selectedAutoServiceId, // Only fetch when user is loaded and service is selected
   });
 
   const removeMutation = useMutation({
-    mutationFn: (memberId: string) => teamService.removeTeamMember(memberId),
+    mutationFn: (memberId: string) =>
+      teamService.removeTeamMember(memberId, selectedAutoServiceId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team'] });
       showToast(
@@ -71,6 +122,19 @@ export function TeamManagementContent() {
   const currentUserMember = teamMembers.find((m) => m.userId === user?.id);
   const isOwner = currentUserMember?.role === 'owner';
   const isManager = currentUserMember?.role === 'manager' || isOwner;
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -122,8 +186,11 @@ export function TeamManagementContent() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {t('totalMembers', { defaultValue: 'Total Members' })}
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {teamMembers.length}
+              <p
+                className="text-2xl font-bold text-gray-900 dark:text-white"
+                suppressHydrationWarning
+              >
+                {teamMembers?.length || 0}
               </p>
             </div>
           </div>
@@ -135,8 +202,11 @@ export function TeamManagementContent() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {t('activeMembers', { defaultValue: 'Active Members' })}
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {teamMembers.filter((m) => m.isActive).length}
+              <p
+                className="text-2xl font-bold text-gray-900 dark:text-white"
+                suppressHydrationWarning
+              >
+                {teamMembers?.filter((m) => m.isActive).length || 0}
               </p>
             </div>
           </div>
@@ -148,8 +218,11 @@ export function TeamManagementContent() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {t('employees', { defaultValue: 'Employees' })}
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {teamMembers.filter((m) => m.role === 'employee').length}
+              <p
+                className="text-2xl font-bold text-gray-900 dark:text-white"
+                suppressHydrationWarning
+              >
+                {teamMembers?.filter((m) => m.role === 'employee').length || 0}
               </p>
             </div>
           </div>

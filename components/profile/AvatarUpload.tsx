@@ -77,7 +77,10 @@ export function AvatarUpload({ currentAvatarUrl, userName, className }: AvatarUp
 
   return (
     <div className={cn('relative', className)}>
-      <div className="relative mx-auto h-32 w-32 overflow-hidden rounded-full sm:h-40 sm:w-40">
+      <div
+        className="relative mx-auto h-32 w-32 overflow-hidden rounded-full sm:h-40 sm:w-40"
+        suppressHydrationWarning
+      >
         {displayImage ? (
           <Image
             src={displayImage}
@@ -86,6 +89,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, className }: AvatarUp
             className="object-cover"
             sizes="(max-width: 640px) 128px, 160px"
             unoptimized
+            suppressHydrationWarning
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary-400 to-secondary-400">

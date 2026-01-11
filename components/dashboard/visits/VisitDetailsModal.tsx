@@ -1,13 +1,24 @@
 'use client';
 
-import { format, parseISO } from 'date-fns';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
+import { parseISO } from 'date-fns/parseISO';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Calendar, User, FileText } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/Button';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import type { Visit } from '@/types';
+
+// Lazy load VisitHistory component
+const VisitHistory = dynamic(
+  () => import('@/components/visits/VisitHistory').then((mod) => ({ default: mod.VisitHistory })),
+  {
+    ssr: false,
+  }
+);
 
 interface VisitDetailsModalProps {
   visit: Visit;
@@ -156,6 +167,11 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
                   <span className="ml-2 capitalize text-gray-900 dark:text-white">
                     {visit.status}
                   </span>
+                </div>
+
+                {/* Visit History */}
+                <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
+                  <VisitHistory visitId={visit.id} />
                 </div>
               </div>
 

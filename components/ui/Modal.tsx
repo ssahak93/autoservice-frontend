@@ -1,8 +1,12 @@
 'use client';
 
+// Import only needed components from framer-motion for tree shaking
+import { AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
+import { getAnimationVariants, getTransition } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
 
 import { Button } from './Button';
@@ -24,6 +28,9 @@ export function Modal({
   size = 'md',
   showCloseButton = true,
 }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
   // Close on Escape key
   useEffect(() => {
     if (!isOpen) return;
@@ -38,6 +45,53 @@ export function Modal({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // Focus management: trap focus inside modal and restore on close
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Store the previously active element
+    previousActiveElement.current = document.activeElement as HTMLElement;
+
+    // Focus the modal container
+    const timer = setTimeout(() => {
+      modalRef.current?.focus();
+    }, 100);
+
+    // Trap focus inside modal
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !modalRef.current) return;
+
+      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('keydown', handleTabKey);
+      // Restore focus to previous element
+      previousActiveElement.current?.focus();
+    };
+  }, [isOpen]);
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -50,8 +104,6 @@ export function Modal({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
@@ -59,36 +111,65 @@ export function Modal({
     xl: 'max-w-4xl',
   };
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div
-        className={cn('w-full rounded-xl bg-white shadow-xl dark:bg-gray-800', sizeClasses[size])}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-            {title && (
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
-            )}
-            {showCloseButton && (
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
-        )}
+  const variants = getAnimationVariants();
+  const transition = getTransition(0.2);
 
-        {/* Content */}
-        <div className="px-6 py-4">{children}</div>
-      </div>
-    </div>
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={transition}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              onClose();
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? 'modal-title' : undefined}
+        >
+          <motion.div
+            ref={modalRef}
+            variants={variants.modal}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={transition}
+            className={cn(
+              'w-full rounded-xl bg-white shadow-xl dark:bg-gray-800',
+              sizeClasses[size]
+            )}
+            onClick={(e) => e.stopPropagation()}
+            tabIndex={-1}
+          >
+            {/* Header */}
+            {(title || showCloseButton) && (
+              <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+                {title && (
+                  <h2
+                    id="modal-title"
+                    className="text-xl font-semibold text-gray-900 dark:text-white"
+                  >
+                    {title}
+                  </h2>
+                )}
+                {showCloseButton && (
+                  <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close modal">
+                    <X className="h-5 w-5" aria-hidden="true" />
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Content */}
+            <div className="px-6 py-4">{children}</div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

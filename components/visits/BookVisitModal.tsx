@@ -2,11 +2,12 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -96,18 +97,27 @@ export function BookVisitModal({
   const [selectedTime, setSelectedTime] = useState<string>(initialTime);
 
   // Get serviceId from visit in edit mode
-  const actualServiceId = isEditMode
-    ? visit?.autoServiceId || visit?.autoServiceProfileId
-    : serviceId;
+  // API expects profile ID, not autoService ID
+  // const actualServiceId = isEditMode
+  //   ? visit?.autoServiceProfileId || visit?.autoServiceId
+  //   : serviceId;
+
+  // Profile ID for availability API (must be profile ID, not autoService ID)
+  const profileIdForAvailability = isEditMode ? visit?.autoServiceProfileId : serviceId;
 
   // Check if this is user's own service (only in create mode)
-  const startDate = format(new Date(), 'yyyy-MM-dd');
-  const endDate = format(new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+  // Use useMemo to prevent hydration mismatch
+  const startDate = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const endDate = useMemo(
+    () => format(new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    []
+  );
 
   const { data: availability, isLoading: isLoadingAvailability } = useQuery({
-    queryKey: ['availability', actualServiceId, startDate, endDate],
-    queryFn: () => availabilityService.getAvailability(actualServiceId, startDate, endDate),
-    enabled: !!actualServiceId, // Check availability in both modes
+    queryKey: ['availability', profileIdForAvailability, startDate, endDate],
+    queryFn: () =>
+      availabilityService.getAvailability(profileIdForAvailability!, startDate, endDate),
+    enabled: !!profileIdForAvailability, // Only check if we have profile ID
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -341,8 +351,8 @@ export function BookVisitModal({
                         error={errors.scheduledDate?.message}
                         required
                         minDate={minDate}
-                        autoServiceId={actualServiceId}
-                        showAvailability={!isEditMode}
+                        autoServiceId={profileIdForAvailability}
+                        showAvailability={!!profileIdForAvailability}
                       />
                     )}
                   />

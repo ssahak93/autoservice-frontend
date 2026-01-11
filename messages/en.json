@@ -16,7 +16,12 @@
     "next": "Next",
     "previous": "Previous",
     "confirm": "Confirm",
-    "menu": "Menu"
+    "menu": "Menu",
+    "skipToMain": "Skip to main content",
+    "retry": "Retry",
+    "goHome": "Go to Home",
+    "networkErrorHint": "Please check your internet connection",
+    "serverErrorHint": "The server is experiencing issues. Please try again later."
   },
   "auth": {
     "login": "Login",
@@ -50,6 +55,24 @@
     "passwordsDontMatch": "Passwords don't match",
     "loginSuccess": "Login successful",
     "invalidPhoneNumber": "Phone number must be 8 digits (e.g., 98222680) or 9 digits starting with 0 (e.g., 098222680)",
+    "forgotPasswordTitle": "Forgot Password",
+    "forgotPasswordDescription": "Enter your email address and we'll send you a link to reset your password.",
+    "forgotPasswordSuccess": "If email exists, password reset link has been sent",
+    "forgotPasswordError": "Failed to send reset email",
+    "sendResetLink": "Send Reset Link",
+    "checkEmail": "Check your email",
+    "resetEmailSent": "If an account with that email exists, we have sent a password reset link.",
+    "didntReceiveEmail": "Didn't receive the email?",
+    "tryAgain": "Try again",
+    "resetPassword": "Reset Password",
+    "resetPasswordDescription": "Enter your new password below.",
+    "newPassword": "New Password",
+    "resetPasswordSuccess": "Password reset successfully",
+    "resetPasswordError": "Failed to reset password",
+    "passwordResetSuccess": "Password Reset Successful",
+    "passwordResetSuccessDescription": "Your password has been reset successfully. Redirecting to login...",
+    "invalidResetToken": "Invalid or missing reset token",
+    "backToLogin": "Back to Login",
     "phoneNumberHelper": "Optional. Enter 8 or 9 digits (e.g., 98222680 or 098222680)",
     "loginFailed": "Login failed. Please try again.",
     "loginFailedMessage": "Login failed. Please check your credentials.",
@@ -177,6 +200,7 @@
     "confirmed": "Confirmed",
     "cancelled": "Cancelled",
     "completed": "Completed",
+    "leaveReview": "Leave Review",
     "noVisits": "You don't have any visits yet",
     "bookNew": "Book a new visit",
     "preferredDate": "Preferred Date",
@@ -220,6 +244,19 @@
     "edit": "Edit",
     "delete": "Delete",
     "cancelVisit": "Cancel Visit",
+    "history": {
+      "title": "Visit History",
+      "noHistory": "No history available for this visit",
+      "dateChanged": "Date changed",
+      "timeChanged": "Time changed",
+      "statusChanged": "Status changed",
+      "problemDescriptionChanged": "Problem description changed",
+      "serviceNotesChanged": "Service notes changed",
+      "cancelled": "Visit cancelled",
+      "changedByCustomer": "Customer",
+      "changedByService": "Auto Service",
+      "changedBySystem": "System"
+    },
     "editVisit": "Edit Visit",
     "deleteVisit": "Delete Visit",
     "updatedSuccessfully": "Visit updated successfully",
@@ -265,7 +302,26 @@
     "reviewCreated": "Review created successfully",
     "reviewError": "Error creating review",
     "noCompletedVisits": "You don't have any completed visits for this service",
-    "close": "Close"
+    "reviewingVisit": "Reviewing visit from",
+    "close": "Close",
+    "reportReview": "Report Review",
+    "reportReason": "Reason for reporting",
+    "reportReasonPlaceholder": "Please explain why you are reporting this review...",
+    "reportSubmitted": "Review reported successfully",
+    "reportError": "Error reporting review",
+    "submitReport": "Submit Report",
+    "cancel": "Cancel",
+    "submitting": "Submitting...",
+    "optional": "Optional",
+    "commentPlaceholder": "Share your experience... (Optional)",
+    "commentHint": "Your feedback helps others make better decisions",
+    "ratingLabels": {
+      "one": "Poor",
+      "two": "Fair",
+      "three": "Good",
+      "four": "Very Good",
+      "five": "Excellent"
+    }
   },
   "profile": {
     "title": "Profile",
@@ -300,10 +356,12 @@
     "currentPasswordRequired": "Current password is required",
     "newPassword": "New Password",
     "passwordMinLength": "Password must be at least 8 characters",
+    "passwordHelper": "Min 8 chars: uppercase, lowercase, number, special char (@$!%*?&)",
     "confirmPasswordRequired": "Please confirm your password",
     "passwordsDontMatch": "Passwords don't match",
     "passwordChanged": "Password changed successfully",
     "passwordChangeError": "Failed to change password",
+    "passwordInvalid": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "avatarUpdated": "Avatar updated successfully",
@@ -382,7 +440,9 @@
       "team": "Team",
       "analytics": "Analytics",
       "myService": "My Service",
-      "settings": "Settings"
+      "settings": "Settings",
+      "sidebar": "Dashboard navigation",
+      "main": "Main navigation"
     },
     "stats": {
       "total": "Total Visits",
@@ -408,7 +468,7 @@
       "browseServices": "Browse Services"
     },
     "selectAutoService": "Select Auto Service",
-    "selectedService": "Currently managing: {{name}}",
+    "selectedService": "Currently managing: {name}",
     "role": {
       "owner": "Owner",
       "manager": "Manager",
@@ -437,6 +497,8 @@
       },
       "actions": {
         "view": "View",
+        "viewVisit": "View visit",
+        "group": "Visit actions",
         "accept": "Accept",
         "complete": "Complete",
         "cancel": "Cancel",
@@ -449,7 +511,7 @@
       "pagination": {
         "previous": "Previous",
         "next": "Next",
-        "page": "Page {{current}} of {{total}}"
+        "page": "Page {current} of {total}"
       },
       "acceptSuccess": "Visit accepted successfully",
       "acceptError": "Failed to accept visit",
@@ -467,14 +529,17 @@
         "notesPlaceholder": "Add any notes...",
         "selectDate": "Select date",
         "selectTime": "Select time",
-        "confirm": "Accept Visit"
+        "confirm": "Accept Visit",
+        "invalidTime": "Time must be in HH:mm format",
+        "notesMaxLength": "Notes must be less than 500 characters"
       },
       "complete": {
         "title": "Complete Visit",
         "confirmation": "Are you sure you want to mark this visit as completed?",
         "notes": "Completion Notes (optional)",
         "notesPlaceholder": "Add completion notes...",
-        "confirm": "Complete Visit"
+        "confirm": "Complete Visit",
+        "characters": "characters"
       },
       "cancelModal": {
         "title": "Cancel Visit",
@@ -482,7 +547,8 @@
         "reason": "Cancellation Reason",
         "reasonPlaceholder": "Please provide a reason...",
         "back": "Back",
-        "confirm": "Cancel Visit"
+        "confirm": "Cancel Visit",
+        "minLength": "Reason must be at least 3 characters"
       },
       "reschedule": {
         "title": "Reschedule Visit",
@@ -493,6 +559,7 @@
         "dateRequired": "Date is required",
         "timeRequired": "Time is required",
         "timeFormat": "Time must be in HH:mm format",
+        "datePast": "Date cannot be in the past",
         "confirm": "Reschedule"
       },
       "details": {
@@ -564,6 +631,11 @@
           "manager": "Manager",
           "employee": "Employee"
         }
+      },
+      "actions": {
+        "group": "Team member actions",
+        "editMember": "Edit {firstName} {lastName}",
+        "removeMember": "Remove {firstName} {lastName} from team"
       }
     },
     "messages": {
@@ -685,6 +757,7 @@
   "notifications": {
     "title": "Notifications",
     "notifications": "Notifications",
+    "subtitle": "Manage and view all your notifications",
     "noNotifications": "No notifications",
     "noNotificationsDescription": "You don't have any notifications yet",
     "markAsRead": "Mark as read",
@@ -692,6 +765,7 @@
     "delete": "Delete",
     "deleteAllRead": "Delete all read",
     "viewAll": "View All",
+    "viewDetails": "View details",
     "close": "Close",
     "page": "Page",
     "of": "of",
@@ -760,6 +834,87 @@
       "title": "Auto Service Required",
       "message": "You need to own an auto service to manage your profile."
     },
+    "noProfile": {
+      "title": "Profile Not Created Yet",
+      "description": "You have created an auto service, but the profile is not yet set up. Complete your profile to start accepting bookings from customers.",
+      "hint": "Please fill out the profile information in the \"Profile\" tab to complete your auto service setup.",
+      "fillForm": "Please use the \"Profile\" tab above to create your auto service profile."
+    },
+    "incompleteProfile": {
+      "title": "Complete Your Auto Service Profile",
+      "description": "Your profile is {completeness}% complete. Complete your profile to attract more customers and improve your visibility.",
+      "progress": "Profile Completion",
+      "completeButton": "Complete Profile",
+      "dismiss": "Dismiss"
+    },
+    "approval": {
+      "approvedTitle": "Auto Service Approved",
+      "approvedMessage": "Your auto service has been approved and is now visible in search results.",
+      "rejectedTitle": "Auto Service Rejected",
+      "rejectedMessage": "Your auto service has been rejected. Please review the reason below and update your profile.",
+      "rejectionReason": "Rejection Reason",
+      "pendingTitle": "Pending Approval",
+      "pendingMessage": "Your auto service profile is pending admin approval. It will be visible in search results once approved.",
+      "dismiss": "Dismiss"
+    },
+    "create": {
+      "title": "Create Your Auto Service",
+      "description": "Get started by creating your auto service profile",
+      "serviceType": "Service Type",
+      "serviceTypeRequired": "Service type is required",
+      "individual": "Individual",
+      "individualDescription": "Personal auto service",
+      "company": "Company",
+      "companyDescription": "Business auto service",
+      "companyName": "Company Name",
+      "companyNameRequired": "Company name is required",
+      "companyNamePlaceholder": "Enter your company name",
+      "firstName": "First Name",
+      "firstNameRequired": "First name is required",
+      "firstNamePlaceholder": "Enter your first name",
+      "lastName": "Last Name",
+      "lastNameRequired": "Last name is required",
+      "lastNamePlaceholder": "Enter your last name",
+      "create": "Create Auto Service",
+      "success": "Auto service created successfully",
+      "error": "Failed to create auto service",
+      "validationError": "Please fill in all required fields",
+      "servicesCount": "You have {count} of {max} auto services",
+      "maxReached": {
+        "title": "Maximum Auto Services Reached",
+        "message": "You have reached the maximum limit of {count} auto services.",
+        "hint": "Please delete an existing service to create a new one.",
+        "yourServices": "Your Auto Services",
+        "manage": "Manage"
+      },
+      "banner": {
+        "title": "Start Your Auto Service Journey",
+        "description": "Create your auto service profile and start accepting bookings from customers.",
+        "benefit1": "Manage bookings and visits",
+        "benefit2": "Build your service profile",
+        "benefit3": "Connect with customers",
+        "cta": "Create Service",
+        "dismiss": "Dismiss"
+      }
+    },
+    "servicesList": {
+      "title": "My Auto Services",
+      "subtitle": "Manage all your auto services and their profiles",
+      "incomplete": "Incomplete Services",
+      "complete": "Complete Services",
+      "profileMissing": "Profile not created",
+      "profileComplete": "Profile complete",
+      "createProfile": "Create Profile",
+      "manage": "Manage",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "pendingApproval": "Pending Approval",
+      "deleteSuccess": "Auto service deleted successfully",
+      "deleteError": "Failed to delete auto service",
+      "deleteConfirmPermanent": "Are you sure you want to permanently delete this auto service? This action cannot be undone.",
+      "deleteConfirmSoft": "Are you sure you want to delete this auto service? This action can be undone by contacting support.",
+      "summary": "You have {total} auto service(s): {complete} complete, {incomplete} incomplete"
+    },
     "tabs": {
       "info": "Service Info",
       "profile": "Profile",
@@ -768,8 +923,25 @@
     },
     "info": {
       "title": "Service Information",
+      "edit": "Edit Service Info",
+      "editDescription": "Edit your service basic information",
+      "companyName": "Company Name",
+      "companyNameRequired": "Company name is required",
+      "firstName": "First Name",
+      "firstNameRequired": "First name is required",
+      "lastName": "Last Name",
+      "lastNameRequired": "Last name is required",
       "serviceName": "Service Name",
       "serviceType": "Service Type",
+      "serviceTypeNote": "Service type cannot be changed",
+      "save": "Save Changes",
+      "cancel": "Cancel",
+      "updateSuccess": "Service information updated successfully",
+      "updateError": "Failed to update service information",
+      "approvalStatus": "Approval Status",
+      "approved": "Approved",
+      "pendingApproval": "Pending Approval",
+      "rejectionReason": "Rejection Reason",
       "verificationStatus": "Verification Status",
       "verified": "Verified",
       "notVerified": "Not Verified",
@@ -791,6 +963,14 @@
     },
     "profile": {
       "title": "Edit Profile",
+      "createTitle": "Create Profile",
+      "createDescription": "Fill out the form below to create your auto service profile.",
+      "create": "Create Profile",
+      "createSuccess": "Profile created successfully",
+      "createError": "Failed to create profile",
+      "location": "Location",
+      "locationHint": "Click on the map to select your location. Address and coordinates will be filled automatically.",
+      "addressWillBeFilled": "Address will be filled automatically when you select a location on the map",
       "description": "Description",
       "descriptionMin": "Description must be at least 10 characters",
       "descriptionPlaceholder": "Describe your service...",
@@ -799,15 +979,37 @@
       "yearsOfExperience": "Years of Experience",
       "address": "Address",
       "addressRequired": "Address is required",
+      "addressPlaceholder": "e.g., Yerevan, Tigran Mets Ave 100",
       "city": "City",
       "cityRequired": "City is required",
+      "cityPlaceholder": "e.g., Yerevan",
       "region": "Region",
       "regionRequired": "Region is required",
+      "regionPlaceholder": "e.g., Yerevan",
       "district": "District",
+      "districtPlaceholder": "Optional district/neighborhood",
       "latitude": "Latitude",
+      "latitudePlaceholder": "Latitude (e.g., 40.1811)",
       "longitude": "Longitude",
+      "longitudePlaceholder": "Longitude (e.g., 44.5136)",
+      "coordinates": "Coordinates",
+      "coordinatesHint": "Click on the map to set coordinates (address will be filled automatically), use \"My Location\" button, or enter coordinates manually.",
+      "pickMap": "Pick on Map",
+      "hideMap": "Hide Map",
+      "useMyLocation": "My Location",
+      "selectRegion": "Select Region",
+      "selectCity": "Select City",
+      "selectDistrict": "Select District (Optional)",
+      "addressHint": "Start typing to search for addresses, or click the search icon to find coordinates",
+      "coordinatesFound": "Coordinates found automatically",
+      "coordinatesNotFound": "Could not find coordinates for this address",
+      "geocodingError": "Failed to find coordinates",
+      "addressFound": "Address filled automatically",
+      "findingAddress": "Finding address...",
       "phoneNumber": "Phone Number",
       "phoneRequired": "Phone number is required",
+      "invalidPhoneNumber": "Invalid phone number format",
+      "phoneNumberHelper": "Enter 8 or 9 digits (e.g., 98222680 or 098222680)",
       "maxVisitsPerDay": "Max Visits Per Day",
       "serviceTypes": "Service Types",
       "serviceTypesRequired": "Select at least one service type",
@@ -862,5 +1064,12 @@
       "close": "Close",
       "dragToReorder": "Drag to reorder"
     }
+  },
+  "offline": {
+    "title": "You are offline",
+    "description": "It looks like you are not connected to the internet. Please check your connection and try again.",
+    "retry": "Try Again",
+    "goHome": "Go Home",
+    "stillOffline": "You are still offline. Please check your internet connection."
   }
 }

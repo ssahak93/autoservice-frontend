@@ -52,7 +52,8 @@ export function InviteTeamMemberModal({ isOpen, onClose }: InviteTeamMemberModal
   });
 
   const generateQRMutation = useMutation({
-    mutationFn: (data: InviteTeamMemberRequest) => teamService.generateInvitationQR(data),
+    mutationFn: (data: InviteTeamMemberRequest) =>
+      teamService.generateInvitationQR(data, selectedAutoServiceId || undefined),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['team'] });
       setQrData(response.qrUrl);

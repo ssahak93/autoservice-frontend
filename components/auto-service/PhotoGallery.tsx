@@ -12,6 +12,7 @@ import {
   type AutoServiceProfile,
   type PhotoItem,
 } from '@/lib/services/auto-service-profile.service';
+import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
 import { PhotoViewer } from './PhotoViewer';
@@ -30,6 +31,7 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
   const t = useTranslations('myService.photos');
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
+  const { selectedAutoServiceId } = useAutoServiceStore();
 
   const [uploadingType, setUploadingType] = useState<'profile' | 'work' | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -89,7 +91,7 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
 
   const deleteMutation = useMutation({
     mutationFn: ({ fileId, type }: { fileId: string; type: 'profile' | 'work' }) =>
-      autoServiceProfileService.deletePhoto(fileId, type),
+      autoServiceProfileService.deletePhoto(fileId, type, selectedAutoServiceId || undefined),
     onMutate: async ({ fileId, type }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['autoServiceProfile'] });
@@ -136,7 +138,7 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
 
   const reorderMutation = useMutation({
     mutationFn: ({ fileIds, type }: { fileIds: string[]; type: 'profile' | 'work' }) =>
-      autoServiceProfileService.reorderPhotos(fileIds, type),
+      autoServiceProfileService.reorderPhotos(fileIds, type, selectedAutoServiceId || undefined),
     onMutate: async ({ fileIds, type }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['autoServiceProfile'] });

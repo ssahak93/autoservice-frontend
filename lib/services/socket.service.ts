@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
 
+import { getCurrentLocale } from '@/lib/utils/i18n';
+
 // Get WebSocket URL - remove /api suffix if present, add /chat namespace
 const getSocketUrl = () => {
   const apiUrl =
@@ -162,9 +164,16 @@ class SocketService {
         }
 
         const apiBaseUrl = getApiBaseUrl();
-        const response = await axios.post(`${apiBaseUrl}/auth/refresh`, {
-          refreshToken,
-        });
+        const locale = getCurrentLocale();
+        const response = await axios.post(
+          `${apiBaseUrl}/auth/refresh`,
+          { refreshToken },
+          {
+            headers: {
+              'Accept-Language': locale,
+            },
+          }
+        );
 
         // Extract tokens from response
         let accessToken: string | undefined;

@@ -1,10 +1,14 @@
 'use client';
 
-import { format, parseISO } from 'date-fns';
+// Import only needed functions from date-fns for tree shaking
+import { format } from 'date-fns/format';
+import { parseISO } from 'date-fns/parseISO';
+import { motion } from 'framer-motion';
 import { Calendar, CheckCircle2, XCircle, AlertCircle, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/Button';
+import { getTransition } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
 import type { Visit, PaginatedResponse } from '@/types';
 
@@ -96,9 +100,11 @@ export function VisitList({
     );
   }
 
+  const transition = getTransition(0.2);
+
   return (
     <div className="space-y-4">
-      {visits.map((visit) => {
+      {visits.map((visit, index) => {
         const StatusIcon = statusIcons[visit.status];
         const actions = getAvailableActions(visit);
         const customerName =
@@ -107,7 +113,14 @@ export function VisitList({
             : t('customer', { defaultValue: 'Customer' });
 
         return (
-          <div key={visit.id} className="glass-light rounded-xl p-6 transition-all hover:shadow-lg">
+          <motion.div
+            key={visit.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...transition, delay: index * 0.05 }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
+            className="glass-light rounded-xl p-6 transition-all hover:shadow-lg"
+          >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               {/* Main Info */}
               <div className="flex-1 space-y-3">
@@ -154,8 +167,19 @@ export function VisitList({
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="outline" size="sm" onClick={() => onVisitClick(visit)}>
+              <div
+                className="flex flex-col gap-2 sm:flex-row"
+                role="group"
+                aria-label={t('actions.group', { defaultValue: 'Visit actions' })}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onVisitClick(visit)}
+                  aria-label={t('actions.viewVisit', {
+                    defaultValue: `View visit for ${customerName}`,
+                  })}
+                >
                   {t('actions.view', { defaultValue: 'View' })}
                 </Button>
                 {actions.map((action) => (
@@ -164,13 +188,14 @@ export function VisitList({
                     variant={action.key === 'cancel' ? 'danger' : 'primary'}
                     size="sm"
                     onClick={() => onAction(visit, action.key)}
+                    aria-label={`${action.label} visit for ${customerName}`}
                   >
                     {action.label}
                   </Button>
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
         );
       })}
 

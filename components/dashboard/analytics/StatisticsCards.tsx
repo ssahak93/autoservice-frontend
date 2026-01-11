@@ -1,9 +1,11 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, TrendingUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import type { DashboardStatistics } from '@/hooks/useDashboard';
+import { getAnimationVariants, getTransition } from '@/lib/utils/animations';
 
 interface StatisticsCardsProps {
   statistics: DashboardStatistics;
@@ -51,14 +53,22 @@ export function StatisticsCards({ statistics }: StatisticsCardsProps) {
     },
   ];
 
+  const variants = getAnimationVariants();
+  const transition = getTransition(0.2);
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {cards.map((card) => {
+      {cards.map((card, index) => {
         const Icon = card.icon;
         return (
-          <div
+          <motion.div
             key={card.title}
-            className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+            variants={variants.slideUp}
+            initial="initial"
+            animate="animate"
+            transition={{ ...transition, delay: index * 0.05 }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -67,11 +77,15 @@ export function StatisticsCards({ statistics }: StatisticsCardsProps) {
                   {card.value}
                 </p>
               </div>
-              <div className={`rounded-full p-3 ${card.color} bg-opacity-10`}>
+              <motion.div
+                className={`rounded-full p-3 ${card.color} bg-opacity-10`}
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={transition}
+              >
                 <Icon className={`h-6 w-6 ${card.color.replace('bg-', 'text-')}`} />
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         );
       })}
     </div>

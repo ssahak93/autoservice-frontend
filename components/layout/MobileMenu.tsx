@@ -30,7 +30,7 @@ export function MobileMenu({
   const { user } = useAuth();
 
   // Check if user owns an auto service
-  const isServiceOwner = user?.autoService !== null && user?.autoService !== undefined;
+  const isServiceOwner = user?.autoServices && user.autoServices.length > 0;
 
   if (!isOpen) return null;
 

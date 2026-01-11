@@ -122,3 +122,14 @@ export const useCancelVisit = () => {
     },
   });
 };
+
+export const useVisitHistory = (visitId: string | null) => {
+  return useQuery({
+    queryKey: ['visit-history', visitId],
+    queryFn: async () => {
+      if (!visitId) return [];
+      return visitsService.getHistory(visitId);
+    },
+    enabled: !!visitId,
+  });
+};

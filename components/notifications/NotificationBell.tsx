@@ -2,7 +2,8 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -12,6 +13,7 @@ import { NotificationList } from './NotificationList';
 
 export function NotificationBell() {
   const t = useTranslations('notifications');
+  const locale = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const { data: stats } = useNotificationStats();
   const unreadCount = stats?.unread || 0;
@@ -73,18 +75,11 @@ export function NotificationBell() {
 
               {/* View All Link */}
               <div className="mt-4 border-t border-neutral-200 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  fullWidth
-                  onClick={() => {
-                    setIsOpen(false);
-                    // TODO: Navigate to full notifications page
-                    // router.push('/notifications');
-                  }}
-                >
-                  {t('viewAll')}
-                </Button>
+                <Link href={`/${locale}/notifications`} onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" size="sm" fullWidth>
+                    {t('viewAll', { defaultValue: 'View All' })}
+                  </Button>
+                </Link>
               </div>
             </motion.div>
           </>

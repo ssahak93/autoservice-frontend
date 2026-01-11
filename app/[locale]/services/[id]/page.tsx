@@ -11,7 +11,14 @@ import { ServiceSchema } from '@/components/seo/ServiceSchema';
 import { ServiceDetailClient } from '@/components/services/ServiceDetailClient';
 import { ServiceGallery } from '@/components/services/ServiceGallery';
 import { ServiceInfo } from '@/components/services/ServiceInfo';
-import { ServiceMap } from '@/components/services/ServiceMap';
+// Lazy load heavy components
+const ServiceMap = dynamic(
+  () => import('@/components/services/ServiceMap').then((mod) => ({ default: mod.ServiceMap })),
+  {
+    loading: () => <div className="h-96 w-full animate-pulse rounded-lg bg-neutral-200" />,
+    ssr: false,
+  }
+);
 import { ServiceTypesList } from '@/components/services/ServiceTypesList';
 import { WorkingHours } from '@/components/services/WorkingHours';
 import { servicesServerService } from '@/lib/services/services.server';

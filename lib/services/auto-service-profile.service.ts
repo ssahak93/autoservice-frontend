@@ -13,9 +13,12 @@ export interface AutoServiceProfile {
   specialization?: string;
   yearsOfExperience?: number;
   address: string;
-  city: string;
-  region: string;
+  // Location fields (filled by admin, used for display/search)
+  city?: string;
+  region?: string;
   district?: string;
+  isApproved: boolean;
+  rejectionReason?: string | null; // Reason for rejection (filled by admin)
   latitude: number;
   longitude: number;
   phoneNumber: string;
@@ -57,9 +60,7 @@ export interface CreateProfileRequest {
   specialization?: string;
   yearsOfExperience?: number;
   address: string;
-  city: string;
-  region: string;
-  district?: string;
+  // city, region, district are no longer sent by user - filled by admin
   latitude: number;
   longitude: number;
   phoneNumber: string;
@@ -80,26 +81,41 @@ export const autoServiceProfileService = {
     return response.data;
   },
 
-  async createProfile(data: CreateProfileRequest): Promise<AutoServiceProfile> {
+  async createProfile(
+    data: CreateProfileRequest,
+    autoServiceId?: string
+  ): Promise<AutoServiceProfile> {
     const response = await apiClient.post<AutoServiceProfile>(
       API_ENDPOINTS.AUTO_SERVICES.CREATE_PROFILE,
-      data
+      data,
+      {
+        params: autoServiceId ? { autoServiceId } : undefined,
+      }
     );
     return response.data;
   },
 
-  async updateProfile(data: UpdateProfileRequest): Promise<AutoServiceProfile> {
+  async updateProfile(
+    data: UpdateProfileRequest,
+    autoServiceId?: string
+  ): Promise<AutoServiceProfile> {
     const response = await apiClient.put<AutoServiceProfile>(
       API_ENDPOINTS.AUTO_SERVICES.UPDATE_PROFILE,
-      data
+      data,
+      {
+        params: autoServiceId ? { autoServiceId } : undefined,
+      }
     );
     return response.data;
   },
 
-  async publishProfile(isPublished: boolean): Promise<AutoServiceProfile> {
+  async publishProfile(isPublished: boolean, autoServiceId?: string): Promise<AutoServiceProfile> {
     const response = await apiClient.put<AutoServiceProfile>(
       API_ENDPOINTS.AUTO_SERVICES.PUBLISH_PROFILE,
-      { isPublished }
+      { isPublished },
+      {
+        params: autoServiceId ? { autoServiceId } : undefined,
+      }
     );
     return response.data;
   },
@@ -124,19 +140,49 @@ export const autoServiceProfileService = {
     return response.data;
   },
 
-  async deletePhoto(fileId: string, type: 'profile' | 'work'): Promise<AutoServiceProfile> {
+  async deletePhoto(
+    fileId: string,
+    type: 'profile' | 'work',
+    autoServiceId?: string
+  ): Promise<AutoServiceProfile> {
     // Use request method for DELETE with body
     const response = await apiClient.post<AutoServiceProfile>(
       API_ENDPOINTS.AUTO_SERVICES.DELETE_PHOTO,
-      { fileId, type }
+      { fileId, type },
+      {
+        params: autoServiceId ? { autoServiceId } : undefined,
+      }
     );
     return response.data;
   },
 
-  async reorderPhotos(fileIds: string[], type: 'profile' | 'work'): Promise<AutoServiceProfile> {
+  async reorderPhotos(
+    fileIds: string[],
+    type: 'profile' | 'work',
+    autoServiceId?: string
+  ): Promise<AutoServiceProfile> {
     const response = await apiClient.put<AutoServiceProfile>(
       API_ENDPOINTS.AUTO_SERVICES.REORDER_PHOTOS,
-      { fileIds, type }
+      { fileIds, type },
+      {
+        params: autoServiceId ? { autoServiceId } : undefined,
+      }
+    );
+    return response.data;
+  },
+
+  async updateServiceInfo(
+    autoServiceId: string,
+    data: {
+      companyName?: string;
+      firstName?: string;
+      lastName?: string;
+      avatarFileId?: string;
+    }
+  ): Promise<AutoServiceProfile> {
+    const response = await apiClient.put<AutoServiceProfile>(
+      API_ENDPOINTS.AUTO_SERVICES.UPDATE(autoServiceId),
+      data
     );
     return response.data;
   },

@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, Phone, Star, CheckCircle2, XCircle } from 'lucide-react';
+import { MapPin, Phone, Star, CheckCircle2, XCircle, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import type { AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
@@ -11,11 +11,20 @@ interface ServiceInfoProps {
 
 export function ServiceInfo({ profile }: ServiceInfoProps) {
   const t = useTranslations('myService.info');
+  const tCreate = useTranslations('myService.create');
 
   const serviceName =
     profile.autoService?.serviceType === 'company'
       ? profile.autoService.companyName
       : `${profile.autoService?.firstName || ''} ${profile.autoService?.lastName || ''}`.trim();
+
+  // Helper to get service type translation
+  const getServiceTypeLabel = (serviceType?: 'individual' | 'company') => {
+    if (!serviceType) return '-';
+    return serviceType === 'company'
+      ? tCreate('company', { defaultValue: 'Company' })
+      : tCreate('individual', { defaultValue: 'Individual' });
+  };
 
   return (
     <div className="space-y-6">
@@ -41,9 +50,42 @@ export function ServiceInfo({ profile }: ServiceInfoProps) {
             <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
               {t('serviceType', { defaultValue: 'Service Type' })}
             </label>
-            <p className="mt-1 capitalize text-gray-900 dark:text-white">
-              {profile.autoService?.serviceType || '-'}
+            <p className="mt-1 text-gray-900 dark:text-white">
+              {getServiceTypeLabel(profile.autoService?.serviceType)}
             </p>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              {t('approvalStatus', { defaultValue: 'Approval Status' })}
+            </label>
+            <div className="mt-1 flex items-center gap-2">
+              {profile.isApproved ? (
+                <>
+                  <ShieldCheck className="h-5 w-5 text-green-500" />
+                  <span className="text-green-600 dark:text-green-400">
+                    {t('approved', { defaultValue: 'Approved' })}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                  <span className="text-amber-600 dark:text-amber-400">
+                    {t('pendingApproval', { defaultValue: 'Pending Approval' })}
+                  </span>
+                </>
+              )}
+            </div>
+            {!profile.isApproved && profile.rejectionReason && (
+              <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                  {t('rejectionReason', { defaultValue: 'Rejection Reason' })}:
+                </p>
+                <p className="mt-1 text-sm text-red-700 dark:text-red-400">
+                  {profile.rejectionReason}
+                </p>
+              </div>
+            )}
           </div>
 
           <div>

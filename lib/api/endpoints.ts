@@ -7,13 +7,18 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/login',
     REFRESH: '/auth/refresh',
     ME: '/auth/me',
+    UPDATE_PROFILE: '/auth/me',
     LOGOUT: '/auth/logout',
     CHANGE_PASSWORD: '/auth/change-password',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
     SETTINGS: '/auth/settings',
+    DELETE_ACCOUNT: '/auth/account',
   },
 
   // Auto Services (Public)
   AUTO_SERVICES: {
+    BASE: '/auto-services',
     SEARCH: '/search/auto-services',
     DETAIL: (id: string) => `/auto-services/${id}`,
     REVIEWS: (id: string) => `/auto-services/${id}/reviews`,
@@ -27,6 +32,12 @@ export const API_ENDPOINTS = {
     REORDER_PHOTOS: '/auto-services/profile/photos/reorder',
     // Available auto services (for owner/team members)
     AVAILABLE: '/auto-services/available',
+    // Create auto service
+    CREATE: '/auto-services',
+    // Update auto service info
+    UPDATE: (id: string) => `/auto-services/${id}`,
+    // Delete auto service
+    DELETE: (id: string) => `/auto-services/${id}`,
   },
 
   // Visits
@@ -39,6 +50,7 @@ export const API_ENDPOINTS = {
     CANCEL: (id: string) => `/visits/${id}/cancel`,
     DELETE: (id: string) => `/visits/${id}`,
     COMPLETE: (id: string) => `/visits/${id}/complete`,
+    HISTORY: (id: string) => `/visits/${id}/history`,
     RESCHEDULE: (id: string) => `/visits/${id}/reschedule`,
     // Auto service endpoints
     AUTO_SERVICE_LIST: '/visits/auto-service',

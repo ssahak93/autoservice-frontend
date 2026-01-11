@@ -181,7 +181,6 @@ export const servicesServerService = {
         params: cleanParams,
         headers: {
           'Accept-Language': locale,
-          'X-Locale': locale,
         },
       }
     );
@@ -203,7 +202,6 @@ export const servicesServerService = {
         {
           headers: {
             'Accept-Language': locale,
-            'X-Locale': locale,
           },
         }
       );

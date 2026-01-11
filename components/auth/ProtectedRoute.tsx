@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from '@/i18n/routing';
+import { usePathname, useRouter } from '@/i18n/routing';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,6 +18,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, redirect = true }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch by only checking localStorage after mount
@@ -35,9 +36,9 @@ export function ProtectedRoute({ children, redirect = true }: ProtectedRouteProp
     // Only redirect if we're sure user is not authenticated (no token and not loading)
     // And only after mount to prevent hydration issues
     if (mounted && redirect && !isLoading && !isAuthenticated && !hasToken) {
-      // Save current URL to redirect back after login
+      // Save current URL to redirect back after login (without locale prefix)
       if (typeof window !== 'undefined') {
-        const currentPath = window.location.pathname + window.location.search;
+        const currentPath = pathname + window.location.search;
         sessionStorage.setItem('redirectAfterLogin', currentPath);
       }
       router.push('/login');

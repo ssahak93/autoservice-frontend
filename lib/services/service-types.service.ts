@@ -17,6 +17,8 @@ export interface ServiceType {
     code: string;
     name: string;
   };
+  // Added by useServiceTypes hook for localization
+  displayName?: string;
 }
 
 export interface ServiceCategory {
@@ -31,7 +33,7 @@ export const serviceTypesService = {
    */
   async getAll(): Promise<ServiceType[]> {
     const response = await apiClient.get<{ data: ServiceType[] }>(API_ENDPOINTS.SERVICE_TYPES.LIST);
-    return response.data.data || response.data as unknown as ServiceType[];
+    return response.data.data || (response.data as unknown as ServiceType[]);
   },
 
   /**
@@ -41,7 +43,7 @@ export const serviceTypesService = {
     const response = await apiClient.get<{ data: ServiceType[] }>(
       API_ENDPOINTS.SERVICE_TYPES.BY_CATEGORY(category)
     );
-    return response.data.data || response.data as unknown as ServiceType[];
+    return response.data.data || (response.data as unknown as ServiceType[]);
   },
 
   /**
@@ -51,7 +53,6 @@ export const serviceTypesService = {
     const response = await apiClient.get<{ data: ServiceType[] }>(
       API_ENDPOINTS.SERVICE_TYPES.BY_CATEGORY_AND_GROUP(category, group)
     );
-    return response.data.data || response.data as unknown as ServiceType[];
+    return response.data.data || (response.data as unknown as ServiceType[]);
   },
 };
-

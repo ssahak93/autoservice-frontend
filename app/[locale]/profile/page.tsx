@@ -9,6 +9,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import { ChangePasswordModal } from '@/components/profile/ChangePasswordModal';
@@ -32,12 +33,34 @@ import {
  * Single Responsibility: Displays and manages user profile information
  * Responsive: Mobile-first design with breakpoints for tablet and desktop
  */
+// Helper function to format dates consistently (always use same format to avoid hydration issues)
+const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    // Always use ISO format for consistent server/client rendering
+    // Format as YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch {
+    return '';
+  }
+};
+
 export default function ProfilePage() {
   const t = useTranslations('profile');
   const { user, isLoading: isLoadingUser } = useAuth();
   const updateProfile = useUpdateProfile();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const variants = getAnimationVariants();
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Form validation schema
   const profileSchema = z.object({
@@ -65,18 +88,23 @@ export default function ProfilePage() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     mode: 'onBlur',
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      phoneNumber: '',
+    },
   });
 
-  // Reset form when user data changes
+  // Reset form when user data changes (only after mount)
   useEffect(() => {
-    if (user) {
+    if (mounted && user) {
       reset({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         phoneNumber: parsePhoneFromBackend(user.phoneNumber),
       });
     }
-  }, [user, reset]);
+  }, [mounted, user, reset]);
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
@@ -90,7 +118,8 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoadingUser) {
+  // Show loading during SSR and initial mount to prevent hydration mismatch
+  if (!mounted || isLoadingUser) {
     return (
       <ProtectedRoute>
         <div className="flex min-h-screen items-center justify-center">
@@ -105,11 +134,18 @@ export default function ProfilePage() {
   }
 
   const userName =
-    `${user.firstName} ${user.lastName}`.trim() || t('user', { defaultValue: 'User' });
+    `${user.firstName || ''} ${user.lastName || ''}`.trim() || t('user', { defaultValue: 'User' });
 
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-6 sm:py-8 lg:py-12">
+        {/* Create Service Banner */}
+        {mounted && (
+          <div className="mb-6">
+            <CreateServiceBanner />
+          </div>
+        )}
+
         {/* Header */}
         <motion.div
           variants={variants.slideUp}
@@ -138,7 +174,7 @@ export default function ProfilePage() {
           >
             <div className="glass-light rounded-xl p-6 sm:p-8">
               {/* Avatar */}
-              <div className="mb-6">
+              <div className="mb-6" suppressHydrationWarning>
                 <AvatarUpload
                   currentAvatarUrl={user.avatarUrl || user.avatarFile?.fileUrl}
                   userName={userName}
@@ -148,15 +184,23 @@ export default function ProfilePage() {
               {/* User Info */}
               <div className="space-y-4 text-center">
                 <div>
-                  <h2 className="font-display text-xl font-semibold text-neutral-900 sm:text-2xl">
+                  <h2
+                    className="font-display text-xl font-semibold text-neutral-900 sm:text-2xl"
+                    suppressHydrationWarning
+                  >
                     {userName}
                   </h2>
                   <div className="mt-2 flex items-center justify-center gap-2 text-sm text-neutral-600">
                     <Mail className="h-4 w-4" />
-                    <span className="break-all">{user.email}</span>
+                    <span className="break-all" suppressHydrationWarning>
+                      {user.email || ''}
+                    </span>
                   </div>
                   {user.phoneNumber && (
-                    <div className="mt-2 flex items-center justify-center gap-2 text-sm text-neutral-600">
+                    <div
+                      className="mt-2 flex items-center justify-center gap-2 text-sm text-neutral-600"
+                      suppressHydrationWarning
+                    >
                       <Phone className="h-4 w-4" />
                       <a
                         href={`tel:${user.phoneNumber}`}
@@ -175,7 +219,7 @@ export default function ProfilePage() {
                       <span>{t('accountCreated', { defaultValue: 'Account created' })}</span>
                       <span className="font-medium text-neutral-900">
                         {user.createdAt
-                          ? new Date(user.createdAt).toLocaleDateString()
+                          ? formatDate(user.createdAt)
                           : t('unknown', { defaultValue: 'Unknown' })}
                       </span>
                     </div>
@@ -183,7 +227,7 @@ export default function ProfilePage() {
                       <div className="flex items-center justify-between">
                         <span>{t('lastUpdated', { defaultValue: 'Last updated' })}</span>
                         <span className="font-medium text-neutral-900">
-                          {new Date(user.updatedAt).toLocaleDateString()}
+                          {formatDate(user.updatedAt)}
                         </span>
                       </div>
                     )}

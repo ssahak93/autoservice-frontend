@@ -11,6 +11,10 @@ export interface UserSettings {
   showEmail: boolean;
   profileVisibility: 'public' | 'private' | 'friends';
   twoFactorEnabled: boolean;
+  newVisitNotification: boolean;
+  visitReminderNotification: boolean;
+  messageNotification: boolean;
+  teamInviteNotification: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +27,10 @@ export interface UpdateSettingsData {
   showEmail?: boolean;
   profileVisibility?: 'public' | 'private' | 'friends';
   twoFactorEnabled?: boolean;
+  newVisitNotification?: boolean;
+  visitReminderNotification?: boolean;
+  messageNotification?: boolean;
+  teamInviteNotification?: boolean;
 }
 
 export const settingsService = {
@@ -55,6 +63,10 @@ export const settingsService = {
       'notifications.email': 'emailNotifications',
       'notifications.push': 'pushNotifications',
       'notifications.sms': 'smsNotifications',
+      'notifications.newVisit': 'newVisitNotification',
+      'notifications.reminder': 'visitReminderNotification',
+      'notifications.message': 'messageNotification',
+      'notifications.teamInvite': 'teamInviteNotification',
       'privacy.showPhone': 'showPhoneNumber',
       'privacy.showEmail': 'showEmail',
       'privacy.profileVisibility': 'profileVisibility',
@@ -67,5 +79,15 @@ export const settingsService = {
     }
 
     return this.updateSettings({ [field]: value } as UpdateSettingsData);
+  },
+
+  /**
+   * Delete user account
+   */
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+      API_ENDPOINTS.AUTH.DELETE_ACCOUNT
+    );
+    return response.data;
   },
 };

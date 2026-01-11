@@ -1,10 +1,10 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Mail, Smartphone } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
 
+import { settingsService, type UpdateSettingsData } from '@/lib/services/settings.service';
 import { useUIStore } from '@/stores/uiStore';
 
 export function NotificationSettings() {
@@ -12,21 +12,14 @@ export function NotificationSettings() {
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
 
-  // TODO: Replace with actual API call when backend is ready
-  const [preferences, setPreferences] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    newVisitNotification: true,
-    visitReminderNotification: true,
-    messageNotification: true,
-    teamInviteNotification: true,
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsService.getSettings(),
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (newPreferences: typeof preferences) => {
-      // TODO: Implement API call
-      // await apiClient.put('/settings/notifications', newPreferences);
-      return newPreferences;
+    mutationFn: async (data: UpdateSettingsData) => {
+      return settingsService.updateSettings(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
@@ -44,11 +37,21 @@ export function NotificationSettings() {
     },
   });
 
-  const handleToggle = (key: keyof typeof preferences) => {
-    const newPreferences = { ...preferences, [key]: !preferences[key] };
-    setPreferences(newPreferences);
-    updateMutation.mutate(newPreferences);
+  const handleToggle = (key: keyof UpdateSettingsData) => {
+    if (!settings) return;
+    const currentValue = settings[key];
+    if (typeof currentValue !== 'boolean') return;
+    const newValue = !currentValue;
+    updateMutation.mutate({ [key]: newValue } as UpdateSettingsData);
   };
+
+  if (isLoading) {
+    return <div className="py-8 text-center">Loading...</div>;
+  }
+
+  if (!settings) {
+    return <div className="py-8 text-center">Failed to load settings</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -77,8 +80,9 @@ export function NotificationSettings() {
               </span>
               <input
                 type="checkbox"
-                checked={preferences.emailNotifications}
+                checked={settings.emailNotifications}
                 onChange={() => handleToggle('emailNotifications')}
+                disabled={updateMutation.isPending}
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
             </label>
@@ -100,8 +104,9 @@ export function NotificationSettings() {
               </span>
               <input
                 type="checkbox"
-                checked={preferences.pushNotifications}
+                checked={settings.pushNotifications}
                 onChange={() => handleToggle('pushNotifications')}
+                disabled={updateMutation.isPending}
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
             </label>
@@ -123,8 +128,9 @@ export function NotificationSettings() {
               </span>
               <input
                 type="checkbox"
-                checked={preferences.newVisitNotification}
+                checked={settings.newVisitNotification}
                 onChange={() => handleToggle('newVisitNotification')}
+                disabled={updateMutation.isPending}
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
             </label>
@@ -134,8 +140,9 @@ export function NotificationSettings() {
               </span>
               <input
                 type="checkbox"
-                checked={preferences.visitReminderNotification}
+                checked={settings.visitReminderNotification}
                 onChange={() => handleToggle('visitReminderNotification')}
+                disabled={updateMutation.isPending}
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
             </label>
@@ -145,8 +152,9 @@ export function NotificationSettings() {
               </span>
               <input
                 type="checkbox"
-                checked={preferences.messageNotification}
+                checked={settings.messageNotification}
                 onChange={() => handleToggle('messageNotification')}
+                disabled={updateMutation.isPending}
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
             </label>
@@ -156,8 +164,9 @@ export function NotificationSettings() {
               </span>
               <input
                 type="checkbox"
-                checked={preferences.teamInviteNotification}
+                checked={settings.teamInviteNotification}
                 onChange={() => handleToggle('teamInviteNotification')}
+                disabled={updateMutation.isPending}
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
             </label>

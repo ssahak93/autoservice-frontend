@@ -21,7 +21,7 @@ export function HeaderNavigation({ isAuthenticated, onLinkClick }: HeaderNavigat
   const { user } = useAuth();
 
   // Check if user owns an auto service
-  const isServiceOwner = user?.autoService !== null && user?.autoService !== undefined;
+  const isServiceOwner = user?.autoServices && user.autoServices.length > 0;
 
   return (
     <nav className="hidden items-center gap-6 md:flex">

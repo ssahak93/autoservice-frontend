@@ -29,7 +29,8 @@ export function CompleteVisitModal({
   const [notes, setNotes] = useState('');
 
   const handleSubmit = () => {
-    onComplete(notes || undefined);
+    const trimmedNotes = notes.trim();
+    onComplete(trimmedNotes || undefined);
     setNotes('');
   };
 
@@ -85,11 +86,17 @@ export function CompleteVisitModal({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
+                    maxLength={500}
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     placeholder={t('complete.notesPlaceholder', {
                       defaultValue: 'Add completion notes...',
                     })}
                   />
+                  {notes.length > 0 && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {notes.length}/500 {t('complete.characters', { defaultValue: 'characters' })}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-4">

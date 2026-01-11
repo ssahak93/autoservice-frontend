@@ -2,7 +2,7 @@
 
 import { Filter } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
@@ -36,6 +36,18 @@ export function VisitFilters({ filters, onFilterChange }: VisitFiltersProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(
     filters.date ? new Date(filters.date) : null
   );
+
+  // Update selectedDate when filters.date changes externally
+  useEffect(() => {
+    if (filters.date) {
+      const newDate = new Date(filters.date);
+      if (!selectedDate || newDate.getTime() !== selectedDate.getTime()) {
+        setSelectedDate(newDate);
+      }
+    } else if (selectedDate) {
+      setSelectedDate(null);
+    }
+  }, [filters.date]);
 
   const handleStatusChange = (status: string) => {
     onFilterChange({ ...filters, status: status || undefined, page: 1 });
@@ -96,7 +108,7 @@ export function VisitFilters({ filters, onFilterChange }: VisitFiltersProps) {
             {t('filters.date', { defaultValue: 'Date' })}
           </label>
           <DatePicker
-            selected={selectedDate}
+            value={selectedDate}
             onChange={handleDateChange}
             placeholder={t('filters.selectDate', { defaultValue: 'Select date' })}
             className="w-full"

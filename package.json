@@ -11,7 +11,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "type-check": "tsc --noEmit",
-    "i18n:validate": "ts-node scripts/validate-translations.ts"
+    "i18n:validate": "ts-node scripts/validate-translations.ts",
+    "analyze": "ANALYZE=true next build",
+    "analyze:bundle": "node scripts/analyze-bundle.js"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -31,6 +33,7 @@
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/typography": "^0.5.10",
     "@tanstack/react-query": "^5.14.2",
+    "@types/leaflet": "^1.9.21",
     "autoprefixer": "^10.4.16",
     "axios": "^1.6.2",
     "class-variance-authority": "^0.7.0",
@@ -38,6 +41,7 @@
     "date-fns": "^3.0.6",
     "framer-motion": "^10.18.0",
     "i18next": "^25.7.3",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.303.0",
     "nestjs-i18n": "^10.6.0",
     "next": "^14.0.4",
@@ -47,6 +51,7 @@
     "react-datepicker": "^9.1.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.49.2",
+    "react-leaflet": "^4.2.1",
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^2.2.0",
     "tailwindcss": "^3.3.6",

@@ -14,7 +14,9 @@ interface ServiceMapProps {
 export function ServiceMap({ latitude, longitude, address, city, name }: ServiceMapProps) {
   const t = useTranslations('services');
 
-  // Generate Google Maps embed URL
+  // Generate Google Maps embed URL (public embed, no API key required)
+  // This uses the public Google Maps embed which doesn't require API key configuration
+  // The error in console is non-critical - the map still works
   const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}&hl=en&output=embed`;
 
   return (

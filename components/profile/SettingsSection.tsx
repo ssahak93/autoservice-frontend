@@ -7,8 +7,10 @@ import { useTranslations, useLocale } from 'next-intl';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 import { useSettings, useUpdateSetting } from '@/hooks/useSettings';
+import { settingsService } from '@/lib/services/settings.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
+import { useUIStore } from '@/stores/uiStore';
 
 interface SettingsSectionProps {
   className?: string;
@@ -26,6 +28,7 @@ export function SettingsSection({ className }: SettingsSectionProps) {
   const variants = getAnimationVariants();
   const { data: settings, isLoading: isLoadingSettings } = useSettings();
   const updateSetting = useUpdateSetting();
+  const { showToast } = useUIStore();
 
   const handleToggle = async (category: 'notifications' | 'privacy' | 'security', key: string) => {
     if (!settings) return;
@@ -42,18 +45,25 @@ export function SettingsSection({ className }: SettingsSectionProps) {
     });
   };
 
-  const handleDeleteAccount = () => {
-    // TODO: Implement account deletion endpoint in backend
+  const handleDeleteAccount = async () => {
     if (
-      confirm(
+      !confirm(
         t('dangerZone.deleteAccountConfirm', {
           defaultValue:
             'Are you sure you want to delete your account? This action cannot be undone.',
         })
       )
     ) {
-      // await settingsService.deleteAccount();
-      // Account deletion requested - handled by mutation
+      return;
+    }
+
+    try {
+      await settingsService.deleteAccount();
+      // Redirect to home page after account deletion
+      window.location.href = '/';
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete account';
+      showToast(errorMessage, 'error');
     }
   };
 

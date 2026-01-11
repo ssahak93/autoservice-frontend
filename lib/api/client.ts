@@ -29,13 +29,10 @@ class ApiClient {
         }
 
         // Add locale to request headers for backend
-        // Using only Accept-Language (standard header) to reduce preflight complexity
-        // Backend will fallback to Accept-Language if X-Locale is not present
+        // Use standard Accept-Language header
         const locale = getCurrentLocale();
         if (config.headers) {
           config.headers['Accept-Language'] = locale;
-          // X-Locale removed to reduce CORS preflight requests
-          // Backend LocaleInterceptor will use Accept-Language as fallback
         }
 
         return config;
@@ -130,9 +127,18 @@ class ApiClient {
       throw new Error('No refresh token');
     }
 
-    const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-      refreshToken,
-    });
+    // Get locale for headers
+    const locale = getCurrentLocale();
+
+    const response = await axios.post(
+      `${API_BASE_URL}/auth/refresh`,
+      { refreshToken },
+      {
+        headers: {
+          'Accept-Language': locale,
+        },
+      }
+    );
 
     // Backend returns { accessToken, refreshToken } directly or wrapped in { success, data }
     let accessToken: string | undefined;

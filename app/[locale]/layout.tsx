@@ -8,6 +8,7 @@ import { SkipLink } from '@/components/common/SkipLink';
 import { Footer } from '@/components/layout/Footer';
 import { GlobalChat } from '@/components/layout/GlobalChat';
 import { Header } from '@/components/layout/Header';
+import { ServiceWorkerRegistration } from '@/components/pwa/ServiceWorkerRegistration';
 import { OrganizationSchema } from '@/components/seo/OrganizationSchema';
 import { Toast } from '@/components/ui/Toast';
 import { routing } from '@/i18n/routing';
@@ -39,18 +40,20 @@ export default async function LocaleLayout({
     <NextIntlClientProvider messages={messages}>
       <ErrorBoundary>
         <Providers>
-          <AuthLogoutHandler />
-          <OrganizationSchema />
-          <SkipLink />
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main id="main-content" className="flex-1" tabIndex={-1}>
-              {children}
-            </main>
-            <Footer />
-            <GlobalChat />
-            <Toast />
-          </div>
+          <ServiceWorkerRegistration>
+            <AuthLogoutHandler />
+            <OrganizationSchema />
+            <SkipLink />
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main id="main-content" className="flex-1" tabIndex={-1}>
+                {children}
+              </main>
+              <Footer />
+              <GlobalChat />
+              <Toast />
+            </div>
+          </ServiceWorkerRegistration>
         </Providers>
       </ErrorBoundary>
     </NextIntlClientProvider>

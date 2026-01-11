@@ -19,6 +19,7 @@ import {
   formatPhoneForBackend,
   parsePhoneFromBackend,
 } from '@/lib/utils/phone.util';
+import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
 interface ProfileEditorProps {
@@ -29,6 +30,7 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
   const t = useTranslations('myService.profile');
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
+  const { selectedAutoServiceId } = useAutoServiceStore();
 
   // Load service types
   const { data: serviceTypes = [] } = useServiceTypes();
@@ -88,7 +90,10 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
         ...data,
         phoneNumber: formatPhoneForBackend(data.phoneNumber),
       };
-      return autoServiceProfileService.updateProfile(formattedData);
+      return autoServiceProfileService.updateProfile(
+        formattedData,
+        selectedAutoServiceId || undefined
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });

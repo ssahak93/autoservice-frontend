@@ -1,8 +1,11 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
+import { ErrorDisplay } from '@/components/common/ErrorDisplay';
 import { useDashboardStatistics } from '@/hooks/useDashboard';
+import { getAnimationVariants, getTransition } from '@/lib/utils/animations';
 import { cn } from '@/lib/utils/cn';
 
 export function DashboardStats() {
@@ -13,7 +16,10 @@ export function DashboardStats() {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
+          <div key={i} className="glass-light rounded-lg p-4">
+            <div className="mb-2 h-4 w-20 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+            <div className="h-8 w-16 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+          </div>
         ))}
       </div>
     );
@@ -21,9 +27,14 @@ export function DashboardStats() {
 
   if (error || !stats) {
     return (
-      <div className="rounded-lg bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-200">
-        {t('stats.error', { defaultValue: 'Failed to load statistics' })}
-      </div>
+      <ErrorDisplay
+        error={error}
+        title={t('stats.error', { defaultValue: 'Failed to load statistics' })}
+        onRetry={() => {
+          // React Query will automatically retry when component remounts or query is refetched
+          window.location.reload();
+        }}
+      />
     );
   }
 
@@ -66,28 +77,37 @@ export function DashboardStats() {
     },
   ];
 
+  const variants = getAnimationVariants();
+  const transition = getTransition(0.2);
+
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {statCards.map((card) => (
-        <div
+      {statCards.map((card, index) => (
+        <motion.div
           key={card.label}
-          className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+          variants={variants.slideUp}
+          initial="initial"
+          animate="animate"
+          transition={{ ...transition, delay: index * 0.05 }}
+          className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
         >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{card.label}</p>
               <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{card.value}</p>
             </div>
-            <div
+            <motion.div
               className={cn(
                 'flex h-12 w-12 items-center justify-center rounded-full text-2xl',
                 card.color
               )}
+              whileHover={{ scale: 1.1 }}
+              transition={transition}
             >
               {card.icon}
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

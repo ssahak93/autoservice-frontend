@@ -24,6 +24,9 @@ export const useDashboardStatistics = (params?: { startDate?: string; endDate?: 
         autoServiceId: selectedAutoServiceId || undefined,
       }),
     enabled: !!selectedAutoServiceId,
+    // Statistics can be cached longer (10 minutes) as they don't change frequently
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 };
 
@@ -42,5 +45,8 @@ export const useAutoServiceVisits = (params?: {
         autoServiceId: selectedAutoServiceId || undefined,
       }),
     enabled: !!selectedAutoServiceId,
+    // Visits list should be fresh (2 minutes) as statuses change frequently
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 };
