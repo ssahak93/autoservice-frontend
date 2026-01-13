@@ -10,6 +10,8 @@ export interface User {
   avatarFile?: {
     fileUrl: string;
   };
+  isActive?: boolean;
+  isBlocked?: boolean;
   // For backward compatibility - first auto service
   autoService?: {
     id: string;
@@ -18,6 +20,8 @@ export interface User {
     lastName: string | null;
     companyName: string | null;
     isVerified: boolean;
+    isBlocked?: boolean;
+    blockedReason?: string | null;
     avatarFileId: string | null;
     avatarFile?: {
       id: string;
@@ -33,6 +37,8 @@ export interface User {
     lastName: string | null;
     companyName: string | null;
     isVerified: boolean;
+    isBlocked?: boolean;
+    blockedReason?: string | null;
     avatarFileId: string | null;
     avatarFile?: {
       id: string;

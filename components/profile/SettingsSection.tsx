@@ -3,9 +3,11 @@
 import { motion } from 'framer-motion';
 import { Bell, Globe, Lock, Shield, Trash2, User } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
+import { useState } from 'react';
 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useSettings, useUpdateSetting } from '@/hooks/useSettings';
 import { settingsService } from '@/lib/services/settings.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
@@ -24,10 +26,12 @@ interface SettingsSectionProps {
  */
 export function SettingsSection({ className }: SettingsSectionProps) {
   const t = useTranslations('profile.settings');
+  const tCommon = useTranslations('common');
   const locale = useLocale();
   const variants = getAnimationVariants();
   const { data: settings, isLoading: isLoadingSettings } = useSettings();
   const updateSetting = useUpdateSetting();
+  const [deleteAccountConfirm, setDeleteAccountConfirm] = useState(false);
   const { showToast } = useUIStore();
 
   const handleToggle = async (category: 'notifications' | 'privacy' | 'security', key: string) => {
@@ -45,18 +49,11 @@ export function SettingsSection({ className }: SettingsSectionProps) {
     });
   };
 
-  const handleDeleteAccount = async () => {
-    if (
-      !confirm(
-        t('dangerZone.deleteAccountConfirm', {
-          defaultValue:
-            'Are you sure you want to delete your account? This action cannot be undone.',
-        })
-      )
-    ) {
-      return;
-    }
+  const handleDeleteAccount = () => {
+    setDeleteAccountConfirm(true);
+  };
 
+  const confirmDeleteAccount = async () => {
     try {
       await settingsService.deleteAccount();
       // Redirect to home page after account deletion
@@ -349,6 +346,20 @@ export function SettingsSection({ className }: SettingsSectionProps) {
           }
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteAccountConfirm}
+        onClose={() => setDeleteAccountConfirm(false)}
+        onConfirm={confirmDeleteAccount}
+        title={t('dangerZone.deleteAccount', { defaultValue: 'Delete Account' })}
+        message={t('dangerZone.deleteAccountConfirm', {
+          defaultValue:
+            'Are you sure you want to delete your account? This action cannot be undone.',
+        })}
+        variant="danger"
+        confirmText={t('dangerZone.deleteAccount', { defaultValue: 'Delete Account' })}
+        cancelText={tCommon('cancel', { defaultValue: 'Cancel' })}
+      />
     </motion.div>
   );
 }

@@ -1,11 +1,13 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, CheckCircle2, Settings, Plus, Trash2, ShieldCheck } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Settings, Plus, Trash2, ShieldCheck, Ban } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from '@/i18n/routing';
 import { autoServicesService } from '@/lib/services/auto-services.service';
@@ -27,10 +29,21 @@ export function AutoServicesList() {
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
   const [deletingServiceId, setDeletingServiceId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    serviceId: string;
+    hasProfile: boolean;
+  }>({ isOpen: false, serviceId: '', hasProfile: false });
+  const deleteConfirmRef = useRef(deleteConfirm);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    deleteConfirmRef.current = deleteConfirm;
+  }, [deleteConfirm]);
 
   // Fetch available auto services
   const { data: availableServicesResponse, isLoading } = useQuery({
@@ -109,10 +122,11 @@ export function AutoServicesList() {
       }
       setDeletingServiceId(null);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const errorObj = error as { response?: { data?: { message?: string } }; message?: string };
       const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
+        errorObj?.response?.data?.message ||
+        errorObj?.message ||
         t('servicesList.deleteError', { defaultValue: 'Failed to delete auto service' });
       showToast(errorMessage, 'error');
       setDeletingServiceId(null);
@@ -143,6 +157,56 @@ export function AutoServicesList() {
     incompleteServices.length > 0 ||
     (ownedServices.length === 1 && !ownedServices[0].hasProfile);
 
+  // If user has exactly one complete service, show a compact view with create button
+  if (!shouldShow && ownedServices.length === 1) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t('servicesList.title', {
+              defaultValue: 'My Auto Services',
+            })}
+          </h1>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {t('servicesList.subtitle', {
+              defaultValue: 'Manage all your auto services and their profiles',
+            })}
+          </p>
+        </div>
+
+        {/* Create Another Service Button */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {t('servicesList.createAnother', {
+                  defaultValue: 'Create Another Auto Service',
+                })}
+              </h3>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {t('servicesList.createAnotherDescription', {
+                  defaultValue:
+                    'You can create multiple auto services to manage different locations or service types.',
+                })}
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => router.push('/my-service?create=true')}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {t('servicesList.createAnother', {
+                defaultValue: 'Create Another Auto Service',
+              })}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!shouldShow) {
     return null;
   }
@@ -152,25 +216,16 @@ export function AutoServicesList() {
     router.push('/my-service');
   };
 
-  const handleDelete = async (serviceId: string, hasProfile: boolean) => {
-    if (
-      !confirm(
-        hasProfile
-          ? t('servicesList.deleteConfirmSoft', {
-              defaultValue:
-                'Are you sure you want to delete this auto service? This action can be undone by contacting support.',
-            })
-          : t('servicesList.deleteConfirmPermanent', {
-              defaultValue:
-                'Are you sure you want to permanently delete this auto service? This action cannot be undone.',
-            })
-      )
-    ) {
-      return;
-    }
+  const handleDelete = (serviceId: string, hasProfile: boolean) => {
+    setDeleteConfirm({ isOpen: true, serviceId, hasProfile });
+  };
 
-    setDeletingServiceId(serviceId);
-    deleteMutation.mutate(serviceId);
+  const confirmDelete = () => {
+    const current = deleteConfirmRef.current;
+    if (!current.serviceId) return;
+    setDeletingServiceId(current.serviceId);
+    deleteMutation.mutate(current.serviceId);
+    setDeleteConfirm({ isOpen: false, serviceId: '', hasProfile: false });
   };
 
   // Helper to get service type translation
@@ -183,17 +238,30 @@ export function AutoServicesList() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {t('servicesList.title', {
-            defaultValue: 'My Auto Services',
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t('servicesList.title', {
+              defaultValue: 'My Auto Services',
+            })}
+          </h1>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {t('servicesList.subtitle', {
+              defaultValue: 'Manage all your auto services and their profiles',
+            })}
+          </p>
+        </div>
+        {/* Create Another Service Button - Always visible when user has services */}
+        <Button
+          variant="primary"
+          onClick={() => router.push('/my-service?create=true')}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          {t('servicesList.createAnother', {
+            defaultValue: 'Create Another',
           })}
-        </h1>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          {t('servicesList.subtitle', {
-            defaultValue: 'Manage all your auto services and their profiles',
-          })}
-        </p>
+        </Button>
       </div>
 
       <div suppressHydrationWarning>
@@ -226,10 +294,13 @@ export function AutoServicesList() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       {service.avatarFile ? (
-                        <img
+                        <Image
                           src={service.avatarFile.fileUrl}
                           alt={service.name}
+                          width={48}
+                          height={48}
                           className="h-12 w-12 rounded-full object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
@@ -248,6 +319,25 @@ export function AutoServicesList() {
                             defaultValue: 'Profile not created',
                           })}
                         </p>
+                        {service.isBlocked && (
+                          <div className="mt-2 rounded-md bg-red-50 p-2 dark:bg-red-900/20">
+                            <div className="flex items-start gap-2">
+                              <Ban className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" />
+                              <div className="flex-1">
+                                <p className="text-xs font-medium text-red-800 dark:text-red-300">
+                                  {t('servicesList.blocked', {
+                                    defaultValue: 'This service is blocked',
+                                  })}
+                                </p>
+                                {service.blockedReason && (
+                                  <p className="mt-1 text-xs text-red-700 dark:text-red-400">
+                                    {service.blockedReason}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -255,6 +345,7 @@ export function AutoServicesList() {
                         variant="primary"
                         size="sm"
                         onClick={() => handleSelectService(service.id)}
+                        disabled={service.isBlocked}
                         className="flex items-center gap-2"
                       >
                         <Plus className="h-4 w-4" />
@@ -307,10 +398,13 @@ export function AutoServicesList() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       {service.avatarFile ? (
-                        <img
+                        <Image
                           src={service.avatarFile.fileUrl}
                           alt={service.name}
+                          width={48}
+                          height={48}
                           className="h-12 w-12 rounded-full object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
@@ -353,6 +447,25 @@ export function AutoServicesList() {
                               </span>
                             )}
                         </div>
+                        {service.isBlocked && (
+                          <div className="mt-2 rounded-md bg-red-50 p-2 dark:bg-red-900/20">
+                            <div className="flex items-start gap-2">
+                              <Ban className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" />
+                              <div className="flex-1">
+                                <p className="text-xs font-medium text-red-800 dark:text-red-300">
+                                  {t('servicesList.blocked', {
+                                    defaultValue: 'This service is blocked',
+                                  })}
+                                </p>
+                                {service.blockedReason && (
+                                  <p className="mt-1 text-xs text-red-700 dark:text-red-400">
+                                    {service.blockedReason}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -360,6 +473,7 @@ export function AutoServicesList() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleSelectService(service.id)}
+                        disabled={service.isBlocked}
                         className="flex items-center gap-2"
                       >
                         <Settings className="h-4 w-4" />
@@ -396,6 +510,28 @@ export function AutoServicesList() {
           </p>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, serviceId: '', hasProfile: false })}
+        onConfirm={confirmDelete}
+        title={t('servicesList.delete', { defaultValue: 'Delete Auto Service' })}
+        message={
+          deleteConfirm.hasProfile
+            ? t('servicesList.deleteConfirmSoft', {
+                defaultValue:
+                  'Are you sure you want to delete this auto service? This action can be undone by contacting support.',
+              })
+            : t('servicesList.deleteConfirmPermanent', {
+                defaultValue:
+                  'Are you sure you want to permanently delete this auto service? This action cannot be undone.',
+              })
+        }
+        variant="danger"
+        confirmText={tCommon('delete', { defaultValue: 'Delete' })}
+        cancelText={tCommon('cancel', { defaultValue: 'Cancel' })}
+        isLoading={deleteMutation.isPending && deletingServiceId === deleteConfirm.serviceId}
+      />
     </div>
   );
 }

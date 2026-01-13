@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -174,19 +175,24 @@ export function CreateAutoService() {
       }, 100);
 
       // Immediately redirect to my-service page to show the profile creation form
+      // Remove create query parameter if present
       router.push('/my-service');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       // Extract error message from backend response
       let errorMessage = t('error', { defaultValue: 'Failed to create auto service' });
+      const errorObj = error as {
+        response?: { data?: { error?: { message?: string }; message?: string } };
+        message?: string;
+      };
 
       // Check for backend error response format: { success: false, error: { message: string } }
-      if (error?.response?.data?.error?.message) {
-        errorMessage = error.response.data.error.message;
-      } else if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
+      if (errorObj?.response?.data?.error?.message) {
+        errorMessage = errorObj.response.data.error.message;
+      } else if (errorObj?.response?.data?.message) {
+        errorMessage = errorObj.response.data.message;
+      } else if (errorObj?.message) {
+        errorMessage = errorObj.message;
       }
 
       showToast(errorMessage, 'error');
@@ -212,7 +218,7 @@ export function CreateAutoService() {
               {t('maxReached.message', {
                 defaultValue: `You have reached the maximum limit of ${MAX_AUTO_SERVICES_PER_USER} auto services.`,
                 count: MAX_AUTO_SERVICES_PER_USER,
-              } as any)}
+              })}
             </p>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-500">
               {t('maxReached.hint', {
@@ -238,14 +244,17 @@ export function CreateAutoService() {
                     >
                       <div className="flex items-center gap-3">
                         {service.avatarFile && (
-                          <img
+                          <Image
                             src={service.avatarFile.fileUrl}
                             alt={
                               service.serviceType === 'company'
                                 ? service.companyName || 'Service'
                                 : `${service.firstName} ${service.lastName}`
                             }
+                            width={40}
+                            height={40}
                             className="h-10 w-10 rounded-full object-cover"
+                            unoptimized
                           />
                         )}
                         <div>
@@ -295,7 +304,7 @@ export function CreateAutoService() {
                 defaultValue: `You have ${ownedServicesCount} of ${MAX_AUTO_SERVICES_PER_USER} auto services`,
                 count: ownedServicesCount,
                 max: MAX_AUTO_SERVICES_PER_USER,
-              } as any)}
+              })}
             </p>
           )}
         </div>

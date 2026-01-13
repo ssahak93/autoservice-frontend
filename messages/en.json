@@ -76,6 +76,7 @@
     "phoneNumberHelper": "Optional. Enter 8 or 9 digits (e.g., 98222680 or 098222680)",
     "loginFailed": "Login failed. Please try again.",
     "loginFailedMessage": "Login failed. Please check your credentials.",
+    "accountInactiveOrBlocked": "User account is inactive or blocked",
     "registrationSuccess": "Registration successful",
     "registrationFailed": "Registration failed. Please try again.",
     "registrationFailedMessage": "Registration failed. Please check your information.",
@@ -578,6 +579,7 @@
       "employees": "Employees",
       "members": "Team Members",
       "noMembers": "No team members yet",
+      "remove": "Remove Team Member",
       "removeSuccess": "Team member removed successfully",
       "removeError": "Failed to remove team member",
       "removeConfirm": "Are you sure you want to remove this team member?",
@@ -857,6 +859,13 @@
       "pendingMessage": "Your auto service profile is pending admin approval. It will be visible in search results once approved.",
       "dismiss": "Dismiss"
     },
+    "blocking": {
+      "title": "Auto Service Blocked",
+      "message": "Your auto service has been blocked by an administrator. You will not be able to access your auto service features until the block is removed.",
+      "reasonLabel": "Reason for blocking",
+      "contactSupport": "If you believe this is an error, please contact our support team.",
+      "dismiss": "Dismiss"
+    },
     "create": {
       "title": "Create Your Auto Service",
       "description": "Get started by creating your auto service profile",
@@ -909,11 +918,16 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "pendingApproval": "Pending Approval",
+      "delete": "Delete Auto Service",
       "deleteSuccess": "Auto service deleted successfully",
       "deleteError": "Failed to delete auto service",
       "deleteConfirmPermanent": "Are you sure you want to permanently delete this auto service? This action cannot be undone.",
       "deleteConfirmSoft": "Are you sure you want to delete this auto service? This action can be undone by contacting support.",
-      "summary": "You have {total} auto service(s): {complete} complete, {incomplete} incomplete"
+      "summary": "You have {total} auto service(s): {complete} complete, {incomplete} incomplete",
+      "createAnother": "Create Another",
+      "createAnotherDescription": "You can create multiple auto services to manage different locations or service types.",
+      "backToList": "Back to Services List",
+      "blocked": "This service is blocked"
     },
     "tabs": {
       "info": "Service Info",
@@ -1016,7 +1030,11 @@
       "reset": "Reset",
       "save": "Save Changes",
       "updateSuccess": "Profile updated successfully",
-      "updateError": "Failed to update profile"
+      "updateError": "Failed to update profile",
+      "profilePhotos": "Profile Photos",
+      "uploadProfilePhotos": "Upload Profile Photos",
+      "workPhotos": "Work Photos",
+      "uploadWorkPhotos": "Upload Work Photos"
     },
     "availability": {
       "title": "Availability Management",
@@ -1048,6 +1066,9 @@
       "profilePhotos": "Profile Photos",
       "workPhotos": "Work Photos",
       "upload": "Upload",
+      "uploadProfilePhotos": "Upload Profile Photos",
+      "uploadWorkPhotos": "Upload Work Photos",
+      "existingPhotos": "Existing Photos",
       "noPhotos": "No photos yet",
       "uploadSuccess": "Photo uploaded successfully",
       "uploadError": "Failed to upload photo",

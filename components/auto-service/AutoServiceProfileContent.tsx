@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info, FileText, Calendar, Image, CheckCircle2, Globe } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useMemo } from 'react';
 
@@ -10,6 +11,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AutoServiceSelector } from '@/components/dashboard/AutoServiceSelector';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from '@/i18n/routing';
 import { autoServiceProfileService } from '@/lib/services/auto-service-profile.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
@@ -18,6 +20,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { ApprovalStatusBanner } from './ApprovalStatusBanner';
 import { AutoServicesList } from './AutoServicesList';
 import { AvailabilityCalendar } from './AvailabilityCalendar';
+import { BlockedServiceBanner } from './BlockedServiceBanner';
 import { CreateAutoService } from './CreateAutoService';
 import { CreateProfileEditor } from './CreateProfileEditor';
 import { IncompleteProfileBanner } from './IncompleteProfileBanner';
@@ -32,6 +35,7 @@ import { ServiceInfoEditor } from './ServiceInfoEditor';
 function AutoServiceProfileManager() {
   // ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC
   const t = useTranslations('myService');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
@@ -80,10 +84,11 @@ function AutoServiceProfileManager() {
       }
       try {
         return await autoServiceProfileService.getProfile(validSelectedAutoServiceId);
-      } catch (err: any) {
+      } catch (err: unknown) {
         // If profile doesn't exist (404), return null instead of throwing
         // This allows us to show the create profile form
-        if (err?.response?.status === 404 || err?.response?.status === 400) {
+        const error = err as { response?: { status?: number } };
+        if (error?.response?.status === 404 || error?.response?.status === 400) {
           return null;
         }
         throw err;
@@ -144,13 +149,14 @@ function AutoServiceProfileManager() {
 
   // If profile doesn't exist, show message to create profile
   // Check if error is 404/400/500 (profile not found or server error) or if profile is null
+  const errorObj = error as { response?: { status?: number }; message?: string } | null;
   const isProfileNotFound =
-    error &&
-    ((error as any)?.response?.status === 404 ||
-      (error as any)?.response?.status === 400 ||
-      (error as any)?.response?.status === 500 ||
-      (error as any)?.message?.includes('not found') ||
-      (error as any)?.message?.includes('Profile not found'));
+    errorObj &&
+    (errorObj?.response?.status === 404 ||
+      errorObj?.response?.status === 400 ||
+      errorObj?.response?.status === 500 ||
+      errorObj?.message?.includes('not found') ||
+      errorObj?.message?.includes('Profile not found'));
 
   // Show create profile form if profile doesn't exist or there's an error
   if (isProfileNotFound || (!isLoading && !profile && !error)) {
@@ -209,7 +215,27 @@ function AutoServiceProfileManager() {
 
   // At this point, profile is guaranteed to exist (non-null) after the early return above
   // TypeScript doesn't know this, so we use a non-null assertion
-  const validProfile = profile!; // Non-null assertion - profile is guaranteed to exist here
+  // But we still need to check for profileCompleteness in case it's missing
+  if (!profile) {
+    // Fallback: should not happen due to early return, but handle gracefully
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="container mx-auto px-4 py-8"
+      >
+        <div className="text-center text-gray-600 dark:text-gray-400">
+          {tCommon('loading', { defaultValue: 'Loading...' })}
+        </div>
+      </motion.div>
+    );
+  }
+
+  const validProfile = {
+    ...profile,
+    // Ensure profileCompleteness exists, default to 0 if missing
+    profileCompleteness: profile.profileCompleteness ?? 0,
+  };
 
   const variants = getAnimationVariants();
 
@@ -244,6 +270,23 @@ function AutoServiceProfileManager() {
         className="mb-6"
       >
         <AutoServiceSelector />
+      </motion.div>
+
+      {/* Show blocked service banner - check if auto service is blocked */}
+      {/* Always render to maintain consistent hook count */}
+      <motion.div
+        variants={variants.slideUp}
+        initial="initial"
+        animate="animate"
+        transition={{ delay: 0.1 }}
+        suppressHydrationWarning
+      >
+        <BlockedServiceBanner
+          autoServiceId={validSelectedAutoServiceId || ''}
+          blockedReason={
+            user?.autoServices?.find((as) => as.id === validSelectedAutoServiceId)?.blockedReason
+          }
+        />
       </motion.div>
 
       {/* Show approval status banner - profile is guaranteed to exist here */}
@@ -434,9 +477,13 @@ function AutoServiceProfileManager() {
  */
 export function AutoServiceProfileContent() {
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  const t = useTranslations('myService');
   const { user, isLoading: isLoadingUser } = useAuth();
   const { selectedAutoServiceId, setSelectedAutoServiceId, availableAutoServices } =
     useAutoServiceStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const showCreateForm = searchParams?.get('create') === 'true';
 
   // Check if user owns any auto service
   // Also check availableAutoServices from store as fallback
@@ -444,11 +491,11 @@ export function AutoServiceProfileContent() {
   const hasServicesFromStore = availableAutoServices.filter((s) => s.role === 'owner').length > 0;
   const isServiceOwner = hasServicesFromUser || hasServicesFromStore;
 
-  // Get user's owned service IDs
-  const userOwnedServiceIds = user?.autoServices?.map((s) => s.id) || [];
-
   // Clear invalid selectedAutoServiceId immediately when user has no services
   useEffect(() => {
+    // Get user's owned service IDs inside useEffect to avoid dependency issues
+    const userOwnedServiceIds = user?.autoServices?.map((s) => s.id) || [];
+
     if (!user) {
       // User not loaded - clear selectedAutoServiceId
       if (selectedAutoServiceId) {
@@ -469,7 +516,7 @@ export function AutoServiceProfileContent() {
     if (selectedAutoServiceId && !userOwnedServiceIds.includes(selectedAutoServiceId)) {
       setSelectedAutoServiceId(null);
     }
-  }, [user, isServiceOwner, selectedAutoServiceId, userOwnedServiceIds, setSelectedAutoServiceId]);
+  }, [user, isServiceOwner, selectedAutoServiceId, setSelectedAutoServiceId]);
 
   // NOW we can do conditional returns - all hooks have been called
   // Wait for user to load
@@ -500,13 +547,31 @@ export function AutoServiceProfileContent() {
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-6xl">
-          {/* Show list of all services with completion status */}
-          <div className="mb-8">
-            <AutoServicesList />
-          </div>
+          {/* Show create form if create=true in query params */}
+          {showCreateForm ? (
+            <div className="mb-8">
+              <div className="mb-4">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/my-service')}
+                  className="flex items-center gap-2"
+                >
+                  ← {t('servicesList.backToList', { defaultValue: 'Back to Services List' })}
+                </Button>
+              </div>
+              <CreateAutoService />
+            </div>
+          ) : (
+            <>
+              {/* Show list of all services with completion status */}
+              <div className="mb-8">
+                <AutoServicesList />
+              </div>
 
-          {/* Show profile manager for selected service */}
-          <AutoServiceProfileManager />
+              {/* Show profile manager for selected service */}
+              <AutoServiceProfileManager />
+            </>
+          )}
         </div>
       </div>
     </ProtectedRoute>

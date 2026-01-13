@@ -43,6 +43,8 @@ export const autoServicesService = {
       isVerified: boolean;
       avatarFile: { id: string; fileUrl: string } | null;
       hasProfile: boolean;
+      isBlocked?: boolean;
+      blockedReason?: string | null;
     }>
   > {
     const response = await apiClient.get<
@@ -73,6 +75,8 @@ export const autoServicesService = {
           hasProfile: boolean;
           isApproved?: boolean;
           rejectionReason?: string | null;
+          isBlocked?: boolean;
+          blockedReason?: string | null;
         }>
     >(API_ENDPOINTS.AUTO_SERVICES.AVAILABLE);
 

@@ -1,17 +1,19 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, X, GripVertical } from 'lucide-react';
+import { X, GripVertical } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import React, { useState, useRef, useEffect } from 'react';
 
-import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { FileUpload } from '@/components/ui/FileUpload';
 import {
   autoServiceProfileService,
   type AutoServiceProfile,
   type PhotoItem,
 } from '@/lib/services/auto-service-profile.service';
+import { type UploadedFile } from '@/lib/services/files.service';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -37,6 +39,11 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [viewingPhoto, setViewingPhoto] = useState<{ url: string; alt: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    fileId: string;
+    type: 'profile' | 'work';
+  }>({ isOpen: false, fileId: '', type: 'profile' });
 
   // Local state for photos to allow optimistic updates
   const [localProfile, setLocalProfile] = useState<AutoServiceProfile>(initialProfile);
@@ -72,17 +79,39 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
   const profilePhotos = normalizePhotos(localProfile.profilePhotoFileIds);
   const workPhotos = normalizePhotos(localProfile.workPhotoFileIds);
 
-  const uploadMutation = useMutation({
-    mutationFn: ({ file, type }: { file: File; type: 'profile' | 'work' }) =>
-      autoServiceProfileService.uploadPhoto(file, type),
+  // Mutation to update profile with new photo IDs using reorderPhotos endpoint
+  const updateProfilePhotosMutation = useMutation({
+    mutationFn: async ({
+      newPhotoIds,
+      type,
+    }: {
+      newPhotoIds: string[];
+      type: 'profile' | 'work';
+    }) => {
+      // Get current photo IDs
+      const currentPhotos = normalizePhotos(
+        type === 'profile' ? localProfile.profilePhotoFileIds : localProfile.workPhotoFileIds
+      );
+      const currentIds = currentPhotos.map((p) => p.id);
+
+      // Combine existing and new IDs (avoid duplicates, new photos go to the end)
+      const allIds = [...new Set([...currentIds, ...newPhotoIds])];
+
+      // Use reorderPhotos endpoint which handles both adding and reordering
+      return autoServiceProfileService.reorderPhotos(
+        allIds,
+        type,
+        selectedAutoServiceId || undefined
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
-      showToast(t('uploadSuccess', { defaultValue: 'Photo uploaded successfully' }), 'success');
+      showToast(t('uploadSuccess', { defaultValue: 'Photos uploaded successfully' }), 'success');
       setUploadingType(null);
     },
     onError: (error: Error) => {
       showToast(
-        error.message || t('uploadError', { defaultValue: 'Failed to upload photo' }),
+        error.message || t('uploadError', { defaultValue: 'Failed to upload photos' }),
         'error'
       );
       setUploadingType(null);
@@ -192,13 +221,15 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
     },
   });
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'profile' | 'work') => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadingType(type);
-      uploadMutation.mutate({ file, type });
-      // Reset input to allow selecting the same file again
-      e.target.value = '';
+  const handlePhotoUpload = async (files: UploadedFile[], type: 'profile' | 'work') => {
+    setUploadingType(type);
+    try {
+      const newPhotoIds = files.map((f) => f.id);
+      await updateProfilePhotosMutation.mutateAsync({ newPhotoIds, type });
+    } catch (error) {
+      // Error is handled in mutation
+    } finally {
+      setUploadingType(null);
     }
   };
 
@@ -206,11 +237,12 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
     if (e) {
       e.stopPropagation();
     }
-    if (
-      confirm(t('deleteConfirm', { defaultValue: 'Are you sure you want to delete this photo?' }))
-    ) {
-      deleteMutation.mutate({ fileId, type });
-    }
+    setDeleteConfirm({ isOpen: true, fileId, type });
+  };
+
+  const confirmDelete = () => {
+    deleteMutation.mutate({ fileId: deleteConfirm.fileId, type: deleteConfirm.type });
+    setDeleteConfirm({ isOpen: false, fileId: '', type: 'profile' });
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -388,48 +420,54 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
 
       {/* Profile Photos */}
       <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('profilePhotos', { defaultValue: 'Profile Photos' })}
-          </h3>
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => handleFileSelect(e, 'profile')}
-              disabled={uploadingType === 'profile'}
-            />
-            <Button variant="outline" size="sm" as="span" isLoading={uploadingType === 'profile'}>
-              <Upload className="mr-2 h-4 w-4" />
-              {t('upload', { defaultValue: 'Upload' })}
-            </Button>
-          </label>
-        </div>
-        {renderPhotoGrid(profilePhotos, 'profile')}
+        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          {t('profilePhotos', { defaultValue: 'Profile Photos' })}
+        </h3>
+        <FileUpload
+          accept="image/*"
+          maxSize={10}
+          maxFiles={10}
+          multiple={true}
+          label={t('uploadProfilePhotos', { defaultValue: 'Upload Profile Photos' })}
+          category="profile-photo"
+          inputId="profile-photos-upload-input"
+          onUpload={(files) => handlePhotoUpload(files, 'profile')}
+          disabled={uploadingType === 'profile' || updateProfilePhotosMutation.isPending}
+        />
+        {profilePhotos.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('existingPhotos', { defaultValue: 'Existing Photos' })} ({profilePhotos.length})
+            </p>
+            {renderPhotoGrid(profilePhotos, 'profile')}
+          </div>
+        )}
       </div>
 
       {/* Work Photos */}
       <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('workPhotos', { defaultValue: 'Work Photos' })}
-          </h3>
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => handleFileSelect(e, 'work')}
-              disabled={uploadingType === 'work'}
-            />
-            <Button variant="outline" size="sm" as="span" isLoading={uploadingType === 'work'}>
-              <Upload className="mr-2 h-4 w-4" />
-              {t('upload', { defaultValue: 'Upload' })}
-            </Button>
-          </label>
-        </div>
-        {renderPhotoGrid(workPhotos, 'work')}
+        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          {t('workPhotos', { defaultValue: 'Work Photos' })}
+        </h3>
+        <FileUpload
+          accept="image/*"
+          maxSize={10}
+          maxFiles={20}
+          multiple={true}
+          label={t('uploadWorkPhotos', { defaultValue: 'Upload Work Photos' })}
+          category="work-photo"
+          inputId="work-photos-upload-input"
+          onUpload={(files) => handlePhotoUpload(files, 'work')}
+          disabled={uploadingType === 'work' || updateProfilePhotosMutation.isPending}
+        />
+        {workPhotos.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('existingPhotos', { defaultValue: 'Existing Photos' })} ({workPhotos.length})
+            </p>
+            {renderPhotoGrid(workPhotos, 'work')}
+          </div>
+        )}
       </div>
 
       {/* Photo Viewer Modal */}
@@ -441,6 +479,20 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
           alt={viewingPhoto.alt}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, fileId: '', type: 'profile' })}
+        onConfirm={confirmDelete}
+        title={t('delete', { defaultValue: 'Delete Photo' })}
+        message={t('deleteConfirm', {
+          defaultValue: 'Are you sure you want to delete this photo?',
+        })}
+        variant="danger"
+        confirmText={t('delete', { defaultValue: 'Delete' })}
+        cancelText={t('cancel', { defaultValue: 'Cancel' })}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

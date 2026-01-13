@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { autoServicesService } from '@/lib/services/auto-services.service';
 import { teamService, type TeamMember } from '@/lib/services/team.service';
@@ -31,6 +32,7 @@ import { TeamMemberList } from './TeamMemberList';
 
 export function TeamManagementContent() {
   const t = useTranslations('dashboard.team');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { selectedAutoServiceId, setAvailableAutoServices, setSelectedAutoServiceId } =
     useAutoServiceStore();
@@ -40,6 +42,10 @@ export function TeamManagementContent() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [removeConfirm, setRemoveConfirm] = useState<{ isOpen: boolean; memberId: string }>({
+    isOpen: false,
+    memberId: '',
+  });
 
   // Ensure component only renders after client-side hydration
   useEffect(() => {
@@ -101,13 +107,12 @@ export function TeamManagementContent() {
   });
 
   const handleRemove = (member: TeamMember) => {
-    if (
-      window.confirm(
-        t('removeConfirm', { defaultValue: 'Are you sure you want to remove this team member?' })
-      )
-    ) {
-      removeMutation.mutate(member.id);
-    }
+    setRemoveConfirm({ isOpen: true, memberId: member.id });
+  };
+
+  const confirmRemove = () => {
+    removeMutation.mutate(removeConfirm.memberId);
+    setRemoveConfirm({ isOpen: false, memberId: '' });
   };
 
   const handleEdit = (member: TeamMember) => {
@@ -258,6 +263,20 @@ export function TeamManagementContent() {
           isOwner={isOwner}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={removeConfirm.isOpen}
+        onClose={() => setRemoveConfirm({ isOpen: false, memberId: '' })}
+        onConfirm={confirmRemove}
+        title={t('remove', { defaultValue: 'Remove Team Member' })}
+        message={t('removeConfirm', {
+          defaultValue: 'Are you sure you want to remove this team member?',
+        })}
+        variant="danger"
+        confirmText={t('remove', { defaultValue: 'Remove' })}
+        cancelText={tCommon('cancel', { defaultValue: 'Cancel' })}
+        isLoading={removeMutation.isPending}
+      />
     </div>
   );
 }

@@ -25,18 +25,7 @@ export function extractErrorMessage(error: unknown): string {
     const errorObj = error as Record<string, unknown>;
 
     // Check for backend error response format: { success: false, error: { message: string } }
-    if (errorObj.error && typeof errorObj.error === 'object') {
-      const errorData = errorObj.error as Record<string, unknown>;
-      if (errorData.message && typeof errorData.message === 'string') {
-        return errorData.message;
-      }
-    }
-
-    // Check for common error response formats
-    if (errorObj.message && typeof errorObj.message === 'string') {
-      return errorObj.message;
-    }
-
+    // Priority 1: error.response.data.error.message (most specific)
     if (
       errorObj.response?.data?.error?.message &&
       typeof errorObj.response.data.error.message === 'string'
@@ -44,8 +33,36 @@ export function extractErrorMessage(error: unknown): string {
       return errorObj.response.data.error.message;
     }
 
+    // Priority 2: error.response.data.error.details.message (fallback in details)
+    if (
+      errorObj.response?.data?.error?.details?.message &&
+      typeof errorObj.response.data.error.details.message === 'string'
+    ) {
+      return errorObj.response.data.error.details.message;
+    }
+
+    // Priority 3: error.error.message (direct error object)
+    if (errorObj.error && typeof errorObj.error === 'object') {
+      const errorData = errorObj.error as Record<string, unknown>;
+      if (errorData.message && typeof errorData.message === 'string') {
+        return errorData.message;
+      }
+    }
+
+    // Priority 4: error.response.data.message
     if (errorObj.response?.data?.message && typeof errorObj.response.data.message === 'string') {
       return errorObj.response.data.message;
+    }
+
+    // Priority 5: error.message (but only if not a generic HTTP error)
+    if (errorObj.message && typeof errorObj.message === 'string') {
+      // Skip generic HTTP error messages
+      if (
+        !errorObj.message.includes('status code') &&
+        !errorObj.message.includes('Request failed')
+      ) {
+        return errorObj.message;
+      }
     }
   }
 

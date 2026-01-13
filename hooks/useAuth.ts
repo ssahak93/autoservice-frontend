@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from '@/i18n/routing';
 import { authService } from '@/lib/services/auth.service';
+import { extractErrorMessage } from '@/lib/utils/errorHandler';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { LoginRequest, RegisterRequest, User } from '@/types';
@@ -86,10 +87,20 @@ export const useAuth = () => {
         showToast(t('loginFailed', { defaultValue: 'Login failed. Please try again.' }), 'error');
       }
     },
-    onError: (error: Error) => {
+    onError: (error: unknown) => {
+      // Extract specific error message from API response
+      const extractedMessage = extractErrorMessage(error);
+
+      // Use extracted message if it's meaningful, otherwise use fallback
       const errorMessage =
-        error.message ||
-        t('loginFailedMessage', { defaultValue: 'Login failed. Please check your credentials.' });
+        extractedMessage &&
+        !extractedMessage.includes('status code') &&
+        !extractedMessage.includes('Request failed')
+          ? extractedMessage
+          : t('loginFailedMessage', {
+              defaultValue: 'Login failed. Please check your credentials.',
+            });
+
       showToast(errorMessage, 'error');
     },
   });
@@ -137,12 +148,20 @@ export const useAuth = () => {
         );
       }
     },
-    onError: (error: Error) => {
+    onError: (error: unknown) => {
+      // Extract specific error message from API response
+      const extractedMessage = extractErrorMessage(error);
+
+      // Use extracted message if it's meaningful, otherwise use fallback
       const errorMessage =
-        error.message ||
-        t('registrationFailedMessage', {
-          defaultValue: 'Registration failed. Please check your information.',
-        });
+        extractedMessage &&
+        !extractedMessage.includes('status code') &&
+        !extractedMessage.includes('Request failed')
+          ? extractedMessage
+          : t('registrationFailedMessage', {
+              defaultValue: 'Registration failed. Please check your information.',
+            });
+
       showToast(errorMessage, 'error');
     },
   });

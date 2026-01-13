@@ -12,6 +12,7 @@ import { z } from 'zod';
 
 // Fix for default marker icons (must be done before importing MapContainer)
 if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (L.Icon.Default.prototype as any)._getIconUrl;
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -35,11 +36,13 @@ const ZoomControl = dynamic(() => import('react-leaflet').then((mod) => mod.Zoom
 });
 
 import { Button } from '@/components/ui/Button';
+import { FileUpload } from '@/components/ui/FileUpload';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 // Location fields (region, city, district) are now filled by admin, not by user
 import { autoServiceProfileService } from '@/lib/services/auto-service-profile.service';
+import { type UploadedFile } from '@/lib/services/files.service';
 import { geocodingService } from '@/lib/services/geocoding.service';
 import { getCurrentLocale } from '@/lib/utils/i18n';
 import { PHONE_PATTERN, PHONE_ERROR_MESSAGE, formatPhoneForBackend } from '@/lib/utils/phone.util';
@@ -58,6 +61,12 @@ export function CreateProfileEditor() {
   const [mounted, setMounted] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
   const mapInstanceRef = useRef<L.Map | null>(null);
+
+  // Photo upload state (similar to admin)
+  const [profilePhotoFiles, setProfilePhotoFiles] = useState<UploadedFile[]>([]);
+  const [workPhotoFiles, setWorkPhotoFiles] = useState<UploadedFile[]>([]);
+  const [profilePhotoFileIds, setProfilePhotoFileIds] = useState<string[]>([]);
+  const [workPhotoFileIds, setWorkPhotoFileIds] = useState<string[]>([]);
 
   // Geolocation hook
   const { state: geolocationState, enable: enableGeolocation } = useGeolocation();
@@ -166,8 +175,8 @@ export function CreateProfileEditor() {
   const createMutation = useMutation({
     mutationFn: (data: FormData) => {
       // Format phone number for backend (add +374 prefix)
-      // Remove city, region, district from data (not sent by user, filled by admin)
-      const { city: _city, region: _region, district: _district, ...profileData } = data;
+      // Note: city, region, district are not in FormData (filled by admin, not sent by user)
+      const profileData = data;
 
       // Default working hours (Monday-Friday: 09:00-18:00, Saturday: 10:00-16:00, Sunday: closed)
       const defaultWorkingHours = {
@@ -184,6 +193,9 @@ export function CreateProfileEditor() {
         ...profileData,
         phoneNumber: formatPhoneForBackend(data.phoneNumber),
         workingHours: defaultWorkingHours,
+        // Include photo file IDs if uploaded
+        profilePhotoFileIds: profilePhotoFileIds.length > 0 ? profilePhotoFileIds : undefined,
+        workPhotoFileIds: workPhotoFileIds.length > 0 ? workPhotoFileIds : undefined,
       };
       return autoServiceProfileService.createProfile(
         formattedData,
@@ -456,7 +468,7 @@ export function CreateProfileEditor() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {serviceTypes.map((serviceType) => {
             // Use displayName if available (from useServiceTypes hook), otherwise fallback to name
-            const displayName = (serviceType as any).displayName || serviceType.name;
+            const displayName = serviceType.displayName || serviceType.name;
             return (
               <label
                 key={serviceType.id}
@@ -476,6 +488,60 @@ export function CreateProfileEditor() {
         {errors.serviceTypes && (
           <p className="mt-1 text-sm text-red-600">{errors.serviceTypes.message}</p>
         )}
+      </div>
+
+      {/* Profile Photos */}
+      <div>
+        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('profilePhotos', { defaultValue: 'Profile Photos' })}
+        </label>
+        <FileUpload
+          accept="image/*"
+          maxSize={10}
+          maxFiles={10}
+          multiple={true}
+          label={t('uploadProfilePhotos', { defaultValue: 'Upload Profile Photos' })}
+          existingFiles={profilePhotoFiles}
+          category="profile-photo"
+          inputId="profile-photos-upload-input"
+          onUpload={(files) => {
+            const newFileIds = files.map((f) => f.id);
+            setProfilePhotoFileIds((prev) => [...prev, ...newFileIds]);
+            setProfilePhotoFiles((prev) => [...prev, ...files]);
+          }}
+          onRemove={(fileId) => {
+            setProfilePhotoFileIds((prev) => prev.filter((id) => id !== fileId));
+            setProfilePhotoFiles((prev) => prev.filter((f) => f.id !== fileId));
+          }}
+          disabled={isSubmitting || createMutation.isPending}
+        />
+      </div>
+
+      {/* Work Photos */}
+      <div>
+        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('workPhotos', { defaultValue: 'Work Photos' })}
+        </label>
+        <FileUpload
+          accept="image/*"
+          maxSize={10}
+          maxFiles={20}
+          multiple={true}
+          label={t('uploadWorkPhotos', { defaultValue: 'Upload Work Photos' })}
+          existingFiles={workPhotoFiles}
+          category="work-photo"
+          inputId="work-photos-upload-input"
+          onUpload={(files) => {
+            const newFileIds = files.map((f) => f.id);
+            setWorkPhotoFileIds((prev) => [...prev, ...newFileIds]);
+            setWorkPhotoFiles((prev) => [...prev, ...files]);
+          }}
+          onRemove={(fileId) => {
+            setWorkPhotoFileIds((prev) => prev.filter((id) => id !== fileId));
+            setWorkPhotoFiles((prev) => prev.filter((f) => f.id !== fileId));
+          }}
+          disabled={isSubmitting || createMutation.isPending}
+        />
       </div>
 
       {/* Submit Button */}
