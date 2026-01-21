@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 
+import { ServiceCardSkeleton } from '@/components/auto-service/ServiceCardSkeleton';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/hooks/useAuth';
@@ -62,10 +63,29 @@ export function TeamManagementContent() {
   // Initialize available auto services and ensure a service is selected
   useEffect(() => {
     if (availableServices.length > 0) {
-      setAvailableAutoServices(availableServices);
+      // Map services to match AutoServiceOption type, ensuring role is correctly typed
+      const mappedServices = availableServices.map((service) => ({
+        id: service.id,
+        name: service.name,
+        role: (service.role === 'owner' || service.role === 'manager' || service.role === 'employee'
+          ? service.role
+          : 'employee') as 'owner' | 'manager' | 'employee',
+        serviceType: service.serviceType,
+        companyName: service.companyName ?? undefined,
+        firstName: service.firstName ?? undefined,
+        lastName: service.lastName ?? undefined,
+        avatarFile: service.avatarFile
+          ? {
+              fileUrl: service.avatarFile.fileUrl,
+            }
+          : undefined,
+        hasProfile: service.hasProfile,
+        isVerified: service.isVerified,
+      }));
+      setAvailableAutoServices(mappedServices);
       // If no service is selected, select the first one
-      if (!selectedAutoServiceId && availableServices.length > 0) {
-        const firstOwnedService = availableServices.find((s) => s.role === 'owner');
+      if (!selectedAutoServiceId && mappedServices.length > 0) {
+        const firstOwnedService = mappedServices.find((s) => s.role === 'owner');
         if (firstOwnedService) {
           setSelectedAutoServiceId(firstOwnedService.id);
         }
@@ -144,11 +164,7 @@ export function TeamManagementContent() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700" />
-          ))}
-        </div>
+        <ServiceCardSkeleton count={3} layout="list" />
       </div>
     );
   }

@@ -2,21 +2,33 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X } from 'lucide-react';
-import Link from 'next/link';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { useNotificationStats } from '@/hooks/useNotifications';
+import { Link } from '@/i18n/routing';
+import { useAuthStore } from '@/stores/authStore';
 
 import { NotificationList } from './NotificationList';
 
 export function NotificationBell() {
   const t = useTranslations('notifications');
-  const locale = useLocale();
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated, accessToken } = useAuthStore();
+
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const { data: stats } = useNotificationStats();
   const unreadCount = stats?.unread || 0;
+
+  // Check if we have a token (either in store or localStorage)
+  const hasToken =
+    typeof window !== 'undefined' && (!!accessToken || !!localStorage.getItem('accessToken'));
+
+  // Don't render if not authenticated or no token
+  if (!isAuthenticated || !hasToken) {
+    return null;
+  }
 
   return (
     <div className="relative">
@@ -75,7 +87,7 @@ export function NotificationBell() {
 
               {/* View All Link */}
               <div className="mt-4 border-t border-neutral-200 pt-4">
-                <Link href={`/${locale}/notifications`} onClick={() => setIsOpen(false)}>
+                <Link href="/notifications" onClick={() => setIsOpen(false)}>
                   <Button variant="outline" size="sm" fullWidth>
                     {t('viewAll', { defaultValue: 'View All' })}
                   </Button>

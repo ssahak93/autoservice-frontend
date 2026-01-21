@@ -21,7 +21,9 @@
     "retry": "Retry",
     "goHome": "Go to Home",
     "networkErrorHint": "Please check your internet connection",
-    "serverErrorHint": "The server is experiencing issues. Please try again later."
+    "serverErrorHint": "The server is experiencing issues. Please try again later.",
+    "enterAddress": "Enter address...",
+    "noAddressFound": "No addresses found"
   },
   "auth": {
     "login": "Login",
@@ -83,6 +85,15 @@
     "logoutSuccess": "Logged out successfully"
   },
   "home": {
+    "searchPlaceholder": "Search for auto services, shops, car washes...",
+    "search": "Search",
+    "searchHint": "Find the best auto services near you",
+    "recommendationsTitle": "Best Services for You",
+    "recommendationsSubtitle": "Top-rated services in your area",
+    "viewAllServices": "View All Services",
+    "recentSearches": "Recent Searches",
+    "recentViews": "Recently Viewed",
+    "clear": "Clear",
     "title": "Auto Service Connect",
     "subtitle": "Find and book the best auto services in Armenia",
     "getStarted": "Get Started",
@@ -108,14 +119,30 @@
     "subtitle": "Find the best auto services in Armenia",
     "loading": "Loading...",
     "searchPlaceholder": "Search services...",
+    "quickFilters": "Quick Filters",
     "filterBy": "Filter by",
     "city": "City",
     "region": "Region",
+    "businessType": "Business Type",
+    "allBusinessTypes": "All Business Types",
+    "businessTypes": {
+      "auto_service": "Auto Service",
+      "auto_shop": "Auto Shop",
+      "car_wash": "Car Wash",
+      "cleaning": "Cleaning",
+      "tire_service": "Tire Service",
+      "towing": "Towing",
+      "tinting": "Tinting",
+      "other": "Other"
+    },
     "serviceType": "Service Type",
     "minRating": "Minimum Rating",
     "noServices": "No services found",
     "viewDetails": "View Details",
     "bookVisit": "Book Visit",
+    "districtsMap": "Districts Map",
+    "clickDistrict": "Click on a district to select it",
+    "loading": "Loading...",
     "rating": "Rating",
     "reviews": "Reviews",
     "verified": "Verified",
@@ -188,7 +215,10 @@
     "updating": "Updating...",
     "noServicesDescription": "No services found. Check back later or try a different search.",
     "browseAll": "Browse All Services",
-    "verifiedService": "Verified service"
+    "verifiedService": "Verified service",
+    "notFound": "Service Not Found",
+    "notFoundDescription": "The service you are looking for does not exist or has been removed.",
+    "browseServices": "Browse Services"
   },
   "visits": {
     "title": "My Visits",
@@ -746,8 +776,12 @@
     "generic": "Something went wrong. Please try again.",
     "network": "Network error. Please check your connection.",
     "unauthorized": "You are not authorized to perform this action.",
-    "notFound": "The requested resource was not found.",
-    "serverError": "Server error. Please try again later."
+    "notFound": "Page Not Found",
+    "notFoundDescription": "The page you are looking for does not exist or has been moved.",
+    "serverError": "Server Error",
+    "serverErrorDescription": "Something went wrong on our end. Please try again later.",
+    "tryAgain": "Try Again",
+    "errorDetails": "Error Details"
   },
   "validation": {
     "required": "This field is required",
@@ -927,7 +961,8 @@
       "createAnother": "Create Another",
       "createAnotherDescription": "You can create multiple auto services to manage different locations or service types.",
       "backToList": "Back to Services List",
-      "blocked": "This service is blocked"
+      "blocked": "This service is blocked",
+      "viewPublic": "View Public Profile"
     },
     "tabs": {
       "info": "Service Info",
@@ -1058,7 +1093,28 @@
       "updateSuccess": "Working hours updated successfully",
       "updateError": "Failed to update working hours",
       "exceptions": "Availability Exceptions",
-      "exceptionsComingSoon": "Availability exceptions management coming soon"
+      "exceptionsComingSoon": "Availability exceptions management coming soon",
+      "addException": "Add Exception",
+      "editException": "Edit Exception",
+      "noExceptions": "No exceptions added yet",
+      "available": "Available",
+      "closed": "Closed",
+      "date": "Date",
+      "isAvailable": "Available on this day",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "e.g., Holiday, Special event",
+      "exceptionCreated": "Exception created successfully",
+      "exceptionUpdated": "Exception updated successfully",
+      "exceptionDeleted": "Exception deleted successfully",
+      "dateRequired": "Date is required",
+      "deleteConfirm": "Are you sure you want to delete this exception?",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create"
     },
     "photos": {
       "title": "Photo Gallery",

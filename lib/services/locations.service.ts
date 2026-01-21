@@ -11,6 +11,15 @@ export interface Location {
   districts?: Array<{ code: string; name: string }>;
 }
 
+export interface DistrictWithBounds {
+  id: string;
+  code: string;
+  name: string;
+  centerLat: number;
+  centerLng: number;
+  bounds: GeoJSON.Polygon | null; // GeoJSON polygon or null
+}
+
 export interface City extends Location {
   regionCode: string;
   regionName: string;
@@ -42,6 +51,16 @@ export const locationsService = {
   async getDistricts(cityCode: string): Promise<Location[]> {
     const response = await apiClient.get<Location[]>(
       `${API_ENDPOINTS.LOCATIONS.DISTRICTS}?city=${cityCode}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get districts with GeoJSON bounds for interactive map visualization
+   */
+  async getDistrictsWithBounds(cityCode: string): Promise<DistrictWithBounds[]> {
+    const response = await apiClient.get<DistrictWithBounds[]>(
+      `${API_ENDPOINTS.LOCATIONS.DISTRICTS_WITH_BOUNDS}?city=${cityCode}`
     );
     return response.data;
   },

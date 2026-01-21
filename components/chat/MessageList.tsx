@@ -544,13 +544,15 @@ export function MessageList({ visitId }: MessageListProps) {
     }
 
     // Debounce: wait 1.5 seconds after last message change before marking as read
-    markAsReadTimeoutRef.current = setTimeout(() => {
-      markAsRead.mutate(visitId, {
-        onSuccess: () => {
-          lastMarkedAsReadRef.current = Date.now();
-        },
-      });
-    }, 1500);
+    if (visitId) {
+      markAsReadTimeoutRef.current = setTimeout(() => {
+        markAsRead.mutate(visitId, {
+          onSuccess: () => {
+            lastMarkedAsReadRef.current = Date.now();
+          },
+        });
+      }, 1500);
+    }
 
     return () => {
       if (markAsReadTimeoutRef.current) {

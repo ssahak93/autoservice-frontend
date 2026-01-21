@@ -211,10 +211,12 @@ export function FileUpload({
             <div key={index} className="group relative">
               {preview.preview ? (
                 <div className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-                  <img
+                  <Image
                     src={preview.preview}
                     alt={preview.file.name}
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
                   />
                   <button
                     type="button"

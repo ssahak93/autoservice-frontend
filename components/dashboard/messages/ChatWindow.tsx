@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { X, User, Calendar, Clock, AlertCircle, Phone } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
 import { MessageInput } from '@/components/chat/MessageInput';
@@ -93,10 +94,13 @@ export function ChatWindow({ visitId, onClose }: ChatWindowProps) {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {visit?.user?.avatarFile?.fileUrl ? (
-              <img
+              <Image
                 src={visit.user.avatarFile.fileUrl}
                 alt={customerName}
+                width={48}
+                height={48}
                 className="h-12 w-12 flex-shrink-0 rounded-full object-cover ring-2 ring-primary-200 dark:ring-primary-800"
+                unoptimized
               />
             ) : (
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 ring-2 ring-primary-200 dark:bg-primary-900/30 dark:ring-primary-800">

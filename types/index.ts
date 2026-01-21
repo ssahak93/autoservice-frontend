@@ -16,6 +16,7 @@ export interface User {
   autoService?: {
     id: string;
     serviceType: 'individual' | 'company';
+    businessType?: BusinessType;
     firstName: string | null;
     lastName: string | null;
     companyName: string | null;
@@ -33,6 +34,7 @@ export interface User {
   autoServices?: Array<{
     id: string;
     serviceType: 'individual' | 'company';
+    businessType?: BusinessType;
     firstName: string | null;
     lastName: string | null;
     companyName: string | null;
@@ -79,10 +81,22 @@ export interface AuthResponse {
   };
 }
 
+// Business Type
+export type BusinessType =
+  | 'auto_service'
+  | 'auto_shop'
+  | 'car_wash'
+  | 'cleaning'
+  | 'tire_service'
+  | 'towing'
+  | 'tinting'
+  | 'other';
+
 // Auto Service types
 export interface AutoService {
   id: string;
   serviceType: 'individual' | 'company';
+  businessType?: BusinessType; // Тип бизнеса
   companyName?: string;
   firstName?: string;
   lastName?: string;
@@ -99,6 +113,8 @@ export interface AutoService {
   averageRating?: number;
   totalReviews: number;
   isVerified: boolean;
+  isBlocked?: boolean; // Blocked services should not be shown in public lists
+  blockedReason?: string | null;
   avatarFile?: {
     fileUrl: string;
   };
@@ -161,6 +177,10 @@ export interface Visit {
     id: string;
     firstName?: string;
     lastName?: string;
+    phoneNumber?: string;
+    avatarFile?: {
+      fileUrl: string;
+    };
   };
   // Legacy fields for backward compatibility
   preferredDate?: string;

@@ -19,13 +19,33 @@ class ServerApiClient {
   /**
    * Get data from API endpoint
    */
-  async get<T>(url: string, config?: { params?: Record<string, unknown>; headers?: Record<string, string> }): Promise<T> {
+  async get<T>(
+    url: string,
+    config?: { params?: Record<string, unknown>; headers?: Record<string, string> }
+  ): Promise<T> {
     try {
       const response = await this.client.get<T>(url, config);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.error?.message || error.message || 'API request failed');
+        // If 404, throw error with message that can be caught and handled
+        if (error.response?.status === 404) {
+          const errorMessage =
+            error.response?.data?.error?.message || error.response?.data?.message || 'Not found';
+          const notFoundError = new Error(errorMessage) as Error & {
+            status?: number;
+            code?: string;
+          };
+          notFoundError.status = 404;
+          notFoundError.code = 'NOT_FOUND';
+          throw notFoundError;
+        }
+        throw new Error(
+          error.response?.data?.error?.message ||
+            error.response?.data?.message ||
+            error.message ||
+            'API request failed'
+        );
       }
       throw error;
     }
@@ -33,4 +53,3 @@ class ServerApiClient {
 }
 
 export const serverApiClient = new ServerApiClient();
-

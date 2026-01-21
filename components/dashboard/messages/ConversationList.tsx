@@ -4,6 +4,7 @@
 import { format } from 'date-fns/format';
 import { motion } from 'framer-motion';
 import { User } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
 import { getTransition } from '@/lib/utils/animations';
@@ -54,10 +55,13 @@ export function ConversationList({
               {/* Avatar */}
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
                 {conversation.visit.user.avatarFile?.fileUrl ? (
-                  <img
+                  <Image
                     src={conversation.visit.user.avatarFile.fileUrl}
                     alt={customerName}
+                    width={48}
+                    height={48}
                     className="h-12 w-12 rounded-full object-cover"
+                    unoptimized
                   />
                 ) : (
                   <User className="h-6 w-6 text-primary-600 dark:text-primary-400" />

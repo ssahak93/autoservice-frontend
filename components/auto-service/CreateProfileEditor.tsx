@@ -1,19 +1,20 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import L from 'leaflet';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
 // Fix for default marker icons (must be done before importing MapContainer)
 if (typeof window !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, import/no-named-as-default-member
   delete (L.Icon.Default.prototype as any)._getIconUrl;
+  // eslint-disable-next-line import/no-named-as-default-member
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
@@ -35,32 +36,30 @@ const ZoomControl = dynamic(() => import('react-leaflet').then((mod) => mod.Zoom
   ssr: false,
 });
 
+import { AddressAutocomplete } from '@/components/common/AddressAutocomplete';
 import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import { useServiceTypes } from '@/hooks/useServiceTypes';
 // Location fields (region, city, district) are now filled by admin, not by user
-import { autoServiceProfileService } from '@/lib/services/auto-service-profile.service';
+import { useCreateProfile } from '@/hooks/useProfileMutations';
+import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { type UploadedFile } from '@/lib/services/files.service';
 import { geocodingService } from '@/lib/services/geocoding.service';
 import { getCurrentLocale } from '@/lib/utils/i18n';
 import { PHONE_PATTERN, PHONE_ERROR_MESSAGE, formatPhoneForBackend } from '@/lib/utils/phone.util';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
 import { LocationPicker } from './LocationPicker';
 
 export function CreateProfileEditor() {
   const t = useTranslations('myService.profile');
-  const { showToast } = useUIStore();
   const queryClient = useQueryClient();
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { showToast } = useUIStore();
   const locale = getCurrentLocale();
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.1811, 44.5136]); // Yerevan default
   const [mounted, setMounted] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
-  const mapInstanceRef = useRef<L.Map | null>(null);
 
   // Photo upload state (similar to admin)
   const [profilePhotoFiles, setProfilePhotoFiles] = useState<UploadedFile[]>([]);
@@ -73,14 +72,6 @@ export function CreateProfileEditor() {
 
   useEffect(() => {
     setMounted(true);
-
-    // Cleanup: remove map instance when component unmounts
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
   }, []);
 
   // Load service types
@@ -136,22 +127,25 @@ export function CreateProfileEditor() {
 
   // Handle reverse geocoding (coordinates → address)
   // Only fills address, not city/region/district (those are filled by admin)
-  const handleReverseGeocode = async (lat: number, lng: number) => {
-    setIsReverseGeocoding(true);
-    try {
-      const result = await geocodingService.reverseGeocode(lat, lng, locale);
-      if (result && result.address) {
-        // Only fill address - city/region/district will be filled by admin
-        setValue('address', result.address, { shouldValidate: true });
-        showToast(t('addressFound', { defaultValue: 'Address filled automatically' }), 'success');
+  const handleReverseGeocode = useCallback(
+    async (lat: number, lng: number) => {
+      setIsReverseGeocoding(true);
+      try {
+        const result = await geocodingService.reverseGeocode(lat, lng, locale);
+        if (result && result.address) {
+          // Only fill address - city/region/district will be filled by admin
+          setValue('address', result.address, { shouldValidate: true });
+          showToast(t('addressFound', { defaultValue: 'Address filled automatically' }), 'success');
+        }
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        showToast(t('geocodingError', { defaultValue: 'Failed to find address' }), 'error');
+      } finally {
+        setIsReverseGeocoding(false);
       }
-    } catch (error) {
-      console.error('Reverse geocoding error:', error);
-      showToast(t('geocodingError', { defaultValue: 'Failed to find address' }), 'error');
-    } finally {
-      setIsReverseGeocoding(false);
-    }
-  };
+    },
+    [locale, setValue, t, showToast]
+  );
 
   // Update map center when coordinates change
   useEffect(() => {
@@ -172,8 +166,11 @@ export function CreateProfileEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geolocationState.isEnabled, geolocationState.latitude, geolocationState.longitude]);
 
-  const createMutation = useMutation({
-    mutationFn: (data: FormData) => {
+  // Use custom hook for create profile mutation (SOLID - Single Responsibility)
+  const createMutation = useCreateProfile();
+
+  const onSubmit = useCallback(
+    (data: FormData) => {
       // Format phone number for backend (add +374 prefix)
       // Note: city, region, district are not in FormData (filled by admin, not sent by user)
       const profileData = data;
@@ -197,28 +194,17 @@ export function CreateProfileEditor() {
         profilePhotoFileIds: profilePhotoFileIds.length > 0 ? profilePhotoFileIds : undefined,
         workPhotoFileIds: workPhotoFileIds.length > 0 ? workPhotoFileIds : undefined,
       };
-      return autoServiceProfileService.createProfile(
-        formattedData,
-        selectedAutoServiceId || undefined
-      );
-    },
-    onSuccess: async () => {
-      // Invalidate and refetch profile to show the newly created profile
-      await queryClient.refetchQueries({ queryKey: ['autoServiceProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-      showToast(t('createSuccess', { defaultValue: 'Profile created successfully' }), 'success');
-    },
-    onError: (error: Error) => {
-      showToast(
-        error.message || t('createError', { defaultValue: 'Failed to create profile' }),
-        'error'
-      );
-    },
-  });
 
-  const onSubmit = (data: FormData) => {
-    createMutation.mutate(data);
-  };
+      createMutation.mutate(formattedData, {
+        onSuccess: async () => {
+          // Invalidate and refetch profile to show the newly created profile
+          await queryClient.refetchQueries({ queryKey: ['autoServiceProfile'] });
+          queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+        },
+      });
+    },
+    [createMutation, queryClient, profilePhotoFileIds, workPhotoFileIds]
+  );
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -308,17 +294,6 @@ export function CreateProfileEditor() {
               zoom={13}
               style={{ height: '100%', width: '100%' }}
               scrollWheelZoom={true}
-              whenCreated={(map) => {
-                // Store map instance and clean up previous one if exists
-                if (mapInstanceRef.current && mapInstanceRef.current !== map) {
-                  try {
-                    mapInstanceRef.current.remove();
-                  } catch (e) {
-                    // Map already removed, ignore
-                  }
-                }
-                mapInstanceRef.current = map;
-              }}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -364,21 +339,32 @@ export function CreateProfileEditor() {
           </Button>
         </div>
 
-        {/* Address - Read Only (Auto-filled from map) */}
+        {/* Address - Autocomplete */}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('address', { defaultValue: 'Address' })} *
           </label>
-          <div className="rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-            {watchedAddress || (
-              <span className="italic text-gray-400 dark:text-gray-500">
-                {t('addressWillBeFilled', {
-                  defaultValue:
-                    'Address will be filled automatically when you select a location on the map',
-                })}
-              </span>
-            )}
-          </div>
+          <AddressAutocomplete
+            value={watchedAddress || ''}
+            onChange={(address) => {
+              setValue('address', address, { shouldValidate: true });
+            }}
+            onSelect={(suggestion) => {
+              // When user selects an address, update coordinates
+              setValue('latitude', suggestion.latitude, { shouldValidate: true });
+              setValue('longitude', suggestion.longitude, { shouldValidate: true });
+              setMapCenter([suggestion.latitude, suggestion.longitude]);
+            }}
+            placeholder={t('enterAddress', { defaultValue: 'Enter address or click on map...' })}
+            disabled={false}
+            className="w-full"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {t('addressHint', {
+              defaultValue:
+                'Start typing to search for addresses, or click on the map to select a location',
+            })}
+          </p>
           {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>}
         </div>
 

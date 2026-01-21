@@ -148,6 +148,7 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
     : [{ value: '', label: t('loading') }];
 
   const hasActiveFilters =
+    localFilters.businessType ||
     localFilters.city ||
     localFilters.region ||
     localFilters.district ||
@@ -238,6 +239,60 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
             />
           </div>
         )}
+
+        {/* Business Type Filter */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-neutral-700">
+            {t('businessType', { defaultValue: 'Business Type' })}
+          </label>
+          <Select
+            value={localFilters.businessType || ''}
+            onChange={(e) => handleChange('businessType', e.target.value || undefined)}
+            options={[
+              { value: '', label: t('allBusinessTypes', { defaultValue: 'All Types' }) },
+              {
+                value: 'auto_service',
+                label: t('businessTypes.auto_service', { defaultValue: 'Auto Service' }),
+                key: 'bt-auto_service',
+              },
+              {
+                value: 'auto_shop',
+                label: t('businessTypes.auto_shop', { defaultValue: 'Auto Shop' }),
+                key: 'bt-auto_shop',
+              },
+              {
+                value: 'car_wash',
+                label: t('businessTypes.car_wash', { defaultValue: 'Car Wash' }),
+                key: 'bt-car_wash',
+              },
+              {
+                value: 'cleaning',
+                label: t('businessTypes.cleaning', { defaultValue: 'Cleaning' }),
+                key: 'bt-cleaning',
+              },
+              {
+                value: 'tire_service',
+                label: t('businessTypes.tire_service', { defaultValue: 'Tire Service' }),
+                key: 'bt-tire_service',
+              },
+              {
+                value: 'towing',
+                label: t('businessTypes.towing', { defaultValue: 'Towing' }),
+                key: 'bt-towing',
+              },
+              {
+                value: 'tinting',
+                label: t('businessTypes.tinting', { defaultValue: 'Tinting' }),
+                key: 'bt-tinting',
+              },
+              {
+                value: 'other',
+                label: t('businessTypes.other', { defaultValue: 'Other' }),
+                key: 'bt-other',
+              },
+            ]}
+          />
+        </div>
 
         {/* Service Type Filter */}
         <Select

@@ -1,10 +1,11 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, Check, Settings } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
+import { ServiceAvatar } from '@/components/auto-service/ServiceAvatar';
 import { useAuth } from '@/hooks/useAuth';
 import { autoServicesService } from '@/lib/services/auto-services.service';
 import { cn } from '@/lib/utils/cn';
@@ -34,7 +35,26 @@ export function AutoServiceSelector() {
   // Initialize available auto services
   useEffect(() => {
     if (availableServices.length > 0) {
-      setAvailableAutoServices(availableServices);
+      // Map services to match AutoServiceOption type, ensuring role is correctly typed
+      const mappedServices = availableServices.map((service) => ({
+        id: service.id,
+        name: service.name,
+        role: (service.role === 'owner' || service.role === 'manager' || service.role === 'employee'
+          ? service.role
+          : 'employee') as 'owner' | 'manager' | 'employee',
+        serviceType: service.serviceType,
+        companyName: service.companyName ?? undefined,
+        firstName: service.firstName ?? undefined,
+        lastName: service.lastName ?? undefined,
+        avatarFile: service.avatarFile
+          ? {
+              fileUrl: service.avatarFile.fileUrl,
+            }
+          : undefined,
+        hasProfile: service.hasProfile,
+        isVerified: service.isVerified,
+      }));
+      setAvailableAutoServices(mappedServices);
     } else if (!user) {
       setAvailableAutoServices([]);
     }
@@ -107,15 +127,15 @@ export function AutoServiceSelector() {
           aria-haspopup="listbox"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            {selectedService?.avatarFile ? (
-              <img
-                src={selectedService.avatarFile.fileUrl}
-                alt={selectedService.name}
-                className="h-8 w-8 flex-shrink-0 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
-              />
-            ) : (
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
-                <Settings className="h-4 w-4 text-gray-400" />
+            {selectedService && (
+              <div className="flex-shrink-0 origin-left scale-75">
+                <ServiceAvatar
+                  avatarFile={selectedService.avatarFile}
+                  name={selectedService.name}
+                  isVerified={selectedService.isVerified}
+                  size="sm"
+                  variant="primary"
+                />
               </div>
             )}
             <div className="min-w-0 flex-1">
@@ -182,17 +202,13 @@ export function AutoServiceSelector() {
                     role="option"
                     aria-selected={isSelected}
                   >
-                    {service.avatarFile ? (
-                      <img
-                        src={service.avatarFile.fileUrl}
-                        alt={service.name}
-                        className="h-10 w-10 flex-shrink-0 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
-                        <Settings className="h-5 w-5 text-gray-400" />
-                      </div>
-                    )}
+                    <ServiceAvatar
+                      avatarFile={service.avatarFile}
+                      name={service.name}
+                      isVerified={service.isVerified}
+                      size="sm"
+                      variant="primary"
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900 dark:text-white">

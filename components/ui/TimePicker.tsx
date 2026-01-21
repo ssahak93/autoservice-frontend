@@ -158,7 +158,10 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
               ) : (
                 <div className="p-4 text-center text-sm text-neutral-500">
                   {selectedDate
-                    ? t('noAvailableTimes', { defaultValue: 'No available times for this date' })
+                    ? t('noAvailableTimes', {
+                        defaultValue:
+                          'No available times for this date. This may be a non-working day or all slots are booked.',
+                      })
                     : t('selectDateFirst', { defaultValue: 'Please select a date first' })}
                 </div>
               )}
@@ -169,6 +172,15 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
           <input ref={ref} type="hidden" value={value || ''} id={id} name={name} />
         </div>
         {error && <p className="mt-1 text-sm text-error-500">{error}</p>}
+        {/* Warning if time is selected but not in available times */}
+        {value && selectedDate && availableTimes.length > 0 && !availableTimes.includes(value) && (
+          <p className="mt-1 text-sm text-amber-600">
+            {t('timeNotAvailable', {
+              defaultValue:
+                'Selected time may not be available. Please select from available times.',
+            })}
+          </p>
+        )}
       </div>
     );
   }

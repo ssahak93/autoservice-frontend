@@ -7,10 +7,13 @@ import axios, {
 
 import { getCurrentLocale } from '@/lib/utils/i18n';
 
+import { requestOptimizer } from './request-optimizer';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
 class ApiClient {
   private client: AxiosInstance;
+  private requestQueue: Map<string, Promise<unknown>> = new Map();
 
   constructor() {
     this.client = axios.create({
@@ -18,9 +21,10 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 30000, // 30 seconds timeout
     });
 
-    // Request interceptor for auth token and locale
+    // Request interceptor for auth token, locale, and optimization
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         const token = this.getToken();
@@ -29,10 +33,32 @@ class ApiClient {
         }
 
         // Add locale to request headers for backend
-        // Use standard Accept-Language header
         const locale = getCurrentLocale();
         if (config.headers) {
           config.headers['Accept-Language'] = locale;
+        }
+
+        // For FormData, don't optimize and let browser set Content-Type with boundary
+        const isFormData = config.data instanceof FormData;
+
+        if (isFormData && config.headers) {
+          // Remove Content-Type header to let browser set it with boundary
+          delete config.headers['Content-Type'];
+        }
+
+        // Optimize request payload (skip FormData - it's already optimized for file uploads)
+        if (config.data && typeof config.data === 'object' && !isFormData) {
+          config.data = requestOptimizer.optimizePayload(config.data);
+
+          // Validate payload size
+          if (!requestOptimizer.validatePayloadSize(config.data)) {
+            console.warn('Request payload exceeds maximum size:', config.url);
+          }
+        }
+
+        // Optimize query params
+        if (config.params && typeof config.params === 'object') {
+          config.params = requestOptimizer.optimizeQueryParams(config.params);
         }
 
         return config;
@@ -57,8 +83,21 @@ class ApiClient {
             url.includes('/auth/register') ||
             url.includes('/auth/me');
 
+          // Check if this is a history/search/feature-flags request - these are optional and shouldn't trigger logout
+          const isOptionalRequest =
+            url.includes('/search/history') ||
+            url.includes('/search/recent') ||
+            url.includes('/feature-flags') ||
+            url.includes('/notifications/stats');
+
           if (isAuthRequest) {
             // For login/register/me, just reject the error - no redirect
+            return Promise.reject(error);
+          }
+
+          if (isOptionalRequest) {
+            // For optional requests (history, stats), just reject the error - no logout
+            // These endpoints are optional and may return 401 for unauthenticated users
             return Promise.reject(error);
           }
 
@@ -197,21 +236,45 @@ class ApiClient {
     return 'hy';
   }
 
-  // Public methods
+  // Public methods with request deduplication for GET requests
   get<T = unknown>(url: string, config?: AxiosRequestConfig) {
-    return this.client.get<T>(url, config);
+    const requestKey = `GET:${url}:${JSON.stringify(config?.params || {})}`;
+
+    return requestOptimizer.deduplicate(requestKey, () => {
+      return this.client.get<T>(url, config);
+    });
   }
 
   post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) {
-    return this.client.post<T>(url, data, config);
+    // Don't optimize FormData - let interceptor handle it
+    const isFormData = data instanceof FormData;
+    const optimizedData =
+      !isFormData && data && typeof data === 'object'
+        ? requestOptimizer.optimizePayload(data as Record<string, unknown>)
+        : data;
+
+    return this.client.post<T>(url, optimizedData, config);
   }
 
   put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) {
-    return this.client.put<T>(url, data, config);
+    // Don't optimize FormData - let interceptor handle it
+    const isFormData = data instanceof FormData;
+    const optimizedData =
+      !isFormData && data && typeof data === 'object'
+        ? requestOptimizer.optimizePayload(data as Record<string, unknown>)
+        : data;
+
+    return this.client.put<T>(url, optimizedData, config);
   }
 
   patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) {
-    return this.client.patch<T>(url, data, config);
+    // Optimize payload before sending
+    const optimizedData =
+      data && typeof data === 'object'
+        ? requestOptimizer.optimizePayload(data as Record<string, unknown>)
+        : data;
+
+    return this.client.patch<T>(url, optimizedData, config);
   }
 
   delete<T = unknown>(url: string, config?: AxiosRequestConfig) {

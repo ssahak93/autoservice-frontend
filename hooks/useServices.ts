@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
+import { queryConfig, queryKeys } from '@/lib/api/query-config';
 import { servicesService, type ServiceSearchParams } from '@/lib/services/services.service';
 import type { AutoService, PaginatedResponse } from '@/types';
 
@@ -10,18 +11,24 @@ export const useServices = (
   options?: { initialData?: PaginatedResponse<AutoService> }
 ) => {
   return useQuery({
-    queryKey: ['services', params],
+    queryKey: queryKeys.services(params),
     queryFn: () => servicesService.search(params),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: queryConfig.staleTime,
+    gcTime: queryConfig.gcTime,
     initialData: options?.initialData,
+    // Keep previous data while fetching new data (better UX)
+    placeholderData: (previousData) => previousData,
   });
 };
 
 export const useService = (id: string | null) => {
   return useQuery<AutoService | null>({
-    queryKey: ['service', id],
+    queryKey: queryKeys.service(id || ''),
     queryFn: () => (id ? servicesService.getById(id) : null),
     enabled: !!id,
+    staleTime: queryConfig.staleTime,
+    gcTime: queryConfig.gcTime,
+    placeholderData: (previousData) => previousData,
   });
 };
 
@@ -30,8 +37,10 @@ export const useServiceReviews = (
   params?: { page?: number; limit?: number }
 ) => {
   return useQuery({
-    queryKey: ['service-reviews', serviceId, params],
+    queryKey: queryKeys.serviceReviews(serviceId || '', params),
     queryFn: () => (serviceId ? servicesService.getReviews(serviceId, params) : null),
     enabled: !!serviceId,
+    staleTime: queryConfig.staleTime,
+    gcTime: queryConfig.gcTime,
   });
 };

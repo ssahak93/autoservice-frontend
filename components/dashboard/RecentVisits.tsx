@@ -5,6 +5,7 @@ import { format } from 'date-fns/format';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
+import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge';
 import { ErrorDisplay } from '@/components/common/ErrorDisplay';
 import { useAutoServiceVisits } from '@/hooks/useDashboard';
 
@@ -113,21 +114,10 @@ export function RecentVisits() {
                   {visit.scheduledTime}
                 </td>
                 <td className="px-4 py-3">
-                  <motion.span
-                    className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                      visit.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        : visit.status === 'confirmed'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                          : visit.status === 'completed'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {visit.status}
-                  </motion.span>
+                  <ServiceStatusBadge
+                    status={visit.status as 'pending' | 'confirmed' | 'cancelled' | 'completed'}
+                    variant="visit"
+                  />
                 </td>
               </motion.tr>
             ))}

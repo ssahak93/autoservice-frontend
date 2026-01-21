@@ -29,10 +29,34 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    // Ignore NEXT_NOT_FOUND errors - these are handled by Next.js for 404 pages
+    // Check both message and digest (Next.js uses digest for special errors)
+    const errorAny = error as { digest?: string; message: string };
+    if (
+      error.message === 'NEXT_NOT_FOUND' ||
+      errorAny.digest === 'NEXT_NOT_FOUND' ||
+      errorAny.digest?.startsWith('NEXT_NOT_FOUND')
+    ) {
+      // Don't set error state for NEXT_NOT_FOUND - let Next.js handle it
+      // Return empty state to prevent ErrorBoundary from catching it
+      return { hasError: false, error: null, errorInfo: null };
+    }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Ignore NEXT_NOT_FOUND errors - these are handled by Next.js for 404 pages
+    // Check both message and digest (Next.js uses digest for special errors)
+    const errorAny = error as { digest?: string; message: string };
+    if (
+      error.message === 'NEXT_NOT_FOUND' ||
+      errorAny.digest === 'NEXT_NOT_FOUND' ||
+      errorAny.digest?.startsWith('NEXT_NOT_FOUND')
+    ) {
+      // Don't log or handle NEXT_NOT_FOUND errors - let Next.js handle them
+      return;
+    }
+
     // Log error for debugging and error tracking
     logError(error, 'ErrorBoundary');
 

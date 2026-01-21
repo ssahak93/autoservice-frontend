@@ -165,6 +165,17 @@ export function isServerError(error: unknown): boolean {
 }
 
 /**
+ * Check if error is a "No refresh token" error (should be silently handled)
+ */
+export function isNoRefreshTokenError(error: unknown): boolean {
+  const message = extractErrorMessage(error);
+  return (
+    message.toLowerCase().includes('no refresh token') ||
+    message.toLowerCase().includes('refresh token')
+  );
+}
+
+/**
  * Get user-friendly error message based on error type
  */
 export function getUserFriendlyErrorMessage(error: unknown, fallback?: string): string {
@@ -196,6 +207,11 @@ export function getUserFriendlyErrorMessage(error: unknown, fallback?: string): 
  * Log error for debugging (can be extended to send to error tracking service)
  */
 export function logError(error: unknown, context?: string): void {
+  // Don't log "No refresh token" errors - they're expected and handled silently
+  if (isNoRefreshTokenError(error)) {
+    return;
+  }
+
   const errorInfo: ErrorInfo = {
     message: extractErrorMessage(error),
     code: extractErrorCode(error),

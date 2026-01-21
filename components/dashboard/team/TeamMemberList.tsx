@@ -1,9 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Edit, Trash2, User, Shield, Briefcase, Crown } from 'lucide-react';
+import { Edit, Trash2, User, Shield, Briefcase, Crown, Users } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
+import { SectionHeader } from '@/components/auto-service/SectionHeader';
 import { Button } from '@/components/ui/Button';
 import type { TeamMember } from '@/lib/services/team.service';
 import { getTransition } from '@/lib/utils/animations';
@@ -67,9 +69,13 @@ export function TeamMemberList({
 
   return (
     <div className="space-y-4">
-      <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-        {t('members', { defaultValue: 'Team Members' })}
-      </h2>
+      <SectionHeader
+        icon={Users}
+        title={t('members', { defaultValue: 'Team Members' })}
+        count={members.length}
+        iconColor="text-primary-600"
+        badgeColor="bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300"
+      />
       <div className="space-y-3">
         {members.map((member, index) => {
           const isCurrentUser = member.userId === currentUserId;
@@ -93,11 +99,13 @@ export function TeamMemberList({
                 {/* Avatar */}
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
                   {member.avatarUrl ? (
-                    <img
+                    <Image
                       src={member.avatarUrl}
                       alt={`${member.firstName || ''} ${member.lastName || ''}`}
+                      width={48}
+                      height={48}
                       className="h-12 w-12 rounded-full object-cover"
-                      suppressHydrationWarning
+                      unoptimized
                     />
                   ) : (
                     <User className="h-6 w-6 text-primary-600 dark:text-primary-400" />

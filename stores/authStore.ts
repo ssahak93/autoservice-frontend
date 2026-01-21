@@ -86,19 +86,27 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        // After rehydration, check if token exists and update isAuthenticated
-        // This runs only on client, so it's safe to check localStorage
+        // After rehydration, only set isAuthenticated to true if we have BOTH token AND user
+        // This prevents making API calls with invalid tokens
+        // The token will be validated by the /api/auth/me request, which will set isAuthenticated properly
         if (state && typeof window !== 'undefined') {
           const token = localStorage.getItem('accessToken');
           const storedToken = state.accessToken;
 
-          // If we have a token (either in localStorage or in state), set isAuthenticated to true
-          if ((token || storedToken) && !state.isAuthenticated) {
-            state.isAuthenticated = true;
-          } else if (!token && !storedToken && state.isAuthenticated) {
-            // If no token exists, clear auth state
+          // Only set isAuthenticated to true if we have token AND user
+          // If we only have token but no user, keep isAuthenticated as false
+          // This will prevent premature API calls - the token will be validated by useAuth hook
+          if (!token && !storedToken) {
+            // No token exists, clear auth state
             state.isAuthenticated = false;
             state.user = null;
+          } else if ((token || storedToken) && state.user) {
+            // We have both token and user, so user is authenticated
+            state.isAuthenticated = true;
+          } else {
+            // We have token but no user - don't set isAuthenticated yet
+            // The useAuth hook will validate the token and set isAuthenticated after successful /api/auth/me
+            state.isAuthenticated = false;
           }
         }
       },

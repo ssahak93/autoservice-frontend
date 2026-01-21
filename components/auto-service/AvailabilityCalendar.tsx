@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 
 import type { AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
 
+import { AvailabilityExceptionsManager } from './AvailabilityExceptionsManager';
 import { WorkingHoursEditor } from './WorkingHoursEditor';
 
 interface AvailabilityCalendarProps {
@@ -29,21 +30,8 @@ export function AvailabilityCalendar({ profile }: AvailabilityCalendarProps) {
       {/* Working Hours Editor */}
       <WorkingHoursEditor profile={profile} />
 
-      {/* Placeholder for availability exceptions calendar */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          {t('exceptions', { defaultValue: 'Availability Exceptions' })}
-        </h3>
-        <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('exceptionsComingSoon', {
-                defaultValue: 'Availability exceptions management coming soon',
-              })}
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Availability Exceptions Manager */}
+      <AvailabilityExceptionsManager profile={profile} />
     </div>
   );
 }

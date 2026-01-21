@@ -47,7 +47,7 @@ export function VisitFilters({ filters, onFilterChange }: VisitFiltersProps) {
     } else if (selectedDate) {
       setSelectedDate(null);
     }
-  }, [filters.date]);
+  }, [filters.date, selectedDate]);
 
   const handleStatusChange = (status: string) => {
     onFilterChange({ ...filters, status: status || undefined, page: 1 });

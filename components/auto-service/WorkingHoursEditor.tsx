@@ -1,16 +1,14 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
-import { autoServiceProfileService } from '@/lib/services/auto-service-profile.service';
+import { useUpdateProfile } from '@/hooks/useProfileMutations';
 import type { AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
-import { useUIStore } from '@/stores/uiStore';
 
 interface WorkingHoursEditorProps {
   profile: AutoServiceProfile;
@@ -50,8 +48,6 @@ const defaultDaySchedule: DaySchedule = {
 
 export function WorkingHoursEditor({ profile }: WorkingHoursEditorProps) {
   const t = useTranslations('myService.availability');
-  const { showToast } = useUIStore();
-  const queryClient = useQueryClient();
 
   // Initialize form with existing working hours or defaults
   const getInitialValues = (): WorkingHoursForm => {
@@ -67,7 +63,7 @@ export function WorkingHoursEditor({ profile }: WorkingHoursEditorProps) {
     };
 
     DAYS.forEach(({ key }) => {
-      const dayData = workingHours[key];
+      const dayData = workingHours[key] as DaySchedule | undefined;
       if (dayData) {
         result[key] = {
           start: dayData.start || defaultDaySchedule.start,
@@ -130,35 +126,17 @@ export function WorkingHoursEditor({ profile }: WorkingHoursEditorProps) {
     defaultValues: getInitialValues(),
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      // Convert form data to working hours format
-      const workingHours: Record<string, DaySchedule> = {};
-      DAYS.forEach(({ key }) => {
-        workingHours[key] = data[key];
-      });
-
-      return autoServiceProfileService.updateProfile({
-        workingHours,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
-      showToast(
-        t('updateSuccess', { defaultValue: 'Working hours updated successfully' }),
-        'success'
-      );
-    },
-    onError: (error: Error) => {
-      showToast(
-        error.message || t('updateError', { defaultValue: 'Failed to update working hours' }),
-        'error'
-      );
-    },
-  });
+  // Use custom hook for update mutation (SOLID - Single Responsibility)
+  const updateMutation = useUpdateProfile();
 
   const onSubmit = (data: FormData) => {
-    updateMutation.mutate(data);
+    // Convert form data to working hours format
+    const workingHours: Record<string, DaySchedule> = {};
+    DAYS.forEach(({ key }) => {
+      workingHours[key] = data[key];
+    });
+
+    updateMutation.mutate({ workingHours });
   };
 
   return (

@@ -238,6 +238,33 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       return dateLoadMap.get(dateStr)?.status || null;
     };
 
+    // Check if a date is a working day (has available slots)
+    const isWorkingDay = (date: Date): boolean => {
+      if (!showAvailability || !autoServiceId || !availability || availability === 'OWN_SERVICE') {
+        return true; // Allow all dates if availability is not loaded
+      }
+
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const availableSlot = availability.availableSlots.find((slot) => slot.date === dateStr);
+      return !!availableSlot && availableSlot.times.length > 0;
+    };
+
+    // Custom filter function to disable non-working days
+    const filterWorkingDays = (date: Date): boolean => {
+      // Always allow past dates to be filtered by minDate
+      if (defaultMinDate && date < defaultMinDate) {
+        return false;
+      }
+
+      // If availability is loaded, only allow working days
+      if (showAvailability && autoServiceId && availability && availability !== 'OWN_SERVICE') {
+        return isWorkingDay(date);
+      }
+
+      // If availability is not loaded, allow all future dates
+      return true;
+    };
+
     // Custom day class name based on availability
     const getDayClassName = (date: Date) => {
       const baseClasses = [];
@@ -247,6 +274,13 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
 
       if (defaultMinDate && date < defaultMinDate) {
         return '!text-neutral-300 !cursor-not-allowed';
+      }
+
+      // Check if this is a non-working day
+      if (showAvailability && autoServiceId && availability && availability !== 'OWN_SERVICE') {
+        if (!isWorkingDay(date)) {
+          return '!text-neutral-300 !cursor-not-allowed !bg-neutral-50';
+        }
       }
 
       // Selected date should always be visible with primary color
@@ -292,7 +326,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
             locale={datePickerLocale}
             showTimeSelect={showTimeSelect}
             timeIntervals={timeIntervals}
-            filterDate={filterDate}
+            filterDate={filterDate || (showAvailability ? filterWorkingDays : undefined)}
             id={id}
             name={name}
             wrapperClassName="w-full"

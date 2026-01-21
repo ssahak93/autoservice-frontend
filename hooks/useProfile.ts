@@ -77,29 +77,32 @@ export function useUploadAvatar() {
         );
       }
 
-      // Get current user to save old avatarFileId
-      const currentUser = user || queryClient.getQueryData<User>(['auth', 'me']);
+      // Get current user to save old avatarFileId BEFORE any updates
+      // Use queryClient.getQueryData to get the most up-to-date user data
+      const currentUser = queryClient.getQueryData<User>(['auth', 'me']) || user;
       const oldAvatarFileId = currentUser?.avatarFileId;
 
       // Upload new file
       const uploadResult = await filesService.uploadFile(file, 'avatars');
 
-      // Update profile with new avatar directly (don't use useUpdateProfile hook to avoid context issues)
-      const updatedUser = await authService.updateProfile({ avatarFileId: uploadResult.id });
-
-      return { uploadResult, updatedUser, oldAvatarFileId };
-    },
-    onSuccess: async (data) => {
-      // Delete old avatar file if it exists and is different from the new one
-      if (data.oldAvatarFileId && data.oldAvatarFileId !== data.uploadResult.id) {
+      // Delete old avatar file BEFORE updating profile to avoid confusion
+      // This ensures we delete the correct old file, not the new one
+      // Only delete if old file exists and is different from new file
+      if (oldAvatarFileId && oldAvatarFileId !== uploadResult.id) {
         try {
-          await filesService.deleteFile(data.oldAvatarFileId);
+          await filesService.deleteFile(oldAvatarFileId);
         } catch (error) {
           // Log error but don't fail the upload if deletion fails
-          console.warn('Failed to delete old avatar file:', error);
+          // Error is silently ignored to not interrupt the upload flow
         }
       }
 
+      // Update profile with new avatar directly (don't use useUpdateProfile hook to avoid context issues)
+      const updatedUser = await authService.updateProfile({ avatarFileId: uploadResult.id });
+
+      return { uploadResult, updatedUser };
+    },
+    onSuccess: async (data) => {
       // Update user in store with the returned user data
       if (data.updatedUser) {
         setUser(data.updatedUser);

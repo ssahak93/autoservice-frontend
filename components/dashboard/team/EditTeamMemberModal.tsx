@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { User, Crown, Shield, Briefcase } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -125,11 +126,13 @@ export function EditTeamMemberModal({
             {/* Avatar */}
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
               {member.avatarUrl ? (
-                <img
+                <Image
                   src={member.avatarUrl}
                   alt={`${member.firstName || ''} ${member.lastName || ''}`}
+                  width={64}
+                  height={64}
                   className="h-16 w-16 rounded-full object-cover"
-                  suppressHydrationWarning
+                  unoptimized
                 />
               ) : (
                 <User className="h-8 w-8 text-primary-600 dark:text-primary-400" />

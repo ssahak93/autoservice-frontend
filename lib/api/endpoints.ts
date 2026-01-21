@@ -16,6 +16,24 @@ export const API_ENDPOINTS = {
     DELETE_ACCOUNT: '/auth/account',
   },
 
+  // Search
+  SEARCH: {
+    AUTO_SERVICES: '/search/auto-services',
+    RECOMMENDATIONS: '/search/recommendations',
+    SUGGESTIONS: '/search/suggestions',
+    TRACK_VIEW: (profileId: string) => `/search/profiles/${profileId}/view`,
+    TRACK_CLICK: (profileId: string) => `/search/profiles/${profileId}/click`,
+    RECENT_SEARCHES: '/search/history/recent-searches',
+    RECENT_VIEWS: '/search/history/recent-views',
+    CLEAR_SEARCHES: '/search/history/clear-searches',
+    CLEAR_VIEWS: '/search/history/clear-views',
+  },
+
+  // Feature Flags (Public)
+  FEATURE_FLAGS: {
+    LIST: '/feature-flags',
+  },
+
   // Auto Services (Public)
   AUTO_SERVICES: {
     BASE: '/auto-services',
@@ -93,6 +111,7 @@ export const API_ENDPOINTS = {
     REGIONS: '/locations/regions',
     CITIES: '/locations/cities',
     DISTRICTS: '/locations/districts',
+    DISTRICTS_WITH_BOUNDS: '/locations/districts/with-bounds',
   },
 
   // Notifications
@@ -111,5 +130,25 @@ export const API_ENDPOINTS = {
     GENERATE_QR: '/auto-services/me/team/generate-qr',
     UPDATE: (memberId: string) => `/auto-services/me/team/${memberId}`,
     REMOVE: (memberId: string) => `/auto-services/me/team/${memberId}`,
+  },
+
+  // Favorites
+  FAVORITES: {
+    LIST: '/favorites',
+    ADD: (profileId: string) => `/favorites/${profileId}`,
+    REMOVE: (profileId: string) => `/favorites/${profileId}`,
+    CHECK: (profileId: string) => `/favorites/${profileId}/check`,
+  },
+
+  // Analytics
+  ANALYTICS: {
+    SERVICE: (profileId: string) => `/analytics/services/${profileId}`,
+  },
+
+  // Admin
+  ADMIN: {
+    FEATURE_FLAGS: '/admin/feature-flags',
+    FEATURE_FLAG: (key: string) => `/admin/feature-flags/${key}`,
+    TOGGLE_FEATURE_FLAG: (key: string) => `/admin/feature-flags/${key}/toggle`,
   },
 } as const;

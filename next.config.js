@@ -32,7 +32,14 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api',
+    NEXT_PUBLIC_CDN_ENABLED: process.env.NEXT_PUBLIC_CDN_ENABLED || 'false',
+    NEXT_PUBLIC_CDN_BASE_URL: process.env.NEXT_PUBLIC_CDN_BASE_URL || '',
   },
+  // CDN configuration for static assets
+  assetPrefix:
+    process.env.NEXT_PUBLIC_CDN_ENABLED === 'true' && process.env.NEXT_PUBLIC_CDN_BASE_URL
+      ? process.env.NEXT_PUBLIC_CDN_BASE_URL
+      : undefined,
   transpilePackages: ['framer-motion'],
   webpack: (config, { isServer, dev }) => {
     if (!isServer) {

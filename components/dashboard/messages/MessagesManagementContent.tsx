@@ -33,7 +33,7 @@ const ConversationList = dynamic(
   }
 );
 
-interface Conversation {
+export interface Conversation {
   visitId: string;
   visit: {
     id: string;

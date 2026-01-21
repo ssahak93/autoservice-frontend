@@ -28,6 +28,14 @@ export function ActiveFilters({
 
   const activeFilters: Array<{ key: keyof ServiceSearchParams; label: string; value: string }> = [];
 
+  if (filters.businessType) {
+    activeFilters.push({
+      key: 'businessType',
+      label: t('businessType', { defaultValue: 'Business Type' }),
+      value: t(`businessTypes.${filters.businessType}`, { defaultValue: filters.businessType }),
+    });
+  }
+
   if (filters.city) {
     activeFilters.push({
       key: 'city',

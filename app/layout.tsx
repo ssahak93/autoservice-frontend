@@ -30,13 +30,6 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-    viewportFit: 'cover',
-  },
   icons: {
     icon: [
       { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
@@ -44,6 +37,14 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }],
   },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover' as const,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

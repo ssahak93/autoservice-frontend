@@ -43,7 +43,7 @@ export function ProtectedRoute({ children, redirect = true }: ProtectedRouteProp
       }
       router.push('/login');
     }
-  }, [mounted, isAuthenticated, isLoading, router, redirect, hasToken]);
+  }, [mounted, isAuthenticated, isLoading, router, redirect, hasToken, pathname]);
 
   // On server or before mount, always show loading to prevent hydration mismatch
   if (!mounted && redirect) {

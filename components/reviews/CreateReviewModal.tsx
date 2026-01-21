@@ -124,11 +124,16 @@ export function CreateReviewModal({ isOpen, onClose, serviceId }: CreateReviewMo
                     className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
                   >
                     <option value="">{t('selectVisit')}</option>
-                    {completedVisits.map((visit) => (
-                      <option key={visit.id} value={visit.id}>
-                        {new Date(visit.preferredDate).toLocaleDateString()} - {visit.preferredTime}
-                      </option>
-                    ))}
+                    {completedVisits.map((visit) => {
+                      const dateStr = visit.preferredDate || visit.scheduledDate;
+                      const timeStr = visit.preferredTime || visit.scheduledTime;
+                      return (
+                        <option key={visit.id} value={visit.id}>
+                          {dateStr ? new Date(dateStr).toLocaleDateString() : ''}{' '}
+                          {timeStr ? `- ${timeStr}` : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                   {errors.visitId && (
                     <p className="mt-1 text-sm text-error-600">{errors.visitId.message}</p>

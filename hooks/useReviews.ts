@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { reviewsService, type CreateReviewDto, type ReviewFilters } from '@/lib/services/reviews.service';
+import { queryConfig } from '@/lib/api/query-config';
+import {
+  reviewsService,
+  type CreateReviewDto,
+  type ReviewFilters,
+} from '@/lib/services/reviews.service';
 
 /**
  * Hook to get reviews for a specific service
@@ -10,6 +15,9 @@ export function useServiceReviews(serviceId: string, filters?: ReviewFilters) {
     queryKey: ['reviews', 'service', serviceId, filters],
     queryFn: () => reviewsService.getServiceReviews(serviceId, filters),
     enabled: !!serviceId,
+    staleTime: queryConfig.staleTime,
+    gcTime: queryConfig.gcTime,
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -20,6 +28,8 @@ export function useUserReviews() {
   return useQuery({
     queryKey: ['reviews', 'user'],
     queryFn: () => reviewsService.getUserReviews(),
+    staleTime: queryConfig.staleTime,
+    gcTime: queryConfig.gcTime,
   });
 }
 
@@ -32,10 +42,15 @@ export function useCreateReview() {
   return useMutation({
     mutationFn: (dto: CreateReviewDto) => reviewsService.createReview(dto),
     onSuccess: (data) => {
+      // Get profileId from response data
+      const profileId = data.autoServiceProfileId;
+
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['reviews', 'service', data.autoServiceProfileId] });
+      if (profileId) {
+        queryClient.invalidateQueries({ queryKey: ['reviews', 'service', profileId] });
+        queryClient.invalidateQueries({ queryKey: ['service', profileId] });
+      }
       queryClient.invalidateQueries({ queryKey: ['reviews', 'user'] });
-      queryClient.invalidateQueries({ queryKey: ['services', data.autoServiceProfileId] });
     },
   });
 }
@@ -49,4 +64,3 @@ export function useReportReview() {
       reviewsService.reportReview(reviewId, reason),
   });
 }
-

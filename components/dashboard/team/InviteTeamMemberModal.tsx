@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { teamService, type InviteTeamMemberRequest } from '@/lib/services/team.service';
+import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
 interface InviteTeamMemberModalProps {
@@ -21,6 +22,7 @@ interface InviteTeamMemberModalProps {
 export function InviteTeamMemberModal({ isOpen, onClose }: InviteTeamMemberModalProps) {
   const t = useTranslations('dashboard.team.invite');
   const { showToast } = useUIStore();
+  const { selectedAutoServiceId } = useAutoServiceStore();
   const queryClient = useQueryClient();
   const [qrData, setQrData] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);

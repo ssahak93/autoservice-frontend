@@ -3,6 +3,15 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import type { AutoService, PaginatedResponse } from '@/types';
 
 export interface ServiceSearchParams {
+  businessType?:
+    | 'auto_service'
+    | 'auto_shop'
+    | 'car_wash'
+    | 'cleaning'
+    | 'tire_service'
+    | 'towing'
+    | 'tinting'
+    | 'other';
   city?: string;
   region?: string;
   district?: string;

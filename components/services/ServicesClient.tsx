@@ -1,15 +1,17 @@
 'use client';
 
 import { Search, SlidersHorizontal } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useMemo, useCallback } from 'react';
 
 import { EmptyState } from '@/components/common/EmptyState';
 import { Pagination } from '@/components/common/Pagination';
-import { SkeletonCard } from '@/components/common/Skeleton';
 import { ActiveFilters } from '@/components/services/ActiveFilters';
 import { FiltersModal } from '@/components/services/FiltersModal';
-import { SearchBar } from '@/components/services/SearchBar';
+import { QuickFilters } from '@/components/services/QuickFilters';
+import { SearchBarEnhanced } from '@/components/services/SearchBarEnhanced';
+import { SearchResultsSkeleton } from '@/components/services/SearchResultsSkeleton';
 import { ServiceCard } from '@/components/services/ServiceCard';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
 import { Button } from '@/components/ui/Button';
@@ -18,6 +20,15 @@ import { useServices } from '@/hooks/useServices';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import type { ServiceSearchParams } from '@/lib/services/services.service';
 import type { AutoService, PaginatedResponse } from '@/types';
+
+// Lazy load DistrictMap to reduce initial bundle size
+const DistrictMap = dynamic(
+  () => import('@/components/services/DistrictMap').then((mod) => ({ default: mod.DistrictMap })),
+  {
+    loading: () => <div className="h-96 w-full animate-pulse rounded-lg bg-neutral-200" />,
+    ssr: false,
+  }
+);
 
 interface ServicesClientProps {
   initialData?: PaginatedResponse<AutoService>;
@@ -55,6 +66,7 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
   // Count active filters for mobile button badge
   const activeFiltersCount = useMemo(() => {
     let count = 0;
+    if (searchParams.businessType) count++;
     if (searchParams.city) count++;
     if (searchParams.region) count++;
     if (searchParams.serviceType) count++;
@@ -78,9 +90,12 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
     (value: string) => {
       // Update query immediately for UI responsiveness
       // Don't reset page here, let debounced search handle it
-      updateSearch({ query: value || undefined }, { resetPage: false });
+      // Only update if value actually changed to avoid unnecessary updates
+      if (value !== (searchParams.query || '')) {
+        updateSearch({ query: value || undefined }, { resetPage: false });
+      }
     },
-    [updateSearch]
+    [updateSearch, searchParams.query]
   );
 
   const handleRemoveFilter = useCallback(
@@ -108,13 +123,40 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
     <div className="space-y-4 sm:space-y-6">
       {/* Search Bar */}
       <div className="glass-light rounded-xl p-4 sm:p-6">
-        <SearchBar
+        <SearchBarEnhanced
           value={searchParams.query || ''}
           onChange={handleSearchChange}
           onSearch={handleSearch}
           isLoading={isFetching}
+          showSuggestions={true}
         />
       </div>
+
+      {/* District Map - Show if Yerevan is selected */}
+      {searchParams.city?.toLowerCase() === 'yerevan' && (
+        <div className="glass-light rounded-xl p-4 sm:p-6">
+          <DistrictMap
+            cityCode="yerevan"
+            selectedDistrictCode={searchParams.district}
+            onDistrictSelect={(districtCode) => {
+              updateSearch({ district: districtCode }, { resetPage: true });
+            }}
+            services={
+              displayData?.data
+                ?.filter((service: AutoService) => !service.isBlocked)
+                .map((service: AutoService) => ({
+                  id: service.id,
+                  name: service.companyName || service.firstName || 'Service',
+                  latitude: service.latitude ? Number(service.latitude) : 0,
+                  longitude: service.longitude ? Number(service.longitude) : 0,
+                  districtCode: service.district || undefined,
+                }))
+                .filter((s) => s.latitude !== 0 && s.longitude !== 0) || []
+            }
+            height="500px"
+          />
+        </div>
+      )}
 
       {/* Mobile Filters Button */}
       <div className="lg:hidden">
@@ -137,7 +179,8 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4 lg:gap-8">
         {/* Filters Sidebar - Desktop */}
-        <div className="hidden lg:col-span-1 lg:block">
+        <div className="hidden space-y-6 lg:col-span-1 lg:block">
+          <QuickFilters filters={searchParams} onFiltersChange={handleFiltersChange} />
           <ServiceFilters filters={searchParams} onFiltersChange={handleFiltersChange} />
         </div>
 
@@ -152,13 +195,7 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
           />
 
           {/* Loading State */}
-          {displayLoading && (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {[...Array(6)].map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          )}
+          {displayLoading && <SearchResultsSkeleton count={6} layout="grid" />}
 
           {/* Error State */}
           {displayError && (
@@ -232,22 +269,24 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
                 )}
               </div>
               <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
-                {displayData.data.map((service: AutoService, index: number) => {
-                  // Extract distance from search results if available
-                  const distance =
-                    'distance' in service &&
-                    typeof (service as AutoService & { distance?: number }).distance === 'number'
-                      ? (service as AutoService & { distance: number }).distance
-                      : undefined;
-                  return (
-                    <ServiceCard
-                      key={service.id}
-                      service={service}
-                      index={index}
-                      distance={distance}
-                    />
-                  );
-                })}
+                {displayData.data
+                  .filter((service: AutoService) => !service.isBlocked) // Filter out blocked services
+                  .map((service: AutoService, index: number) => {
+                    // Extract distance from search results if available
+                    const distance =
+                      'distance' in service &&
+                      typeof (service as AutoService & { distance?: number }).distance === 'number'
+                        ? (service as AutoService & { distance: number }).distance
+                        : undefined;
+                    return (
+                      <ServiceCard
+                        key={service.id}
+                        service={service}
+                        index={index}
+                        distance={distance}
+                      />
+                    );
+                  })}
               </div>
 
               {/* Pagination */}

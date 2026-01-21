@@ -75,6 +75,12 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     notFound();
   }
 
+  // If service is blocked, show 404 (owner can see it in dashboard)
+  // Note: Backend should filter blocked services, but we add extra check here
+  if (service.isBlocked) {
+    notFound();
+  }
+
   const name = service.companyName || `${service.firstName} ${service.lastName}`;
   const rating = service.averageRating || 0;
   const reviewsCount = service.totalReviews || 0;
@@ -269,7 +275,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
             {/* Reviews Section - Client component for interactivity */}
             <div className="glass-light rounded-xl p-4 md:rounded-2xl md:p-8">
-              <ServiceDetailClient serviceId={id} />
+              <ServiceDetailClient serviceId={id} profileId={id} />
             </div>
           </div>
 

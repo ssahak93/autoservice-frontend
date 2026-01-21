@@ -32,12 +32,8 @@ class FilesService {
 
     const response = await apiClient.post<UploadFileResponse>(
       API_ENDPOINTS.FILES.UPLOAD,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      formData
+      // Don't set Content-Type header - let browser set it with boundary
     );
 
     return response.data;
@@ -57,12 +53,8 @@ class FilesService {
 
     const response = await apiClient.post<UploadFileResponse[]>(
       API_ENDPOINTS.FILES.UPLOAD_MULTIPLE,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      formData
+      // Don't set Content-Type header - let browser set it with boundary
     );
 
     return response.data;

@@ -4,12 +4,14 @@
 import { format } from 'date-fns/format';
 import { parseISO } from 'date-fns/parseISO';
 import { motion } from 'framer-motion';
-import { Calendar, CheckCircle2, XCircle, AlertCircle, User } from 'lucide-react';
+import { Calendar, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useCallback } from 'react';
 
+import { ServiceCardSkeleton } from '@/components/auto-service/ServiceCardSkeleton';
+import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge';
 import { Button } from '@/components/ui/Button';
 import { getTransition } from '@/lib/utils/animations';
-import { cn } from '@/lib/utils/cn';
 import type { Visit, PaginatedResponse } from '@/types';
 
 interface VisitListProps {
@@ -21,20 +23,6 @@ interface VisitListProps {
   onAction: (visit: Visit, action: 'accept' | 'complete' | 'cancel' | 'reschedule') => void;
 }
 
-const statusIcons = {
-  pending: AlertCircle,
-  confirmed: CheckCircle2,
-  cancelled: XCircle,
-  completed: CheckCircle2,
-};
-
-const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  confirmed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  completed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-};
-
 export function VisitList({
   visits,
   isLoading,
@@ -45,45 +33,49 @@ export function VisitList({
 }: VisitListProps) {
   const t = useTranslations('dashboard.visits');
 
-  const formatDate = (dateStr: string) => {
+  // Memoize formatDate to prevent unnecessary re-creations
+  const formatDate = useCallback((dateStr: string) => {
     try {
       return format(parseISO(dateStr), 'PPP', { locale: undefined });
     } catch {
       return dateStr;
     }
-  };
+  }, []);
 
-  const getAvailableActions = (visit: Visit) => {
-    const actions: Array<{ key: 'accept' | 'complete' | 'cancel' | 'reschedule'; label: string }> =
-      [];
+  // Memoize getAvailableActions to prevent unnecessary re-creations
+  const getAvailableActions = useCallback(
+    (visit: Visit) => {
+      const actions: Array<{
+        key: 'accept' | 'complete' | 'cancel' | 'reschedule';
+        label: string;
+      }> = [];
 
-    if (visit.status === 'pending') {
-      actions.push({ key: 'accept', label: t('actions.accept', { defaultValue: 'Accept' }) });
-      actions.push({ key: 'cancel', label: t('actions.cancel', { defaultValue: 'Cancel' }) });
-      actions.push({
-        key: 'reschedule',
-        label: t('actions.reschedule', { defaultValue: 'Reschedule' }),
-      });
-    } else if (visit.status === 'confirmed') {
-      actions.push({ key: 'complete', label: t('actions.complete', { defaultValue: 'Complete' }) });
-      actions.push({ key: 'cancel', label: t('actions.cancel', { defaultValue: 'Cancel' }) });
-      actions.push({
-        key: 'reschedule',
-        label: t('actions.reschedule', { defaultValue: 'Reschedule' }),
-      });
-    }
+      if (visit.status === 'pending') {
+        actions.push({ key: 'accept', label: t('actions.accept', { defaultValue: 'Accept' }) });
+        actions.push({ key: 'cancel', label: t('actions.cancel', { defaultValue: 'Cancel' }) });
+        actions.push({
+          key: 'reschedule',
+          label: t('actions.reschedule', { defaultValue: 'Reschedule' }),
+        });
+      } else if (visit.status === 'confirmed') {
+        actions.push({
+          key: 'complete',
+          label: t('actions.complete', { defaultValue: 'Complete' }),
+        });
+        actions.push({ key: 'cancel', label: t('actions.cancel', { defaultValue: 'Cancel' }) });
+        actions.push({
+          key: 'reschedule',
+          label: t('actions.reschedule', { defaultValue: 'Reschedule' }),
+        });
+      }
 
-    return actions;
-  };
+      return actions;
+    },
+    [t]
+  );
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="glass-light h-32 animate-pulse rounded-xl" />
-        ))}
-      </div>
-    );
+    return <ServiceCardSkeleton count={5} layout="list" />;
   }
 
   if (visits.length === 0) {
@@ -105,7 +97,6 @@ export function VisitList({
   return (
     <div className="space-y-4">
       {visits.map((visit, index) => {
-        const StatusIcon = statusIcons[visit.status];
         const actions = getAvailableActions(visit);
         const customerName =
           visit.user?.firstName || visit.user?.lastName
@@ -124,25 +115,10 @@ export function VisitList({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               {/* Main Info */}
               <div className="flex-1 space-y-3">
-                <div className="flex items-center gap-3">
-                  <StatusIcon
-                    className={cn(
-                      'h-5 w-5',
-                      visit.status === 'pending' && 'text-yellow-500',
-                      visit.status === 'confirmed' && 'text-green-500',
-                      visit.status === 'cancelled' && 'text-red-500',
-                      visit.status === 'completed' && 'text-blue-500'
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      'rounded-full px-3 py-1 text-xs font-semibold capitalize',
-                      statusColors[visit.status]
-                    )}
-                  >
-                    {t(`status.${visit.status}`, { defaultValue: visit.status })}
-                  </span>
-                </div>
+                <ServiceStatusBadge
+                  status={visit.status as 'pending' | 'confirmed' | 'cancelled' | 'completed'}
+                  variant="visit"
+                />
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">

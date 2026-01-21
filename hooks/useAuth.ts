@@ -14,19 +14,23 @@ import type { LoginRequest, RegisterRequest, User } from '@/types';
 export const useAuth = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user, isAuthenticated, setUser, setTokens } = useAuthStore();
+  const { user, isAuthenticated, accessToken, setUser, setTokens } = useAuthStore();
   const { showToast } = useUIStore();
   const t = useTranslations('auth');
 
-  // Check if token exists in localStorage (for page reloads)
+  // Check if token exists in localStorage (for validating token on page reload)
   const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
 
-  // Get current user - enable query if authenticated OR if token exists (for page reloads)
+  // Get current user - only fetch if we have a token (to validate it)
+  // But don't fetch if user is already loaded (to avoid unnecessary requests)
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
       try {
-        return await authService.getCurrentUser();
+        const userData = await authService.getCurrentUser();
+        // If successful, set user and mark as authenticated
+        setUser(userData);
+        return userData;
       } catch (error) {
         // If user fetch fails (e.g., 401 Unauthorized), clear auth state
         const axiosError = error as { response?: { status?: number } };
@@ -43,7 +47,10 @@ export const useAuth = () => {
         return null;
       }
     },
-    enabled: isAuthenticated || hasToken, // Enable if authenticated OR token exists
+    // Only fetch if:
+    // 1. We have a token (to validate it), AND
+    // 2. User is not already loaded (to avoid unnecessary requests)
+    enabled: hasToken && !user,
     retry: false,
   });
 
@@ -167,11 +174,18 @@ export const useAuth = () => {
   });
 
   // Logout
-  const handleLogout = () => {
-    authService.logout();
-    queryClient.clear();
-    showToast(t('logoutSuccess', { defaultValue: 'Logged out successfully' }), 'success');
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      queryClient.clear();
+      showToast(t('logoutSuccess', { defaultValue: 'Logged out successfully' }), 'success');
+      router.push('/login');
+    } catch (error) {
+      // Even if logout fails, clear local state
+      queryClient.clear();
+      showToast(t('logoutSuccess', { defaultValue: 'Logged out successfully' }), 'success');
+      router.push('/login');
+    }
   };
 
   // For SSR compatibility, we need to ensure isAuthenticated is consistent
@@ -183,11 +197,17 @@ export const useAuth = () => {
     setMounted(true);
   }, []);
 
+  // Check if we have a valid token (either in store or localStorage)
+  const hasValidToken =
+    mounted &&
+    typeof window !== 'undefined' &&
+    (!!accessToken || !!localStorage.getItem('accessToken'));
+
   return {
     user: (currentUser || user) as User | null,
     // On server, always return false to prevent hydration mismatch
-    // On client, after mount, return actual value
-    isAuthenticated: mounted ? isAuthenticated : false,
+    // On client, after mount, return actual value only if we have both authentication state AND token
+    isAuthenticated: mounted ? isAuthenticated && hasValidToken : false,
     isLoading: isLoadingUser || loginMutation.isPending || registerMutation.isPending,
     login: loginMutation.mutate,
     register: registerMutation.mutate,

@@ -96,12 +96,16 @@ export function ChatWindow({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-hidden">
-        <MessageList visitId={visitId} />
-      </div>
+      {visitId && (
+        <>
+          <div className="flex-1 overflow-hidden">
+            <MessageList visitId={visitId} />
+          </div>
 
-      {/* Input */}
-      <MessageInput visitId={visitId} />
+          {/* Input */}
+          <MessageInput visitId={visitId} />
+        </>
+      )}
     </div>
   );
 }

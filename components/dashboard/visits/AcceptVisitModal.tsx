@@ -1,16 +1,19 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns/format';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { TimePicker } from '@/components/ui/TimePicker';
+import { availabilityService } from '@/lib/services/availability.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import type { Visit } from '@/types';
 
@@ -54,6 +57,32 @@ export function AcceptVisitModal({
   const [selectedDate, setSelectedDate] = useState<Date | null>(
     visit.scheduledDate ? new Date(visit.scheduledDate) : null
   );
+
+  // Get profile ID for availability check
+  const profileId = visit.autoServiceProfileId;
+
+  // Calculate date range for availability (next 60 days)
+  const startDate = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return format(date, 'yyyy-MM-dd');
+  }, []);
+
+  const endDate = useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 60);
+    return format(date, 'yyyy-MM-dd');
+  }, []);
+
+  // Fetch availability if profile ID is available
+  const { data: availability } = useQuery({
+    queryKey: ['availability', profileId, startDate, endDate],
+    queryFn: () =>
+      profileId ? availabilityService.getAvailability(profileId, startDate, endDate) : null,
+    enabled: !!profileId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+  });
 
   const { register, handleSubmit, setValue, watch, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -153,6 +182,14 @@ export function AcceptVisitModal({
                     value={watch('confirmedTime') || ''}
                     onChange={(time) => setValue('confirmedTime', time)}
                     placeholder={t('accept.selectTime', { defaultValue: 'Select time' })}
+                    availableTimes={
+                      availability && typeof availability !== 'string' && selectedDate
+                        ? availability.availableSlots.find(
+                            (slot) => slot.date === format(selectedDate, 'yyyy-MM-dd')
+                          )?.times || []
+                        : []
+                    }
+                    selectedDate={selectedDate}
                   />
                 </div>
 

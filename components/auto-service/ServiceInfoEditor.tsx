@@ -1,18 +1,16 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import {
-  autoServiceProfileService,
-  type AutoServiceProfile,
-} from '@/lib/services/auto-service-profile.service';
-import { useUIStore } from '@/stores/uiStore';
+import { useUpdateServiceInfo } from '@/hooks/useServiceInfoMutations';
+import { useServiceInfoValidation } from '@/hooks/useServiceInfoValidation';
+import { type AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
 
 interface ServiceInfoEditorProps {
   profile: AutoServiceProfile;
@@ -21,22 +19,15 @@ interface ServiceInfoEditorProps {
 
 export function ServiceInfoEditor({ profile, onSuccess }: ServiceInfoEditorProps) {
   const t = useTranslations('myService.info');
-  const { showToast } = useUIStore();
-  const queryClient = useQueryClient();
 
-  const isCompany = profile.autoService?.serviceType === 'company';
+  // Memoize isCompany to prevent unnecessary recalculations
+  const isCompany = useMemo(
+    () => profile.autoService?.serviceType === 'company',
+    [profile.autoService?.serviceType]
+  );
 
-  const schema = z.object({
-    companyName: isCompany
-      ? z.string().min(1, t('companyNameRequired', { defaultValue: 'Company name is required' }))
-      : z.string().optional(),
-    firstName: !isCompany
-      ? z.string().min(1, t('firstNameRequired', { defaultValue: 'First name is required' }))
-      : z.string().optional(),
-    lastName: !isCompany
-      ? z.string().min(1, t('lastNameRequired', { defaultValue: 'Last name is required' }))
-      : z.string().optional(),
-  });
+  // Use custom hook for validation (SOLID - Single Responsibility)
+  const { schema } = useServiceInfoValidation(isCompany);
 
   type FormData = z.infer<typeof schema>;
 
@@ -53,31 +44,22 @@ export function ServiceInfoEditor({ profile, onSuccess }: ServiceInfoEditorProps
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (data: FormData) => {
-      if (!profile.autoServiceId) {
-        throw new Error('Auto service ID is required');
-      }
-      return autoServiceProfileService.updateServiceInfo(profile.autoServiceId, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
-      showToast(
-        t('updateSuccess', { defaultValue: 'Service information updated successfully' }),
-        'success'
-      );
-      onSuccess?.();
-    },
-    onError: (error: Error) => {
-      showToast(
-        error.message || t('updateError', { defaultValue: 'Failed to update service information' }),
-        'error'
-      );
-    },
-  });
+  // Use custom hook for update mutation (SOLID - Single Responsibility)
+  const updateMutation = useUpdateServiceInfo();
 
   const onSubmit = (data: FormData) => {
-    updateMutation.mutate(data);
+    if (!profile.autoServiceId) {
+      // Error will be handled by mutation hook
+      return;
+    }
+    updateMutation.mutate(
+      { autoServiceId: profile.autoServiceId, data },
+      {
+        onSuccess: () => {
+          onSuccess?.();
+        },
+      }
+    );
   };
 
   return (

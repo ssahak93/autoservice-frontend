@@ -1,8 +1,7 @@
 'use client';
 
 // Import only needed components from framer-motion for tree shaking
-import { AnimatePresence } from 'framer-motion';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 

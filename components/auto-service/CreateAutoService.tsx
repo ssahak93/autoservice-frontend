@@ -1,34 +1,31 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Image from 'next/image';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
+import { useCreateAutoService } from '@/hooks/useAutoServiceMutations';
+import { useAutoServiceValidation } from '@/hooks/useAutoServiceValidation';
 import { Link, useRouter } from '@/i18n/routing';
-import {
-  autoServicesService,
-  MAX_AUTO_SERVICES_PER_USER,
-} from '@/lib/services/auto-services.service';
+import { MAX_AUTO_SERVICES_PER_USER } from '@/lib/services/auto-services.service';
 import { useAuthStore } from '@/stores/authStore';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
-import { useUIStore } from '@/stores/uiStore';
+
+import { ServiceAvatar } from './ServiceAvatar';
 
 export function CreateAutoService() {
   const t = useTranslations('myService.create');
-  const { showToast } = useUIStore();
   const queryClient = useQueryClient();
   const router = useRouter();
   const { user } = useAuth();
   const { setUser } = useAuthStore();
-  const { availableAutoServices, setSelectedAutoServiceId, setAvailableAutoServices } =
-    useAutoServiceStore();
+  const { availableAutoServices, setSelectedAutoServiceId } = useAutoServiceStore();
   const [serviceType, setServiceType] = useState<'individual' | 'company'>('individual');
   const [mounted, setMounted] = useState(false);
 
@@ -40,68 +37,19 @@ export function CreateAutoService() {
   // Check if user has reached the maximum number of auto services
   // Use user.autoServices if available, otherwise fallback to availableAutoServices
   // Only calculate after mount to prevent hydration mismatch
-  const ownedServicesCount = mounted
-    ? user?.autoServices?.length || availableAutoServices.filter((s) => s.role === 'owner').length
-    : 0;
+  // Memoize owned services count calculation
+  const ownedServicesCount = useMemo(
+    () =>
+      mounted
+        ? user?.autoServices?.length ||
+          availableAutoServices.filter((s) => s.role === 'owner').length
+        : 0,
+    [mounted, user?.autoServices, availableAutoServices]
+  );
   const canCreateMore = ownedServicesCount < MAX_AUTO_SERVICES_PER_USER;
 
-  const schema = z
-    .object({
-      serviceType: z.enum(['individual', 'company'], {
-        required_error: t('serviceTypeRequired', { defaultValue: 'Service type is required' }),
-      }),
-      companyName: z.string().optional(),
-      firstName: z.string().optional(),
-      lastName: z.string().optional(),
-    })
-    .refine(
-      (data) => {
-        if (data.serviceType === 'company') {
-          return !!data.companyName && data.companyName.trim().length > 0;
-        }
-        return (
-          !!data.firstName &&
-          data.firstName.trim().length > 0 &&
-          !!data.lastName &&
-          data.lastName.trim().length > 0
-        );
-      },
-      {
-        message: t('validationError', {
-          defaultValue: 'Please fill in all required fields',
-        }),
-        path: ['serviceType'],
-      }
-    )
-    .superRefine((data, ctx) => {
-      // Validate company name when service type is company
-      if (data.serviceType === 'company') {
-        if (!data.companyName || data.companyName.trim().length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('companyNameRequired', { defaultValue: 'Company name is required' }),
-            path: ['companyName'],
-          });
-        }
-      }
-      // Validate first and last name when service type is individual
-      if (data.serviceType === 'individual') {
-        if (!data.firstName || data.firstName.trim().length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('firstNameRequired', { defaultValue: 'First name is required' }),
-            path: ['firstName'],
-          });
-        }
-        if (!data.lastName || data.lastName.trim().length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('lastNameRequired', { defaultValue: 'Last name is required' }),
-            path: ['lastName'],
-          });
-        }
-      }
-    });
+  // Use custom hook for validation (SOLID - Single Responsibility)
+  const { schema } = useAutoServiceValidation();
 
   type FormData = z.infer<typeof schema>;
 
@@ -120,87 +68,50 @@ export function CreateAutoService() {
 
   const watchedServiceType = watch('serviceType');
 
-  const createMutation = useMutation({
-    mutationFn: (data: FormData) => {
-      const payload: {
-        serviceType: 'individual' | 'company';
-        companyName?: string;
-        firstName?: string;
-        lastName?: string;
-      } = {
-        serviceType: data.serviceType,
-      };
-
-      if (data.serviceType === 'company') {
-        payload.companyName = data.companyName?.trim();
-      } else {
-        payload.firstName = data.firstName?.trim();
-        payload.lastName = data.lastName?.trim();
-      }
-
-      return autoServicesService.createAutoService(payload);
-    },
-    onSuccess: async (newService) => {
-      // Select the newly created service immediately
-      if (newService?.id) {
-        setSelectedAutoServiceId(newService.id);
-      }
-
-      showToast(t('success', { defaultValue: 'Auto service created successfully' }), 'success');
-
-      // Invalidate and refetch all related queries
-      // This will update user data, available services, and profile
-      await Promise.all([
-        // Refetch user data to get updated autoServices list
-        queryClient.refetchQueries({ queryKey: ['auth', 'me'] }),
-        // Refetch available auto services
-        queryClient.refetchQueries({ queryKey: ['availableAutoServices'] }),
-        // Invalidate profile query (will be fetched when needed)
-        queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] }),
-      ]);
-
-      // Update user data in Zustand store after refetch
-      const updatedUser = queryClient.getQueryData(['auth', 'me']);
-      if (updatedUser) {
-        setUser(updatedUser as typeof user);
-      }
-
-      // Update availableAutoServices in store after refetch
-      // Wait a bit for the query to complete
-      setTimeout(() => {
-        const updatedServices = queryClient.getQueryData(['availableAutoServices']);
-        if (updatedServices && Array.isArray(updatedServices)) {
-          setAvailableAutoServices(updatedServices);
-        }
-      }, 100);
-
-      // Immediately redirect to my-service page to show the profile creation form
-      // Remove create query parameter if present
-      router.push('/my-service');
-    },
-    onError: (error: unknown) => {
-      // Extract error message from backend response
-      let errorMessage = t('error', { defaultValue: 'Failed to create auto service' });
-      const errorObj = error as {
-        response?: { data?: { error?: { message?: string }; message?: string } };
-        message?: string;
-      };
-
-      // Check for backend error response format: { success: false, error: { message: string } }
-      if (errorObj?.response?.data?.error?.message) {
-        errorMessage = errorObj.response.data.error.message;
-      } else if (errorObj?.response?.data?.message) {
-        errorMessage = errorObj.response.data.message;
-      } else if (errorObj?.message) {
-        errorMessage = errorObj.message;
-      }
-
-      showToast(errorMessage, 'error');
-    },
-  });
+  // Use custom hook for create mutation (SOLID - Single Responsibility)
+  const createMutation = useCreateAutoService();
 
   const onSubmit = (data: FormData) => {
-    createMutation.mutate(data);
+    const payload: {
+      serviceType: 'individual' | 'company';
+      companyName?: string;
+      firstName?: string;
+      lastName?: string;
+    } = {
+      serviceType: data.serviceType,
+    };
+
+    if (data.serviceType === 'company') {
+      payload.companyName = data.companyName?.trim();
+    } else {
+      payload.firstName = data.firstName?.trim();
+      payload.lastName = data.lastName?.trim();
+    }
+
+    createMutation.mutate(payload, {
+      onSuccess: async (newService) => {
+        // Select the newly created service immediately
+        if (newService?.id) {
+          setSelectedAutoServiceId(newService.id);
+        }
+
+        // Invalidate and refetch all related queries
+        await Promise.all([
+          queryClient.refetchQueries({ queryKey: ['auth', 'me'] }),
+          queryClient.refetchQueries({ queryKey: ['availableAutoServices'] }),
+          queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] }),
+        ]);
+
+        // Update user data in Zustand store after refetch
+        const updatedUser = queryClient.getQueryData(['auth', 'me']);
+        if (updatedUser) {
+          setUser(updatedUser as typeof user);
+        }
+
+        // Immediately redirect to my-service page
+        router.push('/my-service');
+      },
+    });
   };
 
   // Don't render max reached message until mounted to prevent hydration mismatch
@@ -243,20 +154,17 @@ export function CreateAutoService() {
                       className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
                     >
                       <div className="flex items-center gap-3">
-                        {service.avatarFile && (
-                          <Image
-                            src={service.avatarFile.fileUrl}
-                            alt={
-                              service.serviceType === 'company'
-                                ? service.companyName || 'Service'
-                                : `${service.firstName} ${service.lastName}`
-                            }
-                            width={40}
-                            height={40}
-                            className="h-10 w-10 rounded-full object-cover"
-                            unoptimized
-                          />
-                        )}
+                        <ServiceAvatar
+                          avatarFile={service.avatarFile}
+                          name={
+                            service.serviceType === 'company'
+                              ? service.companyName || 'Service'
+                              : `${service.firstName} ${service.lastName}`.trim() || 'Service'
+                          }
+                          isVerified={service.isVerified}
+                          size="sm"
+                          variant="primary"
+                        />
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
                             {service.serviceType === 'company'

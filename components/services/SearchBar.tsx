@@ -32,11 +32,14 @@ export function SearchBar({
   const [localValue, setLocalValue] = useState(value);
   const debouncedValue = useDebounce(localValue, 500);
   const isTypingRef = useRef(false);
+  const previousValueRef = useRef(value);
 
   // Sync with external value only if we're not currently typing
+  // Also sync if value changed externally (e.g., from URL params)
   useEffect(() => {
-    if (!isTypingRef.current) {
+    if (!isTypingRef.current || previousValueRef.current !== value) {
       setLocalValue(value);
+      previousValueRef.current = value;
     }
   }, [value]);
 

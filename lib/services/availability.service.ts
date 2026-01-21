@@ -12,6 +12,17 @@ export interface WorkingHours {
   [key: string]: { start: string; end: string } | null;
 }
 
+export interface AvailabilityException {
+  id: string;
+  autoServiceProfileId: string;
+  date: string;
+  isAvailable: boolean;
+  startTime?: string | null;
+  endTime?: string | null;
+  reason?: string | null;
+  createdAt: string;
+}
+
 export interface Exception {
   date: string;
   start?: string;
@@ -101,5 +112,86 @@ export const availabilityService = {
 
       throw error;
     }
+  },
+
+  /**
+   * Get availability for own auto service (for service owners)
+   */
+  async getOwnAvailability(
+    startDate: string,
+    endDate: string,
+    autoServiceId?: string
+  ): Promise<AvailabilityResponse> {
+    const params: Record<string, string> = { startDate, endDate };
+    if (autoServiceId) {
+      params.autoServiceId = autoServiceId;
+    }
+    const response = await apiClient.get<AvailabilityResponse>('/auto-service/availability', {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
+   * Get all availability exceptions
+   */
+  async getExceptions(autoServiceId?: string): Promise<AvailabilityException[]> {
+    const params = autoServiceId ? { autoServiceId } : {};
+    const response = await apiClient.get<AvailabilityException[]>(
+      '/auto-service/availability/exceptions',
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Create availability exception
+   */
+  async createException(
+    data: {
+      date: string;
+      isAvailable: boolean;
+      startTime?: string;
+      endTime?: string;
+      reason?: string;
+    },
+    autoServiceId?: string
+  ): Promise<AvailabilityException> {
+    const params = autoServiceId ? { autoServiceId } : {};
+    const response = await apiClient.post<AvailabilityException>(
+      '/auto-service/availability/exceptions',
+      data,
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Update availability exception
+   */
+  async updateException(
+    exceptionId: string,
+    data: {
+      isAvailable?: boolean;
+      startTime?: string;
+      endTime?: string;
+      reason?: string;
+    },
+    autoServiceId?: string
+  ): Promise<AvailabilityException> {
+    const params = autoServiceId ? { autoServiceId } : {};
+    const response = await apiClient.put<AvailabilityException>(
+      `/auto-service/availability/exceptions/${exceptionId}`,
+      data,
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Delete availability exception
+   */
+  async deleteException(exceptionId: string): Promise<void> {
+    await apiClient.delete(`/auto-service/availability/exceptions/${exceptionId}`);
   },
 };

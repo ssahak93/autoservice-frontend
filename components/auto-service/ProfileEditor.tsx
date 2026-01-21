@@ -1,26 +1,18 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
+import { AddressAutocomplete } from '@/components/common/AddressAutocomplete';
 import { Button } from '@/components/ui/Button';
 import { PhoneInput } from '@/components/ui/PhoneInput';
+import { useUpdateProfile } from '@/hooks/useProfileMutations';
+import { useProfileValidation } from '@/hooks/useProfileValidation';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
-import {
-  autoServiceProfileService,
-  type AutoServiceProfile,
-} from '@/lib/services/auto-service-profile.service';
-import {
-  PHONE_PATTERN,
-  PHONE_ERROR_MESSAGE,
-  formatPhoneForBackend,
-  parsePhoneFromBackend,
-} from '@/lib/utils/phone.util';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
-import { useUIStore } from '@/stores/uiStore';
+import { type AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
+import { formatPhoneForBackend, parsePhoneFromBackend } from '@/lib/utils/phone.util';
 
 interface ProfileEditorProps {
   profile: AutoServiceProfile;
@@ -28,34 +20,12 @@ interface ProfileEditorProps {
 
 export function ProfileEditor({ profile }: ProfileEditorProps) {
   const t = useTranslations('myService.profile');
-  const { showToast } = useUIStore();
-  const queryClient = useQueryClient();
-  const { selectedAutoServiceId } = useAutoServiceStore();
 
   // Load service types
   const { data: serviceTypes = [] } = useServiceTypes();
 
-  const schema = z.object({
-    description: z
-      .string()
-      .min(10, t('descriptionMin', { defaultValue: 'Description must be at least 10 characters' })),
-    specialization: z.string().optional(),
-    yearsOfExperience: z.number().min(0).max(100).optional(),
-    address: z.string().min(1, t('addressRequired', { defaultValue: 'Address is required' })),
-    city: z.string().min(1, t('cityRequired', { defaultValue: 'City is required' })),
-    region: z.string().min(1, t('regionRequired', { defaultValue: 'Region is required' })),
-    district: z.string().optional(),
-    latitude: z.number().min(-90).max(90),
-    longitude: z.number().min(-180).max(180),
-    phoneNumber: z
-      .string()
-      .min(1, t('phoneRequired', { defaultValue: 'Phone number is required' }))
-      .regex(PHONE_PATTERN, t('invalidPhoneNumber', { defaultValue: PHONE_ERROR_MESSAGE })),
-    maxVisitsPerDay: z.number().min(1).max(50),
-    serviceTypes: z
-      .array(z.string())
-      .min(1, t('serviceTypesRequired', { defaultValue: 'Select at least one service type' })),
-  });
+  // Use custom hook for validation (SOLID - Single Responsibility)
+  const { schema } = useProfileValidation();
 
   type FormData = z.infer<typeof schema>;
 
@@ -63,6 +33,8 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<FormData>({
@@ -83,32 +55,16 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (data: FormData) => {
-      // Format phone number for backend (add +374 prefix)
-      const formattedData = {
-        ...data,
-        phoneNumber: formatPhoneForBackend(data.phoneNumber),
-      };
-      return autoServiceProfileService.updateProfile(
-        formattedData,
-        selectedAutoServiceId || undefined
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
-      showToast(t('updateSuccess', { defaultValue: 'Profile updated successfully' }), 'success');
-    },
-    onError: (error: Error) => {
-      showToast(
-        error.message || t('updateError', { defaultValue: 'Failed to update profile' }),
-        'error'
-      );
-    },
-  });
+  // Use custom hook for update mutation (SOLID - Single Responsibility)
+  const updateMutation = useUpdateProfile();
 
   const onSubmit = (data: FormData) => {
-    updateMutation.mutate(data);
+    // Format phone number for backend (add +374 prefix)
+    const formattedData = {
+      ...data,
+      phoneNumber: formatPhoneForBackend(data.phoneNumber),
+    };
+    updateMutation.mutate(formattedData);
   };
 
   return (
@@ -168,11 +124,25 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('address', { defaultValue: 'Address' })} *
           </label>
-          <input
-            {...register('address')}
-            type="text"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          <AddressAutocomplete
+            value={watch('address') || ''}
+            onChange={(address) => {
+              setValue('address', address, { shouldValidate: true });
+            }}
+            onSelect={(suggestion) => {
+              // When user selects an address, update coordinates
+              setValue('latitude', suggestion.latitude, { shouldValidate: true });
+              setValue('longitude', suggestion.longitude, { shouldValidate: true });
+            }}
+            placeholder={t('enterAddress', { defaultValue: 'Enter address...' })}
+            disabled={false}
+            className="w-full"
           />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {t('addressHint', {
+              defaultValue: 'Start typing to search for addresses',
+            })}
+          </p>
           {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>}
         </div>
 

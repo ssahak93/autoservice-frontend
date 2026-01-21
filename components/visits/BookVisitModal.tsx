@@ -115,8 +115,12 @@ export function BookVisitModal({
 
   const { data: availability, isLoading: isLoadingAvailability } = useQuery({
     queryKey: ['availability', profileIdForAvailability, startDate, endDate],
-    queryFn: () =>
-      availabilityService.getAvailability(profileIdForAvailability!, startDate, endDate),
+    queryFn: () => {
+      if (!profileIdForAvailability) {
+        return null;
+      }
+      return availabilityService.getAvailability(profileIdForAvailability, startDate, endDate);
+    },
     enabled: !!profileIdForAvailability, // Only check if we have profile ID
     staleTime: 5 * 60 * 1000,
     retry: false,

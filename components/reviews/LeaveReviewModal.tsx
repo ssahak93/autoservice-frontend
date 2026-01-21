@@ -66,8 +66,19 @@ export function LeaveReviewModal({ isOpen, onClose, visit }: LeaveReviewModalPro
       showToast(t('reviewCreated'), 'success');
       reset();
       onClose();
-    } catch (error: any) {
-      if (error?.response?.data?.message) {
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data &&
+        typeof error.response.data === 'object' &&
+        'message' in error.response.data &&
+        typeof error.response.data.message === 'string'
+      ) {
         showToast(error.response.data.message, 'error');
       } else {
         showToast(t('reviewError'), 'error');

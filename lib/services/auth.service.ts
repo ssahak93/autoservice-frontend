@@ -62,10 +62,22 @@ export const authService = {
   },
 
   /**
-   * Logout user
+   * Logout user - invalidate tokens on server
    */
-  logout(): void {
-    useAuthStore.getState().logout();
+  async logout(): Promise<void> {
+    try {
+      const refreshToken = useAuthStore.getState().refreshToken;
+      // Call logout endpoint to invalidate tokens on server
+      await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, {
+        refreshToken: refreshToken || undefined,
+      });
+    } catch (error) {
+      // Even if API call fails, clear local tokens
+      console.error('Logout API call failed:', error);
+    } finally {
+      // Always clear local tokens and state
+      useAuthStore.getState().logout();
+    }
   },
 
   /**

@@ -8,6 +8,15 @@ import { serverApiClient } from '@/lib/api/server-client';
 import type { AutoService, PaginatedResponse } from '@/types';
 
 export interface ServiceSearchParams {
+  businessType?:
+    | 'auto_service'
+    | 'auto_shop'
+    | 'car_wash'
+    | 'cleaning'
+    | 'tire_service'
+    | 'towing'
+    | 'tinting'
+    | 'other';
   city?: string;
   region?: string;
   district?: string;
@@ -30,6 +39,7 @@ interface BackendSearchResponse {
     id: string;
     name: string;
     serviceType: string;
+    businessType?: string;
     description: string;
     city: string;
     region: string;
@@ -44,6 +54,8 @@ interface BackendSearchResponse {
     }>;
     avatarUrl: string | null;
     isVerified: boolean;
+    isBlocked?: boolean; // Blocked services should not be shown in public
+    blockedReason?: string | null;
   }>;
   pagination: {
     page: number;
@@ -60,6 +72,15 @@ interface BackendDetailResponse {
   id: string;
   name: string;
   serviceType: 'individual' | 'company';
+  businessType?:
+    | 'auto_service'
+    | 'auto_shop'
+    | 'car_wash'
+    | 'cleaning'
+    | 'tire_service'
+    | 'towing'
+    | 'tinting'
+    | 'other';
   description: string | null;
   specialization: string | null;
   yearsOfExperience: number | null;
@@ -81,6 +102,8 @@ interface BackendDetailResponse {
   averageRating: number | null;
   totalReviews: number;
   isVerified: boolean;
+  isBlocked?: boolean; // Blocked services should not be shown in public
+  blockedReason?: string | null;
   avatarFileId: string | null;
   avatarUrl: string | null;
 }
@@ -95,6 +118,16 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoSe
   return {
     id: result.id,
     serviceType: result.serviceType as 'individual' | 'company',
+    businessType: result.businessType as
+      | 'auto_service'
+      | 'auto_shop'
+      | 'car_wash'
+      | 'cleaning'
+      | 'tire_service'
+      | 'towing'
+      | 'tinting'
+      | 'other'
+      | undefined,
     companyName: result.serviceType === 'company' ? result.name : undefined,
     firstName: result.serviceType === 'individual' ? firstName : undefined,
     lastName: result.serviceType === 'individual' ? lastName : undefined,
@@ -108,6 +141,8 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoSe
     averageRating: result.averageRating ? Number(result.averageRating) : undefined,
     totalReviews: result.totalReviews,
     isVerified: result.isVerified,
+    isBlocked: result.isBlocked || false,
+    blockedReason: result.blockedReason || undefined,
     avatarFile: result.avatarUrl
       ? {
           fileUrl: result.avatarUrl,
@@ -131,6 +166,7 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
   return {
     id: response.id,
     serviceType: response.serviceType,
+    businessType: response.businessType,
     companyName: response.serviceType === 'company' ? response.name : undefined,
     firstName: response.serviceType === 'individual' ? firstName : undefined,
     lastName: response.serviceType === 'individual' ? lastName : undefined,
@@ -147,6 +183,8 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
     averageRating: response.averageRating ? Number(response.averageRating) : undefined,
     totalReviews: response.totalReviews,
     isVerified: response.isVerified,
+    isBlocked: response.isBlocked || false,
+    blockedReason: response.blockedReason || undefined,
     avatarFile: response.avatarUrl
       ? {
           fileUrl: response.avatarUrl,
@@ -208,8 +246,18 @@ export const servicesServerService = {
 
       return transformDetailResponse(response);
     } catch (error) {
-      if (error instanceof Error && error.message.includes('404')) {
-        return null;
+      // Handle 404 errors gracefully - return null instead of throwing
+      if (error instanceof Error) {
+        const errorWithStatus = error as { status?: number; code?: string };
+        if (
+          errorWithStatus.status === 404 ||
+          errorWithStatus.code === 'NOT_FOUND' ||
+          error.message.includes('404') ||
+          error.message.includes('not found') ||
+          error.message.includes('չի գտնվել')
+        ) {
+          return null;
+        }
       }
       throw error;
     }

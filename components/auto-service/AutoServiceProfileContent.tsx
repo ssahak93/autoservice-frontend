@@ -1,21 +1,19 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info, FileText, Calendar, Image, CheckCircle2, Globe } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AutoServiceSelector } from '@/components/dashboard/AutoServiceSelector';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
+import { useAutoServiceProfile } from '@/hooks/useAutoServiceProfile';
 import { useRouter } from '@/i18n/routing';
-import { autoServiceProfileService } from '@/lib/services/auto-service-profile.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
-import { useUIStore } from '@/stores/uiStore';
 
 import { ApprovalStatusBanner } from './ApprovalStatusBanner';
 import { AutoServicesList } from './AutoServicesList';
@@ -26,6 +24,7 @@ import { CreateProfileEditor } from './CreateProfileEditor';
 import { IncompleteProfileBanner } from './IncompleteProfileBanner';
 import { PhotoGallery } from './PhotoGallery';
 import { ProfileEditor } from './ProfileEditor';
+import { ServiceCardSkeleton } from './ServiceCardSkeleton';
 import { ServiceInfoEditor } from './ServiceInfoEditor';
 
 /**
@@ -36,95 +35,14 @@ function AutoServiceProfileManager() {
   // ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC
   const t = useTranslations('myService');
   const tCommon = useTranslations('common');
-  const { user } = useAuth();
-  const { showToast } = useUIStore();
-  const queryClient = useQueryClient();
-  const { selectedAutoServiceId, setSelectedAutoServiceId } = useAutoServiceStore();
+  const { selectedAutoServiceId } = useAutoServiceStore();
   const [activeTab, setActiveTab] = useState<'info' | 'profile' | 'availability' | 'photos'>(
     'info'
   );
 
-  // Get user's owned service IDs
-  const userOwnedServiceIds = useMemo(
-    () => user?.autoServices?.map((s) => s.id) || [],
-    [user?.autoServices]
-  );
-
-  // Validate and get valid selectedAutoServiceId
-  const validSelectedAutoServiceId = useMemo(() => {
-    if (!selectedAutoServiceId) {
-      // If no selection, use first owned service
-      return userOwnedServiceIds[0] || null;
-    }
-    // Check if selected service belongs to user
-    if (userOwnedServiceIds.includes(selectedAutoServiceId)) {
-      return selectedAutoServiceId;
-    }
-    // Invalid selection, use first owned service
-    return userOwnedServiceIds[0] || null;
-  }, [selectedAutoServiceId, userOwnedServiceIds]);
-
-  // Set valid selectedAutoServiceId if it changed
-  useEffect(() => {
-    if (validSelectedAutoServiceId && validSelectedAutoServiceId !== selectedAutoServiceId) {
-      setSelectedAutoServiceId(validSelectedAutoServiceId);
-    }
-  }, [validSelectedAutoServiceId, selectedAutoServiceId, setSelectedAutoServiceId]);
-
-  // Query for profile - only when we have a valid service ID
-  const {
-    data: profile,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['autoServiceProfile', validSelectedAutoServiceId],
-    queryFn: async () => {
-      if (!validSelectedAutoServiceId) {
-        throw new Error('Auto service ID is required');
-      }
-      try {
-        return await autoServiceProfileService.getProfile(validSelectedAutoServiceId);
-      } catch (err: unknown) {
-        // If profile doesn't exist (404), return null instead of throwing
-        // This allows us to show the create profile form
-        const error = err as { response?: { status?: number } };
-        if (error?.response?.status === 404 || error?.response?.status === 400) {
-          return null;
-        }
-        throw err;
-      }
-    },
-    // Only enable when we have a valid service ID
-    enabled: !!validSelectedAutoServiceId,
-    refetchOnMount: true, // Enable refetch on mount to check for new profile
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-  });
-
-  const publishMutation = useMutation({
-    mutationFn: (isPublished: boolean) =>
-      autoServiceProfileService.publishProfile(
-        isPublished,
-        validSelectedAutoServiceId || undefined
-      ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
-      // Note: profile might be null here, so we use optional chaining
-      showToast(
-        profile?.isPublished
-          ? t('unpublishSuccess', { defaultValue: 'Profile unpublished successfully' })
-          : t('publishSuccess', { defaultValue: 'Profile published successfully' }),
-        'success'
-      );
-    },
-    onError: (error: Error) => {
-      showToast(
-        error.message || t('publishError', { defaultValue: 'Failed to update publish status' }),
-        'error'
-      );
-    },
-  });
+  // Use custom hook for profile management (SOLID - Single Responsibility)
+  const { profile, isLoading, isProfileNotFound, validSelectedAutoServiceId, publishMutation } =
+    useAutoServiceProfile(selectedAutoServiceId);
 
   if (isLoading) {
     return (
@@ -138,28 +56,15 @@ function AutoServiceProfileManager() {
           <div className="glass-light h-32 animate-pulse rounded-xl" />
           {/* Tabs skeleton */}
           <div className="glass-light h-16 animate-pulse rounded-xl" />
-          {/* Content skeleton */}
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="glass-light h-64 animate-pulse rounded-xl" />
-          ))}
+          {/* Content skeleton - using ServiceCardSkeleton for consistency */}
+          <ServiceCardSkeleton count={2} />
         </div>
       </motion.div>
     );
   }
 
-  // If profile doesn't exist, show message to create profile
-  // Check if error is 404/400/500 (profile not found or server error) or if profile is null
-  const errorObj = error as { response?: { status?: number }; message?: string } | null;
-  const isProfileNotFound =
-    errorObj &&
-    (errorObj?.response?.status === 404 ||
-      errorObj?.response?.status === 400 ||
-      errorObj?.response?.status === 500 ||
-      errorObj?.message?.includes('not found') ||
-      errorObj?.message?.includes('Profile not found'));
-
-  // Show create profile form if profile doesn't exist or there's an error
-  if (isProfileNotFound || (!isLoading && !profile && !error)) {
+  // Show create profile form if profile doesn't exist
+  if (isProfileNotFound) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -231,11 +136,15 @@ function AutoServiceProfileManager() {
     );
   }
 
-  const validProfile = {
-    ...profile,
-    // Ensure profileCompleteness exists, default to 0 if missing
-    profileCompleteness: profile.profileCompleteness ?? 0,
-  };
+  // Create valid profile object with defaults (only when profile exists)
+  // Type assertion needed because TypeScript doesn't know profile structure fully
+  const validProfile = profile
+    ? ({
+        ...profile,
+        // Ensure profileCompleteness exists, default to 0 if missing
+        profileCompleteness: profile.profileCompleteness ?? 0,
+      } as typeof profile & { profileCompleteness: number })
+    : null;
 
   const variants = getAnimationVariants();
 
@@ -284,190 +193,199 @@ function AutoServiceProfileManager() {
         <BlockedServiceBanner
           autoServiceId={validSelectedAutoServiceId || ''}
           blockedReason={
-            user?.autoServices?.find((as) => as.id === validSelectedAutoServiceId)?.blockedReason
+            (profile?.autoService as { blockedReason?: string | null })?.blockedReason || null
           }
         />
       </motion.div>
 
-      {/* Show approval status banner - profile is guaranteed to exist here */}
-      {/* Always render to maintain consistent hook count */}
-      <motion.div
-        variants={variants.slideUp}
-        initial="initial"
-        animate="animate"
-        transition={{ delay: 0.15 }}
-        suppressHydrationWarning
-      >
-        <ApprovalStatusBanner profile={validProfile} />
-      </motion.div>
+      {/* Show approval status banner - only if profile exists */}
+      {validProfile && (
+        <motion.div
+          variants={variants.slideUp}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: 0.15 }}
+          suppressHydrationWarning
+        >
+          <ApprovalStatusBanner profile={validProfile} />
+        </motion.div>
+      )}
 
-      {/* Show incomplete profile banner - always render to maintain consistent hook count */}
-      <motion.div
-        variants={variants.slideUp}
-        initial="initial"
-        animate="animate"
-        transition={{ delay: 0.2 }}
-        suppressHydrationWarning
-      >
-        <IncompleteProfileBanner completeness={validProfile.profileCompleteness} />
-      </motion.div>
+      {/* Show incomplete profile banner - only if profile exists */}
+      {validProfile && (
+        <motion.div
+          variants={variants.slideUp}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: 0.2 }}
+          suppressHydrationWarning
+        >
+          <IncompleteProfileBanner completeness={validProfile.profileCompleteness} />
+        </motion.div>
+      )}
 
-      {/* Header Section with Stats */}
-      <motion.div
-        variants={variants.slideUp}
-        initial="initial"
-        animate="animate"
-        transition={{ delay: 0.25 }}
-        className="mb-8"
-      >
-        <div className="glass-light rounded-xl p-6">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {t('title', { defaultValue: 'My Service Profile' })}
-              </h1>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">
-                {t('description', {
-                  defaultValue: 'Manage your auto service profile and settings',
-                })}
-              </p>
-            </div>
+      {/* Header Section with Stats - only show if profile exists */}
+      {validProfile && (
+        <motion.div
+          variants={variants.slideUp}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: 0.25 }}
+          className="mb-8"
+        >
+          <div className="glass-light rounded-xl p-6">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {t('title', { defaultValue: 'My Service Profile' })}
+                </h1>
+                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                  {t('description', {
+                    defaultValue: 'Manage your auto service profile and settings',
+                  })}
+                </p>
+              </div>
 
-            {/* Stats Cards */}
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Completeness Card */}
-              <div className="glass-light rounded-lg border border-primary-200 bg-gradient-to-br from-primary-50 to-primary-100/50 p-4 dark:border-primary-800 dark:from-primary-900/20 dark:to-primary-800/10">
-                <div className="text-center">
-                  <p className="text-xs font-medium text-primary-700 dark:text-primary-300">
-                    {t('completeness', { defaultValue: 'Profile Completeness' })}
-                  </p>
-                  <div className="mt-2 flex items-center justify-center gap-2">
-                    <div className="relative h-16 w-16">
-                      <svg className="h-16 w-16 -rotate-90 transform">
-                        <circle
-                          cx="32"
-                          cy="32"
-                          r="28"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                          className="text-gray-200 dark:text-gray-700"
-                        />
-                        <circle
-                          cx="32"
-                          cy="32"
-                          r="28"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                          strokeDasharray={`${(validProfile.profileCompleteness / 100) * 175.9} 175.9`}
-                          className="text-primary-600 transition-all duration-500"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-lg font-bold text-primary-600">
-                          {validProfile.profileCompleteness}%
-                        </span>
+              {/* Stats Cards */}
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Completeness Card */}
+                <div className="glass-light rounded-lg border border-primary-200 bg-gradient-to-br from-primary-50 to-primary-100/50 p-4 dark:border-primary-800 dark:from-primary-900/20 dark:to-primary-800/10">
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-primary-700 dark:text-primary-300">
+                      {t('completeness', { defaultValue: 'Profile Completeness' })}
+                    </p>
+                    <div className="mt-2 flex items-center justify-center gap-2">
+                      <div className="relative h-16 w-16">
+                        <svg className="h-16 w-16 -rotate-90 transform">
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                            className="text-gray-200 dark:text-gray-700"
+                          />
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                            strokeDasharray={`${(validProfile.profileCompleteness / 100) * 175.9} 175.9`}
+                            className="text-primary-600 transition-all duration-500"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-lg font-bold text-primary-600">
+                            {validProfile.profileCompleteness}%
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Publish Status Button */}
-              <div className="flex items-center">
-                <Button
-                  variant={validProfile.isPublished ? 'outline' : 'primary'}
-                  onClick={() => publishMutation.mutate(!validProfile.isPublished)}
-                  isLoading={publishMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  {validProfile.isPublished ? (
-                    <>
-                      <Globe className="h-4 w-4" />
-                      {t('unpublish', { defaultValue: 'Unpublish' })}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      {t('publish', { defaultValue: 'Publish Profile' })}
-                    </>
-                  )}
-                </Button>
+                {/* Publish Status Button */}
+                <div className="flex items-center">
+                  <Button
+                    variant={validProfile.isPublished ? 'outline' : 'primary'}
+                    onClick={() => publishMutation.mutate(!validProfile.isPublished)}
+                    isLoading={publishMutation.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    {validProfile.isPublished ? (
+                      <>
+                        <Globe className="h-4 w-4" />
+                        {t('unpublish', { defaultValue: 'Unpublish' })}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" />
+                        {t('publish', { defaultValue: 'Publish Profile' })}
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
-      {/* Tabs */}
-      <motion.div
-        variants={variants.slideUp}
-        initial="initial"
-        animate="animate"
-        transition={{ delay: 0.3 }}
-        className="mb-6"
-      >
-        <div className="glass-light rounded-xl border-b-0 p-0">
-          <nav className="flex space-x-1 overflow-x-auto px-4" aria-label="Profile tabs">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`group relative flex items-center gap-2 border-b-2 px-4 py-4 text-sm font-medium transition-all ${
-                    isActive
-                      ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <Icon
-                    className={`h-5 w-5 transition-transform ${
-                      isActive ? 'scale-110' : 'group-hover:scale-105'
-                    }`}
-                  />
-                  <span>{tab.label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500"
-                      initial={false}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      </motion.div>
-
-      {/* Tab Content with Animation */}
-      <motion.div
-        variants={variants.slideUp}
-        initial="initial"
-        animate="animate"
-        transition={{ delay: 0.35 }}
-        className="glass-light rounded-xl p-6"
-      >
-        <AnimatePresence mode="wait">
+      {/* Tabs - only show if profile exists */}
+      {validProfile && (
+        <>
           <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            variants={variants.slideUp}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.3 }}
+            className="mb-6"
           >
-            {activeTab === 'info' && <ServiceInfoEditor profile={validProfile} />}
-            {activeTab === 'profile' && <ProfileEditor profile={validProfile} />}
-            {activeTab === 'availability' && <AvailabilityCalendar profile={validProfile} />}
-            {activeTab === 'photos' && <PhotoGallery profile={validProfile} />}
+            <div className="glass-light rounded-xl border-b-0 p-0">
+              <nav className="flex space-x-1 overflow-x-auto px-4" aria-label="Profile tabs">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`group relative flex items-center gap-2 border-b-2 px-4 py-4 text-sm font-medium transition-all ${
+                        isActive
+                          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                      }`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <Icon
+                        className={`h-5 w-5 transition-transform ${
+                          isActive ? 'scale-110' : 'group-hover:scale-105'
+                        }`}
+                      />
+                      <span>{tab.label}</span>
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500"
+                          initial={false}
+                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
           </motion.div>
-        </AnimatePresence>
-      </motion.div>
+
+          {/* Tab Content with Animation */}
+          <motion.div
+            variants={variants.slideUp}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.35 }}
+            className="glass-light rounded-xl p-6"
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {activeTab === 'info' && <ServiceInfoEditor profile={validProfile} />}
+                {activeTab === 'profile' && <ProfileEditor profile={validProfile} />}
+                {activeTab === 'availability' && <AvailabilityCalendar profile={validProfile} />}
+                {activeTab === 'photos' && <PhotoGallery profile={validProfile} />}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+        </>
+      )}
     </motion.div>
   );
 }

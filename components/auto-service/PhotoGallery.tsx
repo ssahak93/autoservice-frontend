@@ -1,6 +1,5 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, GripVertical } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -9,13 +8,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { FileUpload } from '@/components/ui/FileUpload';
 import {
-  autoServiceProfileService,
+  useDeletePhoto,
+  useReorderPhotos,
+  useUpdateProfilePhotos,
+} from '@/hooks/usePhotoMutations';
+import {
   type AutoServiceProfile,
   type PhotoItem,
 } from '@/lib/services/auto-service-profile.service';
 import { type UploadedFile } from '@/lib/services/files.service';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
-import { useUIStore } from '@/stores/uiStore';
 
 import { PhotoViewer } from './PhotoViewer';
 
@@ -31,9 +32,6 @@ const normalizePhotos = (photos: PhotoItem[] | string[] | undefined): PhotoItem[
 
 export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
   const t = useTranslations('myService.photos');
-  const { showToast } = useUIStore();
-  const queryClient = useQueryClient();
-  const { selectedAutoServiceId } = useAutoServiceStore();
 
   const [uploadingType, setUploadingType] = useState<'profile' | 'work' | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -79,52 +77,12 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
   const profilePhotos = normalizePhotos(localProfile.profilePhotoFileIds);
   const workPhotos = normalizePhotos(localProfile.workPhotoFileIds);
 
-  // Mutation to update profile with new photo IDs using reorderPhotos endpoint
-  const updateProfilePhotosMutation = useMutation({
-    mutationFn: async ({
-      newPhotoIds,
-      type,
-    }: {
-      newPhotoIds: string[];
-      type: 'profile' | 'work';
-    }) => {
-      // Get current photo IDs
-      const currentPhotos = normalizePhotos(
-        type === 'profile' ? localProfile.profilePhotoFileIds : localProfile.workPhotoFileIds
-      );
-      const currentIds = currentPhotos.map((p) => p.id);
+  // Use custom hook for updating photos (SOLID - Single Responsibility)
+  const updateProfilePhotosMutation = useUpdateProfilePhotos();
 
-      // Combine existing and new IDs (avoid duplicates, new photos go to the end)
-      const allIds = [...new Set([...currentIds, ...newPhotoIds])];
-
-      // Use reorderPhotos endpoint which handles both adding and reordering
-      return autoServiceProfileService.reorderPhotos(
-        allIds,
-        type,
-        selectedAutoServiceId || undefined
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
-      showToast(t('uploadSuccess', { defaultValue: 'Photos uploaded successfully' }), 'success');
-      setUploadingType(null);
-    },
-    onError: (error: Error) => {
-      showToast(
-        error.message || t('uploadError', { defaultValue: 'Failed to upload photos' }),
-        'error'
-      );
-      setUploadingType(null);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: ({ fileId, type }: { fileId: string; type: 'profile' | 'work' }) =>
-      autoServiceProfileService.deletePhoto(fileId, type, selectedAutoServiceId || undefined),
-    onMutate: async ({ fileId, type }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['autoServiceProfile'] });
-
+  // Use custom hook for delete with optimistic updates (SOLID - Single Responsibility)
+  const deleteMutation = useDeletePhoto(
+    ({ fileId, type }) => {
       // Mark that we're mutating
       isMutatingRef.current = true;
 
@@ -144,34 +102,18 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
 
       return { previousProfile };
     },
-    onSuccess: () => {
-      showToast(t('deleteSuccess', { defaultValue: 'Photo deleted successfully' }), 'success');
-      queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
-      // Allow prop updates after a short delay to let server data sync
-      setTimeout(() => {
-        isMutatingRef.current = false;
-      }, 1000);
-    },
-    onError: (error: Error, variables, context) => {
+    (context) => {
       isMutatingRef.current = false;
       // Rollback to previous state on error
-      if (context?.previousProfile) {
-        setLocalProfile(context.previousProfile);
+      if (context && typeof context === 'object' && 'previousProfile' in context) {
+        setLocalProfile(context.previousProfile as AutoServiceProfile);
       }
-      showToast(
-        error.message || t('deleteError', { defaultValue: 'Failed to delete photo' }),
-        'error'
-      );
-    },
-  });
+    }
+  );
 
-  const reorderMutation = useMutation({
-    mutationFn: ({ fileIds, type }: { fileIds: string[]; type: 'profile' | 'work' }) =>
-      autoServiceProfileService.reorderPhotos(fileIds, type, selectedAutoServiceId || undefined),
-    onMutate: async ({ fileIds, type }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['autoServiceProfile'] });
-
+  // Use custom hook for reorder with optimistic updates (SOLID - Single Responsibility)
+  const reorderMutation = useReorderPhotos(
+    ({ fileIds, type }) => {
       // Mark that we're mutating
       isMutatingRef.current = true;
 
@@ -199,33 +141,30 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
 
       return { previousProfile };
     },
-    onSuccess: () => {
-      showToast(t('reorderSuccess', { defaultValue: 'Photos reordered successfully' }), 'success');
-      // Invalidate queries to get fresh data from server
-      queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
-      // Allow prop updates after a short delay to let server data sync
-      setTimeout(() => {
-        isMutatingRef.current = false;
-      }, 1000);
-    },
-    onError: (error: Error, variables, context) => {
+    (context) => {
       isMutatingRef.current = false;
       // Rollback to previous state on error
-      if (context?.previousProfile) {
-        setLocalProfile(context.previousProfile);
+      if (context && typeof context === 'object' && 'previousProfile' in context) {
+        setLocalProfile(context.previousProfile as AutoServiceProfile);
       }
-      showToast(
-        error.message || t('reorderError', { defaultValue: 'Failed to reorder photos' }),
-        'error'
-      );
-    },
-  });
+    }
+  );
 
   const handlePhotoUpload = async (files: UploadedFile[], type: 'profile' | 'work') => {
     setUploadingType(type);
     try {
       const newPhotoIds = files.map((f) => f.id);
-      await updateProfilePhotosMutation.mutateAsync({ newPhotoIds, type });
+
+      // Get current photo IDs
+      const currentPhotos = normalizePhotos(
+        type === 'profile' ? localProfile.profilePhotoFileIds : localProfile.workPhotoFileIds
+      );
+      const currentIds = currentPhotos.map((p) => p.id);
+
+      // Combine existing and new IDs (avoid duplicates, new photos go to the end)
+      const allIds = [...new Set([...currentIds, ...newPhotoIds])];
+
+      await updateProfilePhotosMutation.mutateAsync({ newPhotoIds: allIds, type });
     } catch (error) {
       // Error is handled in mutation
     } finally {

@@ -24,7 +24,23 @@ export function useSearch() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize from URL search params (client-side only)
+  // Try to read from URL immediately if available
   const [searchParams, setSearchParams] = useState<ServiceSearchParams>(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const params = deserializeSearchParams(urlParams);
+      // If we have any meaningful params, use them; otherwise use defaults
+      if (
+        params.query ||
+        params.city ||
+        params.region ||
+        params.district ||
+        params.serviceType ||
+        params.businessType
+      ) {
+        return params;
+      }
+    }
     return getDefaultSearchParams();
   });
 

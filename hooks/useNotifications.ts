@@ -3,37 +3,60 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 
+import { queryKeys, queryConfig } from '@/lib/api/query-config';
 import {
   notificationsService,
   type NotificationFilters,
 } from '@/lib/services/notifications.service';
+import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 
 /**
  * Hook to get user notifications
+ * Only fetches if user is authenticated
  */
 export function useNotifications(filters?: NotificationFilters) {
+  const { isAuthenticated } = useAuthStore();
+
   return useQuery({
-    queryKey: ['notifications', filters],
+    queryKey: queryKeys.notifications(filters),
     queryFn: () => notificationsService.getNotifications(filters),
+    enabled: isAuthenticated, // Only fetch if user is authenticated
+    staleTime: queryConfig.staleTime,
+    gcTime: queryConfig.gcTime,
     refetchInterval: 30000, // Poll every 30 seconds
+    placeholderData: (previousData) => previousData,
   });
 }
 
 /**
  * Hook to get notification statistics
  * Automatically refetches every 30 seconds to keep stats up to date
+ * Only fetches if user is authenticated and has a token
  */
 export function useNotificationStats() {
+  const { isAuthenticated, accessToken } = useAuthStore();
+
+  // Also check localStorage for token (in case store hasn't synced yet)
+  const hasToken =
+    typeof window !== 'undefined' && (!!accessToken || !!localStorage.getItem('accessToken'));
+
   return useQuery({
-    queryKey: ['notifications', 'stats'],
+    queryKey: queryKeys.notificationStats(),
     queryFn: () => notificationsService.getStats(),
+    enabled: isAuthenticated && hasToken, // Only fetch if user is authenticated and has token
+    staleTime: queryConfig.staleTime,
+    gcTime: queryConfig.gcTime,
     refetchInterval: 30000, // Poll every 30 seconds
     retry: (failureCount, error) => {
-      // Don't retry on 404/500 errors (service will return default stats)
+      // Don't retry on 401/404/500 errors (unauthorized or service will return default stats)
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
-        if (axiosError.response?.status === 404 || axiosError.response?.status === 500) {
+        if (
+          axiosError.response?.status === 401 ||
+          axiosError.response?.status === 404 ||
+          axiosError.response?.status === 500
+        ) {
           return false;
         }
       }
@@ -52,8 +75,8 @@ export function useMarkNotificationAsRead() {
   return useMutation({
     mutationFn: (notificationId: string) => notificationsService.markAsRead(notificationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notificationStats() });
     },
   });
 }
@@ -88,8 +111,8 @@ export function useDeleteNotification() {
   return useMutation({
     mutationFn: (notificationId: string) => notificationsService.delete(notificationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notificationStats() });
     },
   });
 }

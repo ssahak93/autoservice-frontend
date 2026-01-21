@@ -60,17 +60,22 @@ export const notificationsService = {
   /**
    * Get notification statistics
    * Returns default stats if request fails (fallback for error cases)
+   * Note: This should only be called when user is authenticated
    */
   async getStats(): Promise<NotificationStats> {
     try {
       const response = await apiClient.get<NotificationStats>(API_ENDPOINTS.NOTIFICATIONS.STATS);
       return response.data;
     } catch (error) {
-      // If request fails (e.g., 404, 500), return default stats as fallback
+      // If request fails (e.g., 401, 404, 500), return default stats as fallback
       // This prevents UI errors and provides graceful degradation
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
-        if (axiosError.response?.status === 404 || axiosError.response?.status === 500) {
+        if (
+          axiosError.response?.status === 401 ||
+          axiosError.response?.status === 404 ||
+          axiosError.response?.status === 500
+        ) {
           return {
             total: 0,
             unread: 0,
