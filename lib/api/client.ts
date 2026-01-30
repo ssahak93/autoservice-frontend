@@ -39,11 +39,17 @@ class ApiClient {
         }
 
         // For FormData, don't optimize and let browser set Content-Type with boundary
+        // Check both config.data and the original data passed to post/put methods
         const isFormData = config.data instanceof FormData;
 
-        if (isFormData && config.headers) {
+        if (isFormData) {
           // Remove Content-Type header to let browser set it with boundary
-          delete config.headers['Content-Type'];
+          // This is critical for multipart/form-data uploads
+          if (config.headers) {
+            delete config.headers['Content-Type'];
+          }
+          // Ensure axios doesn't serialize FormData
+          config.transformRequest = [];
         }
 
         // Optimize request payload (skip FormData - it's already optimized for file uploads)

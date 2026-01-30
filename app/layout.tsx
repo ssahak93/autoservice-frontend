@@ -21,7 +21,6 @@ export const metadata: Metadata = {
   title: 'Auto Service Connect',
   description: 'Find and book the best auto services in Armenia',
   manifest: '/manifest.json',
-  themeColor: '#3b82f6',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -45,6 +44,7 @@ export const viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: 'cover' as const,
+  themeColor: '#3b82f6',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

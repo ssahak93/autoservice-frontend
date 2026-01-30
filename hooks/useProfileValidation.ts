@@ -25,15 +25,10 @@ export function useProfileValidation() {
         specialization: z.string().optional(),
         yearsOfExperience: z.number().min(0).max(100).optional(),
         address: z.string().min(1, t('addressRequired', { defaultValue: 'Address is required' })),
-        city: z
+        regionId: z.string().min(1, t('regionRequired', { defaultValue: 'Region is required' })),
+        communityId: z
           .string()
-          .min(1, t('cityRequired', { defaultValue: 'City is required' }))
-          .optional(),
-        region: z
-          .string()
-          .min(1, t('regionRequired', { defaultValue: 'Region is required' }))
-          .optional(),
-        district: z.string().optional(),
+          .min(1, t('communityRequired', { defaultValue: 'Community is required' })),
         latitude: z.number().min(-90).max(90),
         longitude: z.number().min(-180).max(180),
         phoneNumber: z

@@ -31,8 +31,6 @@ export function InviteTeamMemberModal({ isOpen, onClose }: InviteTeamMemberModal
     role: z.enum(['owner', 'manager', 'employee'], {
       required_error: t('roleRequired', { defaultValue: 'Role is required' }),
     }),
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
     specialization: z.string().optional(),
     bio: z.string().optional(),
     yearsOfExperience: z.number().min(0).max(100).optional(),
@@ -121,30 +119,6 @@ export function InviteTeamMemberModal({ isOpen, onClose }: InviteTeamMemberModal
               {errors.role && <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>}
             </div>
 
-            {/* First Name */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('firstName', { defaultValue: 'First Name' })}
-              </label>
-              <input
-                {...register('firstName')}
-                type="text"
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
-
-            {/* Last Name */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('lastName', { defaultValue: 'Last Name' })}
-              </label>
-              <input
-                {...register('lastName')}
-                type="text"
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
-
             {/* Specialization */}
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -199,8 +173,20 @@ export function InviteTeamMemberModal({ isOpen, onClose }: InviteTeamMemberModal
           </>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-lg bg-gray-50 p-6 text-center dark:bg-gray-800">
-              <QrCode className="mx-auto h-24 w-24 text-primary-600" />
+            <div className="rounded-lg bg-white p-6 text-center dark:bg-gray-800">
+              {qrData && (
+                <div className="mx-auto flex h-48 w-48 items-center justify-center rounded-lg border-4 border-primary-100 bg-white p-4 dark:border-primary-900 dark:bg-gray-700">
+                  {generateQRMutation.data?.qrCodeSvg ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: generateQRMutation.data.qrCodeSvg }}
+                      className="flex items-center justify-center"
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                  ) : (
+                    <div className="h-full w-full animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+                  )}
+                </div>
+              )}
               <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
                 {t('qrInstructions', {
                   defaultValue:
@@ -214,7 +200,16 @@ export function InviteTeamMemberModal({ isOpen, onClose }: InviteTeamMemberModal
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {t('invitationLink', { defaultValue: 'Invitation Link' })}
                 </p>
-                <Button variant="outline" size="sm" onClick={handleCopy}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCopy();
+                  }}
+                >
                   {copied ? (
                     <>
                       <Check className="mr-2 h-4 w-4" />

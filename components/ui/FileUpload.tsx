@@ -28,7 +28,7 @@ interface FileUploadProps {
   label?: string;
   /** Whether the upload is disabled */
   disabled?: boolean;
-  /** File category for organization (e.g., 'avatar', 'profile-photo', 'work-photo') */
+  /** File category for organization (e.g., 'avatars', 'auto-service-avatars', 'profile-photos', 'work-photos') */
   category?: string;
   /** Unique ID for the file input (required if multiple FileUpload components on same page) */
   inputId?: string;

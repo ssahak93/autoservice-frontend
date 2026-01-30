@@ -3,6 +3,13 @@
  * Reusable components for auto service management
  */
 
+// Main page components
+export { MyServicePage } from './MyServicePage';
+export { ServiceDashboard } from './ServiceDashboard';
+export { MultipleServicesView } from './MultipleServicesView';
+export { AutoServiceEditor } from './AutoServiceEditor';
+
+// List and card components
 export { AutoServicesList } from './AutoServicesList';
 export { ServiceCard } from './ServiceCard';
 export { ServiceCardSkeleton } from './ServiceCardSkeleton';

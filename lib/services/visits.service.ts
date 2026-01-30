@@ -67,13 +67,17 @@ export const visitsService = {
   },
 
   async getById(id: string): Promise<Visit> {
-    const response = await apiClient.get<{ success: boolean; data: Visit }>(
+    const response = await apiClient.get<{ success: boolean; data: Visit } | Visit>(
       API_ENDPOINTS.VISITS.DETAIL(id)
     );
-    if (!response.data?.data) {
+    // Backend may return data directly or wrapped in {success, data}
+    if ('success' in response.data && response.data.success && 'data' in response.data) {
+      return response.data.data;
+    }
+    if (!response.data || (typeof response.data === 'object' && !('id' in response.data))) {
       throw new Error('Visit not found');
     }
-    return response.data.data;
+    return response.data as Visit;
   },
 
   async updateStatus(id: string, status: Visit['status'], autoServiceId?: string): Promise<Visit> {

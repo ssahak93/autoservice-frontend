@@ -8,12 +8,15 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
+import { FileUpload } from '@/components/ui/FileUpload';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreateAutoService } from '@/hooks/useAutoServiceMutations';
 import { useAutoServiceValidation } from '@/hooks/useAutoServiceValidation';
 import { Link, useRouter } from '@/i18n/routing';
+import { FILE_CATEGORIES } from '@/lib/constants/file-categories.constants';
 import { MAX_AUTO_SERVICES_PER_USER } from '@/lib/services/auto-services.service';
+import { type UploadedFile } from '@/lib/services/files.service';
 import { useAuthStore } from '@/stores/authStore';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 
@@ -28,6 +31,8 @@ export function CreateAutoService() {
   const { availableAutoServices, setSelectedAutoServiceId } = useAutoServiceStore();
   const [serviceType, setServiceType] = useState<'individual' | 'company'>('individual');
   const [mounted, setMounted] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<UploadedFile | null>(null);
+  const [avatarFileId, setAvatarFileId] = useState<string | undefined>(undefined);
 
   // Track mounted state to prevent hydration mismatch
   useEffect(() => {
@@ -77,6 +82,7 @@ export function CreateAutoService() {
       companyName?: string;
       firstName?: string;
       lastName?: string;
+      avatarFileId?: string;
     } = {
       serviceType: data.serviceType,
     };
@@ -86,6 +92,10 @@ export function CreateAutoService() {
     } else {
       payload.firstName = data.firstName?.trim();
       payload.lastName = data.lastName?.trim();
+    }
+
+    if (avatarFileId) {
+      payload.avatarFileId = avatarFileId;
     }
 
     createMutation.mutate(payload, {
@@ -161,7 +171,7 @@ export function CreateAutoService() {
                               ? service.companyName || 'Service'
                               : `${service.firstName} ${service.lastName}`.trim() || 'Service'
                           }
-                          isVerified={service.isVerified}
+                          isApproved={service.isApproved}
                           size="sm"
                           variant="primary"
                         />
@@ -300,6 +310,39 @@ export function CreateAutoService() {
                 {errors.serviceType.message}
               </p>
             )}
+          </div>
+
+          {/* Avatar Upload */}
+          <div>
+            <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('avatar', { defaultValue: 'Avatar' })}
+            </label>
+            <FileUpload
+              accept="image/*"
+              maxSize={10}
+              maxFiles={1}
+              multiple={false}
+              label={t('uploadAvatar', { defaultValue: 'Upload Avatar' })}
+              category={FILE_CATEGORIES.AUTO_SERVICE_AVATARS}
+              inputId="auto-service-avatar-upload-input"
+              existingFiles={avatarFile ? [avatarFile] : []}
+              onUpload={(files) => {
+                if (files.length > 0) {
+                  setAvatarFile(files[0]);
+                  setAvatarFileId(files[0].id);
+                }
+              }}
+              onRemove={() => {
+                setAvatarFile(null);
+                setAvatarFileId(undefined);
+              }}
+              disabled={isSubmitting || createMutation.isPending}
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t('avatarHint', {
+                defaultValue: 'Upload a profile picture for your auto service (optional)',
+              })}
+            </p>
           </div>
 
           {/* Conditional Fields */}

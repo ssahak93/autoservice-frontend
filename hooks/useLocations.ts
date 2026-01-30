@@ -1,45 +1,46 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { locationsService, type City, type Location } from '@/lib/services/locations.service';
+import { locationsService, type Region, type Community } from '@/lib/services/locations.service';
 
 /**
  * Hook for fetching regions
  */
 export function useRegions() {
-  return useQuery<Location[]>({
-    queryKey: ['locations', 'regions'],
+  return useQuery<Region[]>({
+    queryKey: ['regions'],
     queryFn: () => locationsService.getRegions(),
     staleTime: 1000 * 60 * 60 * 24, // 24 hours - regions don't change often
   });
 }
 
 /**
- * Hook for fetching cities
+ * Hook for fetching communities (cities, villages, districts)
+ * @param regionId - Optional filter by region ID
+ * @param type - Optional filter by community type (city, village, district)
  */
-export function useCities(regionCode?: string) {
-  return useQuery<City[]>({
-    queryKey: ['locations', 'cities', regionCode],
-    queryFn: () => locationsService.getCities(regionCode),
+export function useCommunities(regionId?: string, type?: 'city' | 'village' | 'district') {
+  return useQuery<Community[]>({
+    queryKey: ['communities', regionId, type],
+    queryFn: () => locationsService.getCommunities(regionId, type),
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
-    enabled: true, // Always fetch, regionCode is optional
+    enabled: true, // Always fetch, regionId is optional
   });
 }
 
 /**
- * Hook for fetching districts (only for Yerevan)
+ * @deprecated Use useCommunities instead
+ * Kept for backward compatibility during migration
  */
-export function useDistricts(cityCode?: string) {
-  return useQuery<Location[]>({
-    queryKey: ['locations', 'districts', cityCode],
-    queryFn: () => {
-      if (!cityCode) {
-        return Promise.resolve([]);
-      }
-      return locationsService.getDistricts(cityCode);
-    },
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours
-    enabled: !!cityCode && cityCode.toLowerCase() === 'yerevan', // Only fetch for Yerevan
-  });
+export function useCities(regionId?: string) {
+  return useCommunities(regionId, 'city');
+}
+
+/**
+ * @deprecated Use useCommunities instead
+ * Kept for backward compatibility during migration
+ */
+export function useDistricts(regionId?: string) {
+  return useCommunities(regionId, 'district');
 }
 
 /**
@@ -48,7 +49,8 @@ export function useDistricts(cityCode?: string) {
 export function useLocations() {
   return {
     useRegions,
-    useCities,
-    useDistricts,
+    useCommunities,
+    useCities, // Deprecated
+    useDistricts, // Deprecated
   };
 }

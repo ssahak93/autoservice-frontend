@@ -23,7 +23,11 @@ interface ServiceCardProps {
  */
 export function ServiceCard({ service, index = 0, distance }: ServiceCardProps) {
   const t = useTranslations('services');
-  const name = service.companyName || `${service.firstName} ${service.lastName}`;
+  // Safely construct name, handling undefined/null values
+  const name =
+    service.companyName ||
+    [service.firstName, service.lastName].filter(Boolean).join(' ') ||
+    t('unknownService', { defaultValue: 'Unknown Service' });
   const rating = service.averageRating || 0;
   const reviewsCount = service.totalReviews || 0;
   const isOpen = service.workingHours
@@ -57,10 +61,10 @@ export function ServiceCard({ service, index = 0, distance }: ServiceCardProps) 
               </span>
             </div>
           )}
-          {service.isVerified && (
+          {service.isApproved && (
             <div
               className="absolute right-2 top-2 rounded-full bg-success-500 p-1"
-              aria-label={t('verifiedService', { defaultValue: 'Verified service' })}
+              aria-label={t('approvedService', { defaultValue: 'Approved service' })}
             >
               <Verified className="h-4 w-4 text-white" />
             </div>
@@ -80,8 +84,9 @@ export function ServiceCard({ service, index = 0, distance }: ServiceCardProps) 
               <div className="flex items-center gap-1">
                 <MapPin className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 <span className="truncate">
-                  {service.district ? `${service.district}, ` : ''}
-                  {service.city}
+                  {service.community && service.region
+                    ? `${service.community}, ${service.region}`
+                    : service.community || service.region || ''}
                 </span>
               </div>
               {distance !== undefined && (

@@ -32,8 +32,11 @@ class FilesService {
 
     const response = await apiClient.post<UploadFileResponse>(
       API_ENDPOINTS.FILES.UPLOAD,
-      formData
-      // Don't set Content-Type header - let browser set it with boundary
+      formData,
+      {
+        // Don't set Content-Type - let browser set it with boundary
+        // The interceptor will handle removing any Content-Type header
+      }
     );
 
     return response.data;
@@ -43,6 +46,10 @@ class FilesService {
    * Upload multiple files
    */
   async uploadFiles(files: File[], category?: string): Promise<UploadFileResponse[]> {
+    if (files.length === 0) {
+      return [];
+    }
+
     const formData = new FormData();
     files.forEach((file) => {
       formData.append('files', file);
@@ -53,8 +60,11 @@ class FilesService {
 
     const response = await apiClient.post<UploadFileResponse[]>(
       API_ENDPOINTS.FILES.UPLOAD_MULTIPLE,
-      formData
-      // Don't set Content-Type header - let browser set it with boundary
+      formData,
+      {
+        // Don't set Content-Type - let browser set it with boundary
+        // The interceptor will handle removing any Content-Type header
+      }
     );
 
     return response.data;

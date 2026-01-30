@@ -21,13 +21,15 @@ export function useSearch() {
   const router = useRouter();
   const pathname = usePathname();
   const nextSearchParams = useNextSearchParams();
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize from URL search params (client-side only)
-  // Try to read from URL immediately if available
+  // Initialize from Next.js search params (SSR-safe)
   const [searchParams, setSearchParams] = useState<ServiceSearchParams>(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
+    // Use nextSearchParams which is SSR-safe
+    if (nextSearchParams) {
+      const urlParams = new URLSearchParams();
+      nextSearchParams.forEach((value, key) => {
+        urlParams.set(key, value);
+      });
       const params = deserializeSearchParams(urlParams);
       // If we have any meaningful params, use them; otherwise use defaults
       if (
@@ -36,7 +38,9 @@ export function useSearch() {
         params.region ||
         params.district ||
         params.serviceType ||
-        params.businessType
+        params.businessType ||
+        params.regionId ||
+        params.communityId
       ) {
         return params;
       }
@@ -44,20 +48,13 @@ export function useSearch() {
     return getDefaultSearchParams();
   });
 
-  // Sync with URL on mount (client-side only)
+  // Sync with URL search params changes (from browser navigation or SSR)
   useEffect(() => {
-    if (typeof window !== 'undefined' && !isInitialized) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const params = deserializeSearchParams(urlParams);
-      setSearchParams(params);
-      setIsInitialized(true);
-    }
-  }, [isInitialized]);
-
-  // Sync with URL search params changes (from browser navigation)
-  useEffect(() => {
-    if (isInitialized && typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
+    if (nextSearchParams) {
+      const urlParams = new URLSearchParams();
+      nextSearchParams.forEach((value, key) => {
+        urlParams.set(key, value);
+      });
       const params = deserializeSearchParams(urlParams);
       // Only update if different from current state
       const currentSerialized = serializeSearchParams(searchParams).toString();
@@ -67,7 +64,7 @@ export function useSearch() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nextSearchParams?.toString(), isInitialized]);
+  }, [nextSearchParams?.toString()]);
 
   // Update search parameters and sync with URL
   const updateSearch = useCallback(
@@ -116,6 +113,5 @@ export function useSearch() {
     updateSearch,
     resetSearch,
     setFilter,
-    isInitialized,
   };
 }

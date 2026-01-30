@@ -112,7 +112,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                   <span className="text-4xl font-bold">{name.charAt(0).toUpperCase()}</span>
                 </div>
               )}
-              {service.isVerified && (
+              {service.isApproved && (
                 <div className="absolute right-2 top-2 rounded-full bg-success-500 p-1">
                   <svg
                     className="h-4 w-4 text-white"
@@ -133,9 +133,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             <div className="flex-1">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <h1 className="font-display text-2xl font-bold sm:text-3xl">{name}</h1>
-                {service.isVerified && (
+                {service.isApproved && (
                   <span className="rounded-full bg-success-500 px-2 py-1 text-xs font-medium">
-                    {t('verified')}
+                    {t('approved')}
                   </span>
                 )}
               </div>

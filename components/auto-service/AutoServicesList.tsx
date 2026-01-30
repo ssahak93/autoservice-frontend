@@ -58,14 +58,9 @@ export function AutoServicesList() {
     [ownedServices]
   );
 
-  // Memoize shouldShow calculation to prevent unnecessary recalculations
-  const shouldShow = useMemo(
-    () =>
-      ownedServices.length > 1 ||
-      incompleteServices.length > 0 ||
-      (ownedServices.length === 1 && !ownedServices[0].hasProfile),
-    [ownedServices, incompleteServices]
-  );
+  // Only show list if user has multiple services
+  // Single service is handled by ServiceDashboard
+  const shouldShow = useMemo(() => ownedServices.length > 1, [ownedServices.length]);
 
   // Memoize callbacks to prevent unnecessary re-renders of child components
   const handleSelectService = useCallback(
@@ -106,73 +101,9 @@ export function AutoServicesList() {
     return <ServiceCardSkeleton count={3} />;
   }
 
-  // Don't show if no services
-  if (ownedServices.length === 0) {
-    return null;
-  }
-
-  // If user has exactly one complete service, show a compact view with create button
-  if (!shouldShow && ownedServices.length === 1) {
-    return (
-      <motion.div
-        initial="initial"
-        animate="animate"
-        variants={variants.fadeIn}
-        className="space-y-6"
-      >
-        {/* Header */}
-        <motion.div variants={variants.slideUp} className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {t('servicesList.title', {
-              defaultValue: 'My Auto Services',
-            })}
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            {t('servicesList.subtitle', {
-              defaultValue: 'Manage all your auto services and their profiles',
-            })}
-          </p>
-        </motion.div>
-
-        {/* Create Another Service Card */}
-        <motion.div
-          variants={variants.slideUp}
-          whileHover={{ scale: 1.02, y: -2 }}
-          className="rounded-xl border-2 border-dashed border-primary-300 bg-gradient-to-br from-primary-50 to-primary-100/50 p-6 dark:border-primary-700 dark:from-primary-900/20 dark:to-primary-800/10"
-        >
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {t('servicesList.createAnother', {
-                  defaultValue: 'Create Another Auto Service',
-                })}
-              </h3>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                {t('servicesList.createAnotherDescription', {
-                  defaultValue:
-                    'You can create multiple auto services to manage different locations or service types.',
-                })}
-              </p>
-            </div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="primary"
-                onClick={() => router.push('/my-service?create=true')}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                {t('servicesList.createAnother', {
-                  defaultValue: 'Create Another Auto Service',
-                })}
-              </Button>
-            </motion.div>
-          </div>
-        </motion.div>
-      </motion.div>
-    );
-  }
-
-  if (!shouldShow) {
+  // Don't show if no services or only one service
+  // Single service is handled by ServiceDashboard
+  if (ownedServices.length === 0 || !shouldShow) {
     return null;
   }
 

@@ -157,6 +157,14 @@ export function isNotFoundError(error: unknown): boolean {
 }
 
 /**
+ * Check if error is a 409 Conflict error
+ */
+export function isConflictError(error: unknown): boolean {
+  const status = extractErrorStatus(error);
+  return status === 409;
+}
+
+/**
  * Check if error is a 500+ server error
  */
 export function isServerError(error: unknown): boolean {

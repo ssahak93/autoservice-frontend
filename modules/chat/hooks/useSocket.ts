@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Socket } from 'socket.io-client';
 
-import { socketService } from '@/lib/services/socket.service';
 import { useAuthStore } from '@/stores/authStore';
+
+import { socketService } from '../services/socket.service';
 
 export function useSocket() {
   const { accessToken } = useAuthStore();
@@ -14,15 +15,12 @@ export function useSocket() {
 
   useEffect(() => {
     if (!accessToken) {
-      // Disconnect if no token
       socketService.disconnect();
       setSocket(null);
       setIsConnected(false);
       return;
     }
 
-    // Connect socket (will reuse existing connection if token is the same)
-    // Note: connect is now async to handle token refresh
     let socketInstance: Socket | null = null;
     let isMounted = true;
 
@@ -31,7 +29,6 @@ export function useSocket() {
       socketInstance = socket;
       setSocket(socket);
 
-      // Update connection state immediately if already connected
       if (socket.connected) {
         setIsConnected(true);
       }
@@ -51,7 +48,6 @@ export function useSocket() {
         setIsConnected(false);
       };
 
-      // Add event listeners
       socket.on('connect', handleConnect);
       socket.on('disconnect', handleDisconnect);
       socket.on('connect_error', handleConnectError);
@@ -59,16 +55,15 @@ export function useSocket() {
 
     return () => {
       isMounted = false;
-      // Remove event listeners on cleanup
       if (socketInstance) {
         socketInstance.off('connect');
         socketInstance.off('disconnect');
         socketInstance.off('connect_error');
       }
-      // Copy ref value to variable for cleanup
       const timeoutId = reconnectTimeoutRef.current;
       if (timeoutId) {
         clearTimeout(timeoutId);
+        reconnectTimeoutRef.current = null;
       }
     };
   }, [accessToken]);

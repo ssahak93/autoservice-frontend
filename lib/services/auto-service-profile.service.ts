@@ -13,12 +13,15 @@ export interface AutoServiceProfile {
   specialization?: string;
   yearsOfExperience?: number;
   address: string;
-  // Location fields (filled by admin, used for display/search)
-  city?: string;
+  addressHy?: string;
+  addressRu?: string;
+  // Location fields (IDs for relations)
+  regionId?: string;
+  communityId?: string;
+  // Display fields (localized names from relations)
   region?: string;
-  district?: string;
-  isApproved: boolean;
-  rejectionReason?: string | null; // Reason for rejection (filled by admin)
+  community?: string;
+  communityType?: 'city' | 'village' | 'district';
   latitude: number;
   longitude: number;
   phoneNumber: string;
@@ -38,7 +41,9 @@ export interface AutoServiceProfile {
     companyName?: string;
     firstName?: string;
     lastName?: string;
-    isVerified: boolean;
+    isApproved?: boolean; // Approval status from AutoService (primary table)
+    approvedAt?: string | null;
+    rejectionReason?: string | null; // Reason for rejection (filled by admin)
     avatarFile?: {
       id: string;
       fileUrl: string;
@@ -60,7 +65,10 @@ export interface CreateProfileRequest {
   specialization?: string;
   yearsOfExperience?: number;
   address: string;
-  // city, region, district are no longer sent by user - filled by admin
+  addressHy?: string;
+  addressRu?: string;
+  regionId: string;
+  communityId: string;
   latitude: number;
   longitude: number;
   phoneNumber: string;

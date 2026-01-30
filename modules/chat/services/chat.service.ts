@@ -16,7 +16,8 @@ export interface MessageReaction {
 
 export interface Message {
   id: string;
-  visitId: string;
+  visitId?: string | null;
+  conversationId?: string | null;
   senderId: string;
   autoServiceId?: string | null;
   teamMemberId?: string | null;
@@ -33,11 +34,11 @@ export interface Message {
   createdAt: string;
   sender?: {
     id: string;
-    firstName: string;
-    lastName: string;
+    firstName: string | null;
+    lastName: string | null;
     avatarFile?: {
       fileUrl: string;
-    };
+    } | null;
   };
   autoService?: {
     id: string;
@@ -58,6 +59,26 @@ export interface Message {
       fileUrl: string;
     } | null;
   } | null;
+}
+
+export interface AdminConversation {
+  id: string;
+  title: string;
+  admin?: {
+    id: string;
+    email: string;
+  };
+  lastMessage: {
+    id: string;
+    content: string;
+    createdAt: string;
+    senderId: string;
+    senderType: string;
+    isRead: boolean;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+  unreadCount: number;
 }
 
 export interface SendMessageDto {
@@ -100,7 +121,6 @@ export const chatService = {
       const response = await apiClient.post<Message>(`/chat/visits/${visitId}/messages`, dto);
       return response.data;
     } catch (error) {
-      // Extract error message from backend response
       const axiosError = error as AxiosError<{ message?: string; error?: { message?: string } }>;
       const errorMessage =
         axiosError.response?.data?.message ||
@@ -134,7 +154,6 @@ export const chatService = {
 
       return response.data;
     } catch (error) {
-      // Extract error message from backend response
       const axiosError = error as AxiosError<{ message?: string; error?: { message?: string } }>;
       const errorMessage =
         axiosError.response?.data?.message ||
@@ -159,7 +178,6 @@ export const chatService = {
       );
       return response.data.count || 0;
     } catch (error) {
-      // If endpoint doesn't exist (404) or fails, return 0
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 404) {
         return 0;
@@ -250,5 +268,104 @@ export const chatService = {
       params: autoServiceId ? { autoServiceId } : undefined,
     });
     return response.data;
+  },
+
+  // Admin conversation methods
+  /**
+   * Get user conversations with admin
+   */
+  async getAdminConversations(): Promise<{ data: AdminConversation[] }> {
+    const response = await apiClient.get<{ data: AdminConversation[] }>(
+      '/chat/admin/conversations'
+    );
+    return response.data;
+  },
+
+  /**
+   * Create a new conversation with admin
+   */
+  async createAdminConversation(title: string): Promise<AdminConversation> {
+    const response = await apiClient.post<AdminConversation>('/chat/admin/conversations', {
+      title,
+    });
+    return response.data;
+  },
+
+  /**
+   * Get messages for an admin conversation
+   */
+  async getAdminConversationMessages(
+    conversationId: string,
+    page: number = 1,
+    limit: number = 50
+  ): Promise<ChatMessagesResponse> {
+    const response = await apiClient.get<ChatMessagesResponse>(
+      `/chat/admin/conversations/${conversationId}/messages`,
+      {
+        params: { page, limit },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Send a message in an admin conversation
+   */
+  async sendAdminConversationMessage(conversationId: string, content: string): Promise<Message> {
+    try {
+      const response = await apiClient.post<Message>(
+        `/chat/admin/conversations/${conversationId}/messages`,
+        { content }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string; error?: { message?: string } }>;
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.error?.message ||
+        axiosError.message ||
+        'Failed to send message';
+      throw new Error(errorMessage);
+    }
+  },
+
+  /**
+   * Mark admin conversation messages as read
+   */
+  async markAdminMessagesAsRead(conversationId: string): Promise<void> {
+    await apiClient.put(`/chat/admin/conversations/${conversationId}/messages/read`);
+  },
+
+  /**
+   * Send an image message with optional text in an admin conversation (user side)
+   */
+  async uploadImage(file: File, isAdmin = false): Promise<{ fileId: string; fileUrl: string }> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Use correct endpoint based on chat type
+      // For admin conversations: /chat/admin/upload-image
+      // For visit chats: /chat/visits/upload-image
+      const endpoint = isAdmin ? '/chat/admin/upload-image' : '/chat/visits/upload-image';
+      const response = await apiClient.post<{ fileId: string; fileUrl: string }>(
+        endpoint,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string; error?: { message?: string } }>;
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.error?.message ||
+        axiosError.message ||
+        'Failed to upload image';
+      throw new Error(errorMessage);
+    }
   },
 };

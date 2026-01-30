@@ -17,9 +17,8 @@ export interface ServiceSearchParams {
     | 'towing'
     | 'tinting'
     | 'other';
-  city?: string;
-  region?: string;
-  district?: string;
+  regionId?: string;
+  communityId?: string;
   serviceType?: string;
   minRating?: number;
   latitude?: number;
@@ -28,7 +27,7 @@ export interface ServiceSearchParams {
   page?: number;
   limit?: number;
   sortBy?: 'rating' | 'distance' | 'reviews' | 'newest';
-  query?: string; // Text search query (for future backend support)
+  query?: string; // Text search query
 }
 
 /**
@@ -41,9 +40,12 @@ interface BackendSearchResponse {
     serviceType: string;
     businessType?: string;
     description: string;
-    city: string;
-    region: string;
-    district?: string;
+    address: string;
+    addressHy?: string;
+    addressRu?: string;
+    community?: string;
+    region?: string;
+    communityType?: 'city' | 'village' | 'district';
     averageRating: number | null;
     totalReviews: number;
     distance?: number;
@@ -53,7 +55,7 @@ interface BackendSearchResponse {
       category: string;
     }>;
     avatarUrl: string | null;
-    isVerified: boolean;
+    isApproved: boolean; // Approval status from AutoService (primary table)
     isBlocked?: boolean; // Blocked services should not be shown in public
     blockedReason?: string | null;
   }>;
@@ -85,9 +87,11 @@ interface BackendDetailResponse {
   specialization: string | null;
   yearsOfExperience: number | null;
   address: string;
-  city: string;
-  region: string;
-  district?: string | null;
+  addressHy?: string;
+  addressRu?: string;
+  community?: string;
+  region?: string;
+  communityType?: 'city' | 'village' | 'district';
   latitude: number;
   longitude: number;
   phoneNumber: string | null;
@@ -101,7 +105,7 @@ interface BackendDetailResponse {
   workPhotoFileIds: string[]; // Backend returns URLs, not IDs
   averageRating: number | null;
   totalReviews: number;
-  isVerified: boolean;
+  isApproved: boolean; // Approval status from profile
   isBlocked?: boolean; // Blocked services should not be shown in public
   blockedReason?: string | null;
   avatarFileId: string | null;
@@ -112,8 +116,10 @@ interface BackendDetailResponse {
  * Transform backend search response to frontend AutoService format
  */
 function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoService {
-  const [firstName, ...lastNameParts] = result.name.split(' ');
-  const lastName = lastNameParts.join(' ') || '';
+  // Safely split name, handling empty or single-word names
+  const nameParts = (result.name || '').trim().split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
 
   return {
     id: result.id,
@@ -128,19 +134,21 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoSe
       | 'tinting'
       | 'other'
       | undefined,
-    companyName: result.serviceType === 'company' ? result.name : undefined,
-    firstName: result.serviceType === 'individual' ? firstName : undefined,
-    lastName: result.serviceType === 'individual' ? lastName : undefined,
+    companyName: result.serviceType === 'company' ? result.name || undefined : undefined,
+    firstName: result.serviceType === 'individual' ? firstName || undefined : undefined,
+    lastName: result.serviceType === 'individual' ? lastName || undefined : undefined,
     description: result.description || undefined,
-    address: `${result.city}, ${result.region}`, // Backend search doesn't return address, use city/region
-    city: result.city,
+    address: result.address || '',
+    addressHy: result.addressHy,
+    addressRu: result.addressRu,
+    community: result.community,
     region: result.region,
-    district: result.district || undefined,
+    communityType: result.communityType,
     latitude: 0, // Will be set from detail if needed
     longitude: 0, // Will be set from detail if needed
     averageRating: result.averageRating ? Number(result.averageRating) : undefined,
     totalReviews: result.totalReviews,
-    isVerified: result.isVerified,
+    isApproved: result.isApproved,
     isBlocked: result.isBlocked || false,
     blockedReason: result.blockedReason || undefined,
     avatarFile: result.avatarUrl
@@ -156,8 +164,10 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoSe
  * Transform backend detail response to frontend AutoService format
  */
 function transformDetailResponse(response: BackendDetailResponse): AutoService {
-  const [firstName, ...lastNameParts] = response.name.split(' ');
-  const lastName = lastNameParts.join(' ') || '';
+  // Safely split name, handling empty or single-word names
+  const nameParts = (response.name || '').trim().split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
 
   // Backend now returns URLs directly, so use them as-is
   const profilePhotoUrls = response.profilePhotoFileIds || [];
@@ -167,22 +177,24 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
     id: response.id,
     serviceType: response.serviceType,
     businessType: response.businessType,
-    companyName: response.serviceType === 'company' ? response.name : undefined,
-    firstName: response.serviceType === 'individual' ? firstName : undefined,
-    lastName: response.serviceType === 'individual' ? lastName : undefined,
+    companyName: response.serviceType === 'company' ? response.name || undefined : undefined,
+    firstName: response.serviceType === 'individual' ? firstName || undefined : undefined,
+    lastName: response.serviceType === 'individual' ? lastName || undefined : undefined,
     description: response.description || undefined,
     specialization: response.specialization || undefined,
     address: response.address,
-    city: response.city,
+    addressHy: response.addressHy,
+    addressRu: response.addressRu,
+    community: response.community,
     region: response.region,
-    district: response.district || undefined,
+    communityType: response.communityType,
     latitude: response.latitude,
     longitude: response.longitude,
     phoneNumber: response.phoneNumber || undefined,
     workingHours: response.workingHours || undefined,
     averageRating: response.averageRating ? Number(response.averageRating) : undefined,
     totalReviews: response.totalReviews,
-    isVerified: response.isVerified,
+    isApproved: response.isApproved,
     isBlocked: response.isBlocked || false,
     blockedReason: response.blockedReason || undefined,
     avatarFile: response.avatarUrl

@@ -13,7 +13,7 @@ export interface AutoServiceOption {
     fileUrl: string;
   };
   hasProfile?: boolean;
-  isVerified?: boolean;
+  isApproved?: boolean; // Approval status from profile
 }
 
 interface AutoServiceState {

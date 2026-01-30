@@ -20,6 +20,8 @@ export function useUpdateServiceInfo() {
       autoServiceProfileService.updateServiceInfo(autoServiceId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['availableAutoServices'] });
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
       showToast(
         t('updateSuccess', { defaultValue: 'Service information updated successfully' }),
         'success'

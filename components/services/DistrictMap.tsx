@@ -1,24 +1,11 @@
 'use client';
 
-import L from 'leaflet';
 import { MapPin } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { locationsService, DistrictWithBounds } from '@/lib/services/locations.service';
-
-// Fix for default marker icons (must be done before importing MapContainer)
-if (typeof window !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, import/no-named-as-default-member
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-  // eslint-disable-next-line import/no-named-as-default-member
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  });
-}
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), {
@@ -74,6 +61,25 @@ export function DistrictMap({
     selectedDistrictCode || null
   );
 
+  // Fix for default marker icons (must be done on client side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Dynamically import Leaflet only on client side
+      import('leaflet').then((L) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, import/no-named-as-default-member
+        delete (L.default.Icon.Default.prototype as any)._getIconUrl;
+        // eslint-disable-next-line import/no-named-as-default-member
+        L.default.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+          shadowUrl:
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        });
+      });
+    }
+  }, []);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -120,19 +126,24 @@ export function DistrictMap({
   };
 
   // Event handlers for GeoJSON
-  const onEachDistrict = (district: DistrictWithBounds, layer: L.Layer) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onEachDistrict = (district: DistrictWithBounds, layer: any) => {
     layer.on({
       click: () => handleDistrictClick(district),
-      mouseover: (e) => {
-        const target = e.target as L.Path;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mouseover: (e: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const target = e.target as any;
         target.setStyle({
           fillOpacity: 0.5,
           weight: 3,
         });
         target.bindPopup(district.name).openPopup();
       },
-      mouseout: (e) => {
-        const target = e.target as L.Path;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mouseout: (e: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const target = e.target as any;
         const style = getDistrictStyle(district);
         target.setStyle(style);
         target.closePopup();

@@ -54,7 +54,7 @@ export function useAvailableAutoServices() {
         companyName: s.companyName,
         firstName: s.firstName,
         lastName: s.lastName,
-        isVerified: s.isVerified,
+        isApproved: s.isApproved,
         avatarFile: s.avatarFile || null,
         hasProfile: false, // We don't know from user data, will be updated by API
       })) || []

@@ -78,6 +78,13 @@ export function MobileMenu({
             >
               {t('profile')}
             </Link>
+            <Link
+              href="/support"
+              className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+              onClick={handleLinkClick}
+            >
+              {t('support', { defaultValue: 'Support' })}
+            </Link>
             <div className="mt-2 border-t border-neutral-200 pt-2">
               {userName && <div className="px-4 py-2 text-sm text-neutral-600">{userName}</div>}
               <button

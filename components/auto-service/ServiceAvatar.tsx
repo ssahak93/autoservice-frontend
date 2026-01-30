@@ -10,7 +10,7 @@ import { getTransition } from '@/lib/utils/animations';
 interface ServiceAvatarProps {
   avatarFile?: { fileUrl: string } | null;
   name: string;
-  isVerified?: boolean;
+  isApproved?: boolean;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'primary' | 'amber';
 }
@@ -37,7 +37,7 @@ const gradientColors = {
 export const ServiceAvatar = memo(function ServiceAvatar({
   avatarFile,
   name,
-  isVerified = false,
+  isApproved = false,
   size = 'md',
   variant = 'primary',
 }: ServiceAvatarProps) {
@@ -62,7 +62,7 @@ export const ServiceAvatar = memo(function ServiceAvatar({
           />
         </div>
       )}
-      {isVerified && (
+      {isApproved && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}

@@ -1,7 +1,9 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -12,6 +14,7 @@ import { useUpdateProfile } from '@/hooks/useProfileMutations';
 import { useProfileValidation } from '@/hooks/useProfileValidation';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { type AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
+import { locationsService } from '@/lib/services/locations.service';
 import { formatPhoneForBackend, parsePhoneFromBackend } from '@/lib/utils/phone.util';
 
 interface ProfileEditorProps {
@@ -20,9 +23,22 @@ interface ProfileEditorProps {
 
 export function ProfileEditor({ profile }: ProfileEditorProps) {
   const t = useTranslations('myService.profile');
+  const [selectedRegionId, setSelectedRegionId] = useState<string>(profile.regionId || '');
 
   // Load service types
   const { data: serviceTypes = [] } = useServiceTypes();
+
+  // Load regions and communities
+  const { data: regions = [] } = useQuery({
+    queryKey: ['regions'],
+    queryFn: () => locationsService.getRegions(),
+  });
+
+  const { data: communities = [] } = useQuery({
+    queryKey: ['communities', selectedRegionId],
+    queryFn: () => locationsService.getCommunities(selectedRegionId),
+    enabled: !!selectedRegionId,
+  });
 
   // Use custom hook for validation (SOLID - Single Responsibility)
   const { schema } = useProfileValidation();
@@ -44,9 +60,8 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
       specialization: profile.specialization || '',
       yearsOfExperience: profile.yearsOfExperience,
       address: profile.address,
-      city: profile.city,
-      region: profile.region,
-      district: profile.district || '',
+      regionId: profile.regionId || '',
+      communityId: profile.communityId || '',
       latitude: Number(profile.latitude),
       longitude: Number(profile.longitude),
       phoneNumber: parsePhoneFromBackend(profile.phoneNumber),
@@ -54,6 +69,22 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
       serviceTypes: profile.services?.map((s) => s.serviceType.id) || [],
     },
   });
+
+  // Update selectedRegionId when profile.regionId changes
+  useEffect(() => {
+    if (profile.regionId) {
+      setSelectedRegionId(profile.regionId);
+    }
+  }, [profile.regionId]);
+
+  // Reset community when region changes
+  const regionId = watch('regionId');
+  useEffect(() => {
+    if (regionId && regionId !== selectedRegionId) {
+      setSelectedRegionId(regionId);
+      setValue('communityId', '', { shouldValidate: false });
+    }
+  }, [regionId, selectedRegionId, setValue]);
 
   // Use custom hook for update mutation (SOLID - Single Responsibility)
   const updateMutation = useUpdateProfile();
@@ -119,7 +150,7 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
       </div>
 
       {/* Location */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="space-y-4">
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('address', { defaultValue: 'Address' })} *
@@ -146,69 +177,100 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
           {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>}
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('city', { defaultValue: 'City' })} *
-          </label>
-          <input
-            {...register('city')}
-            type="text"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          />
-          {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>}
-        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Region Selection */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('region', { defaultValue: 'Region' })} *
+            </label>
+            <Controller
+              name="regionId"
+              control={control}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setSelectedRegionId(e.target.value);
+                    setValue('communityId', '', { shouldValidate: false });
+                  }}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                >
+                  <option value="">{t('selectRegion', { defaultValue: 'Select Region' })}</option>
+                  {regions.map((region) => (
+                    <option key={region.id} value={region.id}>
+                      {region.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+            {errors.regionId && (
+              <p className="mt-1 text-sm text-red-600">{errors.regionId.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('region', { defaultValue: 'Region' })} *
-          </label>
-          <input
-            {...register('region')}
-            type="text"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          />
-          {errors.region && <p className="mt-1 text-sm text-red-600">{errors.region.message}</p>}
-        </div>
+          {/* Community Selection */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('community', { defaultValue: 'Community' })} *
+            </label>
+            <Controller
+              name="communityId"
+              control={control}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  disabled={!selectedRegionId}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                >
+                  <option value="">
+                    {selectedRegionId
+                      ? t('selectCommunity', { defaultValue: 'Select Community' })
+                      : t('selectRegionFirst', { defaultValue: 'Select Region first' })}
+                  </option>
+                  {communities.map((community) => (
+                    <option key={community.id} value={community.id}>
+                      {community.name} ({community.type})
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+            {errors.communityId && (
+              <p className="mt-1 text-sm text-red-600">{errors.communityId.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('district', { defaultValue: 'District' })}
-          </label>
-          <input
-            {...register('district')}
-            type="text"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          />
-        </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('latitude', { defaultValue: 'Latitude' })} *
+            </label>
+            <input
+              {...register('latitude', { valueAsNumber: true })}
+              type="number"
+              step="0.000001"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            />
+            {errors.latitude && (
+              <p className="mt-1 text-sm text-red-600">{errors.latitude.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('latitude', { defaultValue: 'Latitude' })} *
-          </label>
-          <input
-            {...register('latitude', { valueAsNumber: true })}
-            type="number"
-            step="0.000001"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          />
-          {errors.latitude && (
-            <p className="mt-1 text-sm text-red-600">{errors.latitude.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('longitude', { defaultValue: 'Longitude' })} *
-          </label>
-          <input
-            {...register('longitude', { valueAsNumber: true })}
-            type="number"
-            step="0.000001"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          />
-          {errors.longitude && (
-            <p className="mt-1 text-sm text-red-600">{errors.longitude.message}</p>
-          )}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('longitude', { defaultValue: 'Longitude' })} *
+            </label>
+            <input
+              {...register('longitude', { valueAsNumber: true })}
+              type="number"
+              step="0.000001"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            />
+            {errors.longitude && (
+              <p className="mt-1 text-sm text-red-600">{errors.longitude.message}</p>
+            )}
+          </div>
         </div>
       </div>
 

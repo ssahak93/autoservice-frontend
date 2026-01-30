@@ -18,8 +18,8 @@ export function ServiceSchema({ service }: ServiceSchemaProps) {
     address: {
       '@type': 'PostalAddress',
       streetAddress: service.address,
-      addressLocality: service.city,
-      addressRegion: service.region,
+      addressLocality: service.community || '',
+      addressRegion: service.region || '',
       addressCountry: 'AM',
     },
     geo: {
@@ -38,7 +38,9 @@ export function ServiceSchema({ service }: ServiceSchemaProps) {
     }),
     ...(service.workingHours && {
       openingHoursSpecification: Object.entries(service.workingHours)
-        .filter(([, hours]) => hours && typeof hours === 'object' && 'open' in hours && 'close' in hours)
+        .filter(
+          ([, hours]) => hours && typeof hours === 'object' && 'open' in hours && 'close' in hours
+        )
         .map(([day, hours]) => ({
           '@type': 'OpeningHoursSpecification',
           dayOfWeek: day.charAt(0).toUpperCase() + day.slice(1),
@@ -55,4 +57,3 @@ export function ServiceSchema({ service }: ServiceSchemaProps) {
     />
   );
 }
-

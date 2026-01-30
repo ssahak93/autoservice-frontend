@@ -1,26 +1,23 @@
 /**
  * Locations service for fetching Armenia location data
+ * Updated for new architecture: Region -> Community (city/village/district)
  */
 
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
-export interface Location {
-  code: string;
-  name: string;
-  districts?: Array<{ code: string; name: string }>;
-}
-
-export interface DistrictWithBounds {
+export interface Region {
   id: string;
   code: string;
   name: string;
-  centerLat: number;
-  centerLng: number;
-  bounds: GeoJSON.Polygon | null; // GeoJSON polygon or null
 }
 
-export interface City extends Location {
+export interface Community {
+  id: string;
+  code: string;
+  name: string;
+  type: 'city' | 'village' | 'district';
+  regionId: string;
   regionCode: string;
   regionName: string;
 }
@@ -29,38 +26,47 @@ export const locationsService = {
   /**
    * Get all regions (marzes) of Armenia
    */
-  async getRegions(): Promise<Location[]> {
-    const response = await apiClient.get<Location[]>(API_ENDPOINTS.LOCATIONS.REGIONS);
+  async getRegions(): Promise<Region[]> {
+    const response = await apiClient.get<Region[]>(API_ENDPOINTS.LOCATIONS.REGIONS);
     return response.data;
   },
 
   /**
-   * Get all cities
+   * Get all communities (cities, villages, districts)
+   * @param regionId - Optional filter by region ID
+   * @param type - Optional filter by community type (city, village, district)
    */
-  async getCities(regionCode?: string): Promise<City[]> {
-    const url = regionCode
-      ? `${API_ENDPOINTS.LOCATIONS.CITIES}?region=${regionCode}`
-      : API_ENDPOINTS.LOCATIONS.CITIES;
-    const response = await apiClient.get<City[]>(url);
+  async getCommunities(
+    regionId?: string,
+    type?: 'city' | 'village' | 'district'
+  ): Promise<Community[]> {
+    const params = new URLSearchParams();
+    if (regionId) params.append('regionId', regionId);
+    if (type) params.append('type', type);
+
+    const url = params.toString()
+      ? `${API_ENDPOINTS.LOCATIONS.COMMUNITIES}?${params.toString()}`
+      : API_ENDPOINTS.LOCATIONS.COMMUNITIES;
+
+    const response = await apiClient.get<Community[]>(url);
     return response.data;
   },
 
   /**
-   * Get districts for a city (only Yerevan has districts)
+   * Reverse geocode coordinates to address
+   * Uses backend API (Nominatim) for address text only
    */
-  async getDistricts(cityCode: string): Promise<Location[]> {
-    const response = await apiClient.get<Location[]>(
-      `${API_ENDPOINTS.LOCATIONS.DISTRICTS}?city=${cityCode}`
-    );
-    return response.data;
-  },
-
-  /**
-   * Get districts with GeoJSON bounds for interactive map visualization
-   */
-  async getDistrictsWithBounds(cityCode: string): Promise<DistrictWithBounds[]> {
-    const response = await apiClient.get<DistrictWithBounds[]>(
-      `${API_ENDPOINTS.LOCATIONS.DISTRICTS_WITH_BOUNDS}?city=${cityCode}`
+  async reverseGeocodeAddress(
+    latitude: number,
+    longitude: number,
+    locale: 'hy' | 'en' | 'ru' = 'en'
+  ): Promise<{
+    address: string;
+    addressHy: string | null;
+    addressRu: string | null;
+  }> {
+    const response = await apiClient.get(
+      `${API_ENDPOINTS.GEOCODING.REVERSE}?latitude=${latitude}&longitude=${longitude}&locale=${locale}`
     );
     return response.data;
   },

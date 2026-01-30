@@ -20,7 +20,6 @@ export interface User {
     firstName: string | null;
     lastName: string | null;
     companyName: string | null;
-    isVerified: boolean;
     isBlocked?: boolean;
     blockedReason?: string | null;
     avatarFileId: string | null;
@@ -38,7 +37,6 @@ export interface User {
     firstName: string | null;
     lastName: string | null;
     companyName: string | null;
-    isVerified: boolean;
     isBlocked?: boolean;
     blockedReason?: string | null;
     avatarFileId: string | null;
@@ -103,16 +101,19 @@ export interface AutoService {
   description?: string;
   specialization?: string;
   address: string;
-  city: string;
-  region: string;
-  district?: string; // District/neighborhood (for Yerevan)
+  addressHy?: string;
+  addressRu?: string;
+  // Location display fields (localized names from relations)
+  community?: string;
+  region?: string;
+  communityType?: 'city' | 'village' | 'district';
   latitude: number;
   longitude: number;
   phoneNumber?: string;
   workingHours?: WorkingHours;
   averageRating?: number;
   totalReviews: number;
-  isVerified: boolean;
+  isApproved?: boolean; // Approval status from profile
   isBlocked?: boolean; // Blocked services should not be shown in public lists
   blockedReason?: string | null;
   avatarFile?: {

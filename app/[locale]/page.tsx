@@ -1,7 +1,6 @@
 import dynamic from 'next/dynamic';
 import { getTranslations } from 'next-intl/server';
 
-import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { HeroSearch } from '@/components/home/HeroSearch';
 import { Link } from '@/i18n/routing';
 import { SkeletonLoading } from '@/lib/utils/lazy-loading';
@@ -46,11 +45,6 @@ export default async function HomePage({ params }: HomePageProps) {
     <div className="relative min-h-screen overflow-hidden">
       {/* Animated gradient background */}
       <div className="absolute inset-0 animate-gradient bg-gradient-hero" />
-
-      {/* Language Switcher */}
-      <div className="absolute right-4 top-4 z-20">
-        <LanguageSwitcher />
-      </div>
 
       {/* Hero Section */}
       <div className="relative z-10 flex min-h-[80vh] flex-col items-center justify-center px-4">

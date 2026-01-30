@@ -21,8 +21,6 @@ export interface TeamMember {
 
 export interface InviteTeamMemberRequest {
   role: AutoServiceRole;
-  firstName?: string;
-  lastName?: string;
   specialization?: string;
   bio?: string;
   yearsOfExperience?: number;
@@ -45,9 +43,25 @@ export interface QRInvitationResponse {
   success: boolean;
   invitationCode: string;
   qrUrl: string;
+  qrCodeSvg?: string; // SVG string for QR code
   qrData: string;
   teamMemberId: string;
   message: string;
+}
+
+export interface PendingInvitation {
+  id: string;
+  role: AutoServiceRole;
+  firstName: string;
+  lastName: string;
+  specialization: string | null;
+  bio: string | null;
+  yearsOfExperience: number | null;
+  invitationCode: string | null;
+  qrUrl: string | null;
+  qrCodeSvg?: string | null; // SVG string for QR code
+  invitedAt: string;
+  invitedBy: string;
 }
 
 export const teamService = {
@@ -91,6 +105,27 @@ export const teamService = {
     const config = autoServiceId ? { params: { autoServiceId } } : undefined;
     const response = await apiClient.delete<{ success: boolean; message: string }>(
       API_ENDPOINTS.TEAM.REMOVE(memberId),
+      config
+    );
+    return response.data;
+  },
+
+  async getPendingInvitations(autoServiceId?: string): Promise<PendingInvitation[]> {
+    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+    const response = await apiClient.get<PendingInvitation[]>(
+      API_ENDPOINTS.TEAM.PENDING_INVITATIONS,
+      config
+    );
+    return response.data;
+  },
+
+  async cancelInvitation(
+    invitationId: string,
+    autoServiceId?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+      API_ENDPOINTS.TEAM.CANCEL_INVITATION(invitationId),
       config
     );
     return response.data;

@@ -1,26 +1,13 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import L from 'leaflet';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
-
-// Fix for default marker icons (must be done before importing MapContainer)
-if (typeof window !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, import/no-named-as-default-member
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-  // eslint-disable-next-line import/no-named-as-default-member
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  });
-}
 
 // Dynamically import MapContainer to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), {
@@ -41,11 +28,11 @@ import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useGeolocation } from '@/hooks/useGeolocation';
-// Location fields (region, city, district) are now filled by admin, not by user
 import { useCreateProfile } from '@/hooks/useProfileMutations';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
+import { FILE_CATEGORIES } from '@/lib/constants/file-categories.constants';
 import { type UploadedFile } from '@/lib/services/files.service';
-import { geocodingService } from '@/lib/services/geocoding.service';
+import { locationsService } from '@/lib/services/locations.service';
 import { getCurrentLocale } from '@/lib/utils/i18n';
 import { PHONE_PATTERN, PHONE_ERROR_MESSAGE, formatPhoneForBackend } from '@/lib/utils/phone.util';
 import { useUIStore } from '@/stores/uiStore';
@@ -60,6 +47,19 @@ export function CreateProfileEditor() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.1811, 44.5136]); // Yerevan default
   const [mounted, setMounted] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [selectedRegionId, setSelectedRegionId] = useState<string>('');
+
+  // Load regions and communities
+  const { data: regions = [] } = useQuery({
+    queryKey: ['regions'],
+    queryFn: () => locationsService.getRegions(),
+  });
+
+  const { data: communities = [] } = useQuery({
+    queryKey: ['communities', selectedRegionId],
+    queryFn: () => locationsService.getCommunities(selectedRegionId),
+    enabled: !!selectedRegionId,
+  });
 
   // Photo upload state (similar to admin)
   const [profilePhotoFiles, setProfilePhotoFiles] = useState<UploadedFile[]>([]);
@@ -69,6 +69,25 @@ export function CreateProfileEditor() {
 
   // Geolocation hook
   const { state: geolocationState, enable: enableGeolocation } = useGeolocation();
+
+  // Fix for default marker icons (must be done on client side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Dynamically import Leaflet only on client side
+      import('leaflet').then((L) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, import/no-named-as-default-member
+        delete (L.default.Icon.Default.prototype as any)._getIconUrl;
+        // eslint-disable-next-line import/no-named-as-default-member
+        L.default.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+          shadowUrl:
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        });
+      });
+    }
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -84,7 +103,10 @@ export function CreateProfileEditor() {
     specialization: z.string().optional(),
     yearsOfExperience: z.number().min(0).max(100).optional(),
     address: z.string().min(1, t('addressRequired', { defaultValue: 'Address is required' })),
-    // city, region, district are no longer required - will be filled by admin
+    regionId: z.string().min(1, t('regionRequired', { defaultValue: 'Region is required' })),
+    communityId: z
+      .string()
+      .min(1, t('communityRequired', { defaultValue: 'Community is required' })),
     latitude: z.number().min(-90).max(90),
     longitude: z.number().min(-180).max(180),
     phoneNumber: z
@@ -113,6 +135,8 @@ export function CreateProfileEditor() {
       specialization: '',
       yearsOfExperience: undefined,
       address: '',
+      regionId: '',
+      communityId: '',
       latitude: 40.1811, // Default to Yerevan
       longitude: 44.5136,
       phoneNumber: '',
@@ -125,17 +149,15 @@ export function CreateProfileEditor() {
   const watchedLongitude = watch('longitude');
   const watchedAddress = watch('address');
 
-  // Handle reverse geocoding (coordinates → address)
-  // Only fills address, not city/region/district (those are filled by admin)
+  // Handle reverse geocoding (coordinates → address only)
   const handleReverseGeocode = useCallback(
     async (lat: number, lng: number) => {
       setIsReverseGeocoding(true);
       try {
-        const result = await geocodingService.reverseGeocode(lat, lng, locale);
-        if (result && result.address) {
-          // Only fill address - city/region/district will be filled by admin
-          setValue('address', result.address, { shouldValidate: true });
-          showToast(t('addressFound', { defaultValue: 'Address filled automatically' }), 'success');
+        // Get address from backend API (Nominatim) - returns address, addressHy, addressRu
+        const addressResult = await locationsService.reverseGeocodeAddress(lat, lng, locale);
+        if (addressResult && addressResult.address) {
+          setValue('address', addressResult.address, { shouldValidate: true });
         }
       } catch (error) {
         console.error('Reverse geocoding error:', error);
@@ -153,6 +175,14 @@ export function CreateProfileEditor() {
       setMapCenter([watchedLatitude, watchedLongitude]);
     }
   }, [watchedLatitude, watchedLongitude]);
+
+  // Reset community when region changes
+  useEffect(() => {
+    if (selectedRegionId) {
+      setSelectedCommunityId('');
+      setValue('communityId', '', { shouldValidate: false });
+    }
+  }, [selectedRegionId, setValue]);
 
   // Handle geolocation success
   useEffect(() => {
@@ -172,9 +202,6 @@ export function CreateProfileEditor() {
   const onSubmit = useCallback(
     (data: FormData) => {
       // Format phone number for backend (add +374 prefix)
-      // Note: city, region, district are not in FormData (filled by admin, not sent by user)
-      const profileData = data;
-
       // Default working hours (Monday-Friday: 09:00-18:00, Saturday: 10:00-16:00, Sunday: closed)
       const defaultWorkingHours = {
         monday: { start: '09:00', end: '18:00', isOpen: true },
@@ -187,7 +214,7 @@ export function CreateProfileEditor() {
       };
 
       const formattedData = {
-        ...profileData,
+        ...data,
         phoneNumber: formatPhoneForBackend(data.phoneNumber),
         workingHours: defaultWorkingHours,
         // Include photo file IDs if uploaded
@@ -305,7 +332,7 @@ export function CreateProfileEditor() {
                   setValue('latitude', lat, { shouldValidate: true });
                   setValue('longitude', lng, { shouldValidate: true });
                   setMapCenter([lat, lng]);
-                  // Automatically reverse geocode to fill address
+                  // Automatically reverse geocode to fill address and detect location
                   handleReverseGeocode(lat, lng);
                 }}
               />
@@ -403,6 +430,74 @@ export function CreateProfileEditor() {
           )}
         </div>
 
+        {/* Region Selection */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('region', { defaultValue: 'Region' })} *
+          </label>
+          <Controller
+            name="regionId"
+            control={control}
+            render={({ field }) => (
+              <select
+                {...field}
+                onChange={(e) => {
+                  field.onChange(e);
+                  setSelectedRegionId(e.target.value);
+                  setValue('communityId', '', { shouldValidate: false });
+                }}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="">{t('selectRegion', { defaultValue: 'Select Region' })}</option>
+                {regions.map((region) => (
+                  <option key={region.id} value={region.id}>
+                    {region.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          />
+          {errors.regionId && (
+            <p className="mt-1 text-sm text-red-600">{errors.regionId.message}</p>
+          )}
+        </div>
+
+        {/* Community Selection (City/Village/District) */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('community', { defaultValue: 'Community' })} *
+          </label>
+          <Controller
+            name="communityId"
+            control={control}
+            render={({ field }) => (
+              <select
+                {...field}
+                onChange={(e) => {
+                  field.onChange(e);
+                  setSelectedCommunityId(e.target.value);
+                }}
+                disabled={!selectedRegionId}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="">
+                  {selectedRegionId
+                    ? t('selectCommunity', { defaultValue: 'Select Community' })
+                    : t('selectRegionFirst', { defaultValue: 'Select Region first' })}
+                </option>
+                {communities.map((community) => (
+                  <option key={community.id} value={community.id}>
+                    {community.name} ({community.type})
+                  </option>
+                ))}
+              </select>
+            )}
+          />
+          {errors.communityId && (
+            <p className="mt-1 text-sm text-red-600">{errors.communityId.message}</p>
+          )}
+        </div>
+
         {isReverseGeocoding && (
           <p className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400">
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -488,7 +583,7 @@ export function CreateProfileEditor() {
           multiple={true}
           label={t('uploadProfilePhotos', { defaultValue: 'Upload Profile Photos' })}
           existingFiles={profilePhotoFiles}
-          category="profile-photo"
+          category={FILE_CATEGORIES.PROFILE_PHOTOS}
           inputId="profile-photos-upload-input"
           onUpload={(files) => {
             const newFileIds = files.map((f) => f.id);
@@ -515,7 +610,7 @@ export function CreateProfileEditor() {
           multiple={true}
           label={t('uploadWorkPhotos', { defaultValue: 'Upload Work Photos' })}
           existingFiles={workPhotoFiles}
-          category="work-photo"
+          category={FILE_CATEGORIES.WORK_PHOTOS}
           inputId="work-photos-upload-input"
           onUpload={(files) => {
             const newFileIds = files.map((f) => f.id);

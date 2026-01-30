@@ -12,13 +12,20 @@ export interface CreateAutoServiceRequest {
   avatarFileId?: string;
 }
 
+export interface UpdateAutoServiceRequest {
+  companyName?: string;
+  firstName?: string;
+  lastName?: string;
+  avatarFileId?: string;
+}
+
 export interface AutoService {
   id: string;
   serviceType: 'individual' | 'company';
   companyName?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-  isVerified: boolean;
+  isApproved?: boolean; // Approval status from profile
   avatarFile?: {
     id: string;
     fileUrl: string;
@@ -40,9 +47,9 @@ export const autoServicesService = {
       companyName: string | null;
       firstName: string | null;
       lastName: string | null;
-      isVerified: boolean;
       avatarFile: { id: string; fileUrl: string } | null;
       hasProfile: boolean;
+      isApproved?: boolean; // Approval status from profile
       isBlocked?: boolean;
       blockedReason?: string | null;
     }>
@@ -57,9 +64,9 @@ export const autoServicesService = {
             companyName: string | null;
             firstName: string | null;
             lastName: string | null;
-            isVerified: boolean;
             avatarFile: { id: string; fileUrl: string } | null;
             hasProfile: boolean;
+            isApproved?: boolean; // Approval status from profile
           }>;
         }
       | Array<{
@@ -70,10 +77,9 @@ export const autoServicesService = {
           companyName: string | null;
           firstName: string | null;
           lastName: string | null;
-          isVerified: boolean;
           avatarFile: { id: string; fileUrl: string } | null;
           hasProfile: boolean;
-          isApproved?: boolean;
+          isApproved?: boolean; // Approval status from profile
           rejectionReason?: string | null;
           isBlocked?: boolean;
           blockedReason?: string | null;
@@ -88,6 +94,17 @@ export const autoServicesService = {
       return response.data.data;
     }
     return [];
+  },
+
+  async updateAutoService(
+    autoServiceId: string,
+    data: UpdateAutoServiceRequest
+  ): Promise<AutoService> {
+    const response = await apiClient.put<AutoService>(
+      API_ENDPOINTS.AUTO_SERVICES.UPDATE(autoServiceId),
+      data
+    );
+    return response.data;
   },
 
   async deleteAutoService(autoServiceId: string): Promise<{ success: boolean; message: string }> {

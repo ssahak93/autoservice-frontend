@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import { useRegions, useCities, useDistricts } from '@/hooks/useLocations';
+import { useRegions, useCommunities } from '@/hooks/useLocations';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import type { ServiceSearchParams } from '@/lib/services/services.service';
 
@@ -33,10 +33,7 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
 
   const { data: serviceTypes, isLoading: serviceTypesLoading } = useServiceTypes();
   const { data: regions } = useRegions();
-  const { data: cities } = useCities(localFilters.region);
-  const { data: districts } = useDistricts(
-    localFilters.city?.toLowerCase() === 'yerevan' ? 'yerevan' : undefined
-  );
+  const { data: communities } = useCommunities(localFilters.regionId);
 
   // Sync local filters with external filters (only if not internal update)
   useEffect(() => {
@@ -149,9 +146,8 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
 
   const hasActiveFilters =
     localFilters.businessType ||
-    localFilters.city ||
-    localFilters.region ||
-    localFilters.district ||
+    localFilters.regionId ||
+    localFilters.communityId ||
     localFilters.serviceType ||
     localFilters.minRating ||
     geolocation.state.isEnabled ||
@@ -181,64 +177,44 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
         <div>
           <label className="mb-2 block text-sm font-medium text-neutral-700">{t('region')}</label>
           <Select
-            value={localFilters.region || ''}
-            onChange={(e) => handleChange('region', e.target.value || undefined)}
-            options={[
-              { value: '', label: t('allRegions', { defaultValue: 'All Regions' }) },
-              ...(regions || []).map((region, index) => ({
-                value: region.code,
-                label: region.name,
-                key: `region-${region.code}-${index}`,
-              })),
-            ]}
-          />
-        </div>
-
-        {/* City Filter */}
-        <div>
-          <label className="mb-2 block text-sm font-medium text-neutral-700">{t('city')}</label>
-          <Select
-            value={localFilters.city || ''}
+            value={localFilters.regionId || ''}
             onChange={(e) => {
-              handleChange('city', e.target.value || undefined);
-              // Reset district when city changes
-              if (e.target.value !== localFilters.city) {
-                handleChange('district', undefined);
+              handleChange('regionId', e.target.value || undefined);
+              // Reset community when region changes
+              if (e.target.value !== localFilters.regionId) {
+                handleChange('communityId', undefined);
               }
             }}
             options={[
-              { value: '', label: t('allCities', { defaultValue: 'All Cities' }) },
-              ...(cities || []).map((city, index) => ({
-                value: city.code,
-                label: city.name,
-                // Use unique key: regionCode-cityCode-index to handle duplicates
-                key: `${city.regionCode || 'all'}-${city.code}-${index}`,
+              { value: '', label: t('allRegions', { defaultValue: 'All Regions' }) },
+              ...(regions || []).map((region, index) => ({
+                value: region.id,
+                label: region.name,
+                key: `region-${region.id}-${index}`,
               })),
             ]}
-            disabled={!localFilters.region}
           />
         </div>
 
-        {/* District Filter (only for Yerevan) */}
-        {localFilters.city?.toLowerCase() === 'yerevan' && districts && districts.length > 0 && (
-          <div>
-            <label className="mb-2 block text-sm font-medium text-neutral-700">
-              {t('district', { defaultValue: 'District' })}
-            </label>
-            <Select
-              value={localFilters.district || ''}
-              onChange={(e) => handleChange('district', e.target.value || undefined)}
-              options={[
-                { value: '', label: t('allDistricts', { defaultValue: 'All Districts' }) },
-                ...districts.map((district, index) => ({
-                  value: district.code,
-                  label: district.name,
-                  key: `district-${district.code}-${index}`,
-                })),
-              ]}
-            />
-          </div>
-        )}
+        {/* Community Filter (City/Village/District) */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-neutral-700">
+            {t('community', { defaultValue: 'Community' })}
+          </label>
+          <Select
+            value={localFilters.communityId || ''}
+            onChange={(e) => handleChange('communityId', e.target.value || undefined)}
+            options={[
+              { value: '', label: t('allCommunities', { defaultValue: 'All Communities' }) },
+              ...(communities || []).map((community, index) => ({
+                value: community.id,
+                label: `${community.name} (${community.type})`,
+                key: `community-${community.id}-${index}`,
+              })),
+            ]}
+            disabled={!localFilters.regionId}
+          />
+        </div>
 
         {/* Business Type Filter */}
         <div>

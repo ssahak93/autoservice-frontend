@@ -5,14 +5,17 @@ import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
-import { useUnreadCount } from '@/hooks/useChat';
 import { useVisit } from '@/hooks/useVisits';
+
+import { useUnreadCount } from '../hooks/useChat';
 
 import { MessageInput } from './MessageInput';
 import { MessageList } from './MessageList';
 
 interface ChatWindowProps {
-  visitId: string | null;
+  visitId?: string | null;
+  conversationId?: string | null;
+  title?: string;
   serviceName?: string;
   isOpen: boolean;
   onClose: () => void;
@@ -20,29 +23,31 @@ interface ChatWindowProps {
 
 export function ChatWindow({
   visitId,
+  conversationId,
+  title,
   serviceName: _serviceName,
   isOpen,
   onClose,
 }: ChatWindowProps) {
   const t = useTranslations('chat');
-  // Always call hooks in the same order - use enabled option for conditional fetching
-  const { data: unreadCount } = useUnreadCount(visitId);
-  const { data: visit, isLoading: isLoadingVisit } = useVisit(visitId);
+  const { data: unreadCount } = useUnreadCount(visitId || null);
+  const { data: visit, isLoading: isLoadingVisit } = useVisit(visitId || null);
   const { user } = useAuth();
 
-  // Determine chat participant name
   const participantName = useMemo(() => {
-    // Wait for visit data to load
+    // Admin conversation
+    if (conversationId && title) {
+      return title;
+    }
+
+    // Visit chat
     if (isLoadingVisit || !visit || !user) {
-      // Don't show "Service 0" or invalid names while loading
       return t('chat', { defaultValue: 'Chat' });
     }
 
-    // Determine if current user is customer or service owner
     const isCustomer = visit.userId === user.id;
 
     if (isCustomer) {
-      // Current user is customer, show service name
       const autoService = visit.autoServiceProfile?.autoService || visit.autoService;
       if (autoService?.companyName) {
         return autoService.companyName;
@@ -52,17 +57,15 @@ export function ChatWindow({
         if (name) return name;
       }
       return t('service', { defaultValue: 'Service' });
-    } else {
-      // Current user is service owner, show customer name
-      if (visit.user?.firstName || visit.user?.lastName) {
-        const name = `${visit.user.firstName || ''} ${visit.user.lastName || ''}`.trim();
-        if (name) return name;
-      }
-      return t('customer', { defaultValue: 'Customer' });
     }
-  }, [visit, user, isLoadingVisit, t]);
 
-  // Use conditional rendering in JSX instead of early return
+    if (visit.user?.firstName || visit.user?.lastName) {
+      const name = `${visit.user.firstName || ''} ${visit.user.lastName || ''}`.trim();
+      if (name) return name;
+    }
+    return t('customer', { defaultValue: 'Customer' });
+  }, [visit, user, isLoadingVisit, t, conversationId, title]);
+
   if (!isOpen) {
     return null;
   }
@@ -73,7 +76,6 @@ export function ChatWindow({
       role="dialog"
       aria-labelledby="chat-title"
     >
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-neutral-200 bg-gradient-primary px-4 py-3 text-white">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" aria-hidden="true" />
@@ -95,15 +97,13 @@ export function ChatWindow({
         </button>
       </div>
 
-      {/* Messages */}
-      {visitId && (
+      {(visitId || conversationId) && (
         <>
           <div className="flex-1 overflow-hidden">
-            <MessageList visitId={visitId} />
+            <MessageList visitId={visitId || null} conversationId={conversationId || null} />
           </div>
 
-          {/* Input */}
-          <MessageInput visitId={visitId} />
+          <MessageInput visitId={visitId || null} conversationId={conversationId || null} />
         </>
       )}
     </div>

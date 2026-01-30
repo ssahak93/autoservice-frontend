@@ -5,6 +5,7 @@ import { Bell, Globe, Lock, Shield, Trash2, User } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -305,25 +306,50 @@ export function SettingsSection({ className }: SettingsSectionProps) {
           <Globe className="h-5 w-5" />
           {t('language.title', { defaultValue: 'Language' })}
         </h4>
-        <SettingItem
-          icon={Globe}
-          title={t('language.interface', { defaultValue: 'Interface Language' })}
-          description={t('language.interfaceDescription', {
-            defaultValue: 'Choose your preferred language',
-          })}
-          action={
-            <div className="text-sm font-medium text-neutral-700">
-              {locale === 'hy' ? 'Հայերեն' : locale === 'ru' ? 'Русский' : 'English'}
+        <div className="space-y-4 rounded-lg border border-neutral-200 bg-neutral-50/50 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary-100 p-2">
+                  <Globe className="h-5 w-5 text-primary-600" />
+                </div>
+                <div>
+                  <h5 className="font-semibold text-neutral-900">
+                    {t('language.interface', { defaultValue: 'Interface Language' })}
+                  </h5>
+                  <p className="mt-1 text-sm text-neutral-600">
+                    {t('language.interfaceDescription', {
+                      defaultValue: 'Choose your preferred language',
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-3 rounded-lg bg-white p-3 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">
+                    {locale === 'hy' ? '🇦🇲' : locale === 'ru' ? '🇷🇺' : '🇬🇧'}
+                  </span>
+                  <span className="text-sm font-medium text-neutral-700">
+                    {locale === 'hy' ? 'Հայերեն' : locale === 'ru' ? 'Русский' : 'English'}
+                  </span>
+                  <span className="text-xs text-neutral-500">({locale.toUpperCase()})</span>
+                </div>
+                <div className="ml-auto">
+                  <LanguageSwitcher />
+                </div>
+              </div>
+              <p className="mt-3 flex items-start gap-2 text-xs text-neutral-500">
+                <Globe className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                <span>
+                  {t('language.note', {
+                    defaultValue:
+                      'Language is managed globally. Use the language switcher above or in the header.',
+                  })}
+                </span>
+              </p>
             </div>
-          }
-        >
-          <p className="mt-2 text-xs text-neutral-500">
-            {t('language.note', {
-              defaultValue:
-                'Language is managed globally. Use the language switcher in the header.',
-            })}
-          </p>
-        </SettingItem>
+          </div>
+        </div>
       </div>
 
       {/* Danger Zone */}

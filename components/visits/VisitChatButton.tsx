@@ -4,8 +4,8 @@ import { MessageSquare } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/Button';
-import { useUnreadCount } from '@/hooks/useChat';
-import { useChatStore } from '@/stores/chatStore';
+import { useUnreadCount } from '@/modules/chat/hooks/useChat';
+import { useChatStore } from '@/modules/chat/state/chatStore';
 
 interface VisitChatButtonProps {
   visitId: string;
@@ -15,7 +15,7 @@ interface VisitChatButtonProps {
 export function VisitChatButton({ visitId, serviceName }: VisitChatButtonProps) {
   const t = useTranslations('chat');
   const { data: unreadCount = 0 } = useUnreadCount(visitId);
-  const { setOpenChat } = useChatStore();
+  const { setOpenVisitChat } = useChatStore();
 
   const hasUnread = unreadCount > 0;
 
@@ -23,7 +23,7 @@ export function VisitChatButton({ visitId, serviceName }: VisitChatButtonProps) 
     <Button
       variant="outline"
       size="sm"
-      onClick={() => setOpenChat(visitId, serviceName)}
+      onClick={() => setOpenVisitChat(visitId, serviceName)}
       className="relative flex items-center gap-2 transition-all hover:border-primary-300 hover:bg-primary-50"
     >
       <MessageSquare className="h-4 w-4" />

@@ -57,6 +57,13 @@ export function HeaderNavigation({ isAuthenticated, onLinkClick }: HeaderNavigat
           >
             {t('profile')}
           </Link>
+          <Link
+            href="/support"
+            className="text-neutral-700 transition-colors hover:text-primary-600"
+            onClick={onLinkClick}
+          >
+            {t('support', { defaultValue: 'Support' })}
+          </Link>
         </>
       )}
     </nav>

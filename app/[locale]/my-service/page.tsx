@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
-import { AutoServiceProfileContent } from '@/components/auto-service/AutoServiceProfileContent';
+import { MyServicePage } from '@/components/auto-service/MyServicePage';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('myService');
@@ -12,6 +12,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function MyServicePage() {
-  return <AutoServiceProfileContent />;
+export default function Page() {
+  return <MyServicePage />;
 }

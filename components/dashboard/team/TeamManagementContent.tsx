@@ -29,6 +29,7 @@ const InviteTeamMemberModal = dynamic(
   }
 );
 
+import { PendingInvitationsList } from './PendingInvitationsList';
 import { TeamMemberList } from './TeamMemberList';
 
 export function TeamManagementContent() {
@@ -80,7 +81,7 @@ export function TeamManagementContent() {
             }
           : undefined,
         hasProfile: service.hasProfile,
-        isVerified: service.isVerified,
+        isApproved: service.isApproved,
       }));
       setAvailableAutoServices(mappedServices);
       // If no service is selected, select the first one
@@ -106,6 +107,18 @@ export function TeamManagementContent() {
     queryKey: ['team', selectedAutoServiceId],
     queryFn: () => teamService.getTeam(selectedAutoServiceId || undefined),
     enabled: !!user && !!selectedAutoServiceId, // Only fetch when user is loaded and service is selected
+  });
+
+  // Check if current user is owner from available services (for enabling queries)
+  const isOwnerFromAvailableServices = availableServices.some(
+    (s) => s.id === selectedAutoServiceId && s.role === 'owner'
+  );
+
+  // Fetch pending invitations (only for owners)
+  const { data: pendingInvitations = [], isLoading: isLoadingInvitations } = useQuery({
+    queryKey: ['teamInvitations', selectedAutoServiceId],
+    queryFn: () => teamService.getPendingInvitations(selectedAutoServiceId || undefined),
+    enabled: !!user && !!selectedAutoServiceId && isOwnerFromAvailableServices, // Only fetch for owners
   });
 
   const removeMutation = useMutation({
@@ -144,9 +157,13 @@ export function TeamManagementContent() {
   };
 
   // Check if current user is owner
+  // Check from available services first (faster), then from team members
+  const currentUserService = availableServices.find((s) => s.id === selectedAutoServiceId);
+  const isOwnerFromService = currentUserService?.role === 'owner';
   const currentUserMember = teamMembers.find((m) => m.userId === user?.id);
-  const isOwner = currentUserMember?.role === 'owner';
-  const isManager = currentUserMember?.role === 'manager' || isOwner;
+  const isOwner = isOwnerFromService || currentUserMember?.role === 'owner';
+  const isManager =
+    currentUserService?.role === 'manager' || currentUserMember?.role === 'manager' || isOwner;
 
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
@@ -249,6 +266,22 @@ export function TeamManagementContent() {
           </div>
         </div>
       </div>
+
+      {/* Pending Invitations List (only for owners) */}
+      {isOwner && (
+        <div className="mb-6">
+          {isLoadingInvitations ? (
+            <div className="glass-light rounded-xl p-6">
+              <div className="h-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
+            </div>
+          ) : (
+            <PendingInvitationsList
+              invitations={pendingInvitations}
+              autoServiceId={selectedAutoServiceId || undefined}
+            />
+          )}
+        </div>
+      )}
 
       {/* Team Members List */}
       <div className="glass-light rounded-xl p-6">

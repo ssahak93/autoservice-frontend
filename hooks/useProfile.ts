@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 
+import { FILE_CATEGORIES } from '@/lib/constants/file-categories.constants';
 import { authService } from '@/lib/services/auth.service';
 import { filesService } from '@/lib/services/files.service';
 import { validateFile } from '@/lib/utils/fileValidation';
@@ -83,7 +84,7 @@ export function useUploadAvatar() {
       const oldAvatarFileId = currentUser?.avatarFileId;
 
       // Upload new file
-      const uploadResult = await filesService.uploadFile(file, 'avatars');
+      const uploadResult = await filesService.uploadFile(file, FILE_CATEGORIES.AVATARS);
 
       // Delete old avatar file BEFORE updating profile to avoid confusion
       // This ensures we delete the correct old file, not the new one

@@ -60,7 +60,7 @@ export function ServiceInfo({ profile }: ServiceInfoProps) {
               {t('approvalStatus', { defaultValue: 'Approval Status' })}
             </label>
             <div className="mt-1 flex items-center gap-2">
-              {profile.isApproved ? (
+              {profile.autoService?.isApproved ? (
                 <>
                   <ShieldCheck className="h-5 w-5 text-green-500" />
                   <span className="text-green-600 dark:text-green-400">
@@ -76,13 +76,13 @@ export function ServiceInfo({ profile }: ServiceInfoProps) {
                 </>
               )}
             </div>
-            {!profile.isApproved && profile.rejectionReason && (
+            {!profile.autoService?.isApproved && profile.autoService?.rejectionReason && (
               <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                 <p className="text-sm font-medium text-red-800 dark:text-red-300">
                   {t('rejectionReason', { defaultValue: 'Rejection Reason' })}:
                 </p>
                 <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-                  {profile.rejectionReason}
+                  {profile.autoService.rejectionReason}
                 </p>
               </div>
             )}
@@ -93,18 +93,18 @@ export function ServiceInfo({ profile }: ServiceInfoProps) {
               {t('verificationStatus', { defaultValue: 'Verification Status' })}
             </label>
             <div className="mt-1 flex items-center gap-2">
-              {profile.autoService?.isVerified ? (
+              {profile.autoService?.isApproved ? (
                 <>
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                   <span className="text-green-600 dark:text-green-400">
-                    {t('verified', { defaultValue: 'Verified' })}
+                    {t('approved', { defaultValue: 'Approved' })}
                   </span>
                 </>
               ) : (
                 <>
                   <XCircle className="h-5 w-5 text-gray-400" />
                   <span className="text-gray-600 dark:text-gray-400">
-                    {t('notVerified', { defaultValue: 'Not Verified' })}
+                    {t('pending', { defaultValue: 'Pending Approval' })}
                   </span>
                 </>
               )}
@@ -199,10 +199,13 @@ export function ServiceInfo({ profile }: ServiceInfoProps) {
               <MapPin className="mt-0.5 h-5 w-5 text-gray-400" />
               <div>
                 <p className="text-gray-900 dark:text-white">{profile.address}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {profile.city}, {profile.region}
-                  {profile.district && `, ${profile.district}`}
-                </p>
+                {(profile.community || profile.region) && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {profile.community && profile.region
+                      ? `${profile.community}, ${profile.region}`
+                      : profile.community || profile.region}
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
                   {t('coordinates', { defaultValue: 'Coordinates' })}:{' '}
                   {Number(profile.latitude).toFixed(6)}, {Number(profile.longitude).toFixed(6)}

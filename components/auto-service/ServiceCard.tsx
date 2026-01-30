@@ -17,7 +17,6 @@ interface Service {
   id: string;
   name: string;
   serviceType: 'individual' | 'company';
-  isVerified: boolean;
   avatarFile?: { fileUrl: string } | null;
   hasProfile: boolean;
   isApproved?: boolean;
@@ -108,7 +107,7 @@ export const ServiceCard = memo(function ServiceCard({
         !isSelected && 'shadow-md hover:shadow-xl',
         service.isBlocked && 'opacity-75'
       )}
-      onClick={() => !service.isBlocked && onSelect(service.id)}
+      onClick={() => onSelect(service.id)}
     >
       {/* Gradient overlay on hover */}
       <div
@@ -138,7 +137,7 @@ export const ServiceCard = memo(function ServiceCard({
             <ServiceAvatar
               avatarFile={service.avatarFile}
               name={service.name}
-              isVerified={service.isVerified}
+              isApproved={service.isApproved}
               variant={isIncomplete ? 'amber' : 'primary'}
             />
 

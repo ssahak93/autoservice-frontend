@@ -54,9 +54,22 @@ export function AcceptVisitModal({
 
   type FormData = z.infer<typeof schema>;
 
-  const [selectedDate, setSelectedDate] = useState<Date | null>(
-    visit.scheduledDate ? new Date(visit.scheduledDate) : null
-  );
+  // Calculate today's date (start of day)
+  const today = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, []);
+
+  // Set initial date: use visit date if it's today or in the future, otherwise use today
+  const initialDate = useMemo(() => {
+    if (!visit.scheduledDate) return today;
+    const visitDate = new Date(visit.scheduledDate);
+    visitDate.setHours(0, 0, 0, 0);
+    return visitDate >= today ? visitDate : today;
+  }, [visit.scheduledDate, today]);
+
+  const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
 
   // Get profile ID for availability check
   const profileId = visit.autoServiceProfileId;
@@ -84,28 +97,47 @@ export function AcceptVisitModal({
     retry: false,
   });
 
-  const { register, handleSubmit, setValue, watch, reset } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      confirmedDate: visit.scheduledDate,
+  // Calculate initial form values
+  const initialFormValues = useMemo(() => {
+    const visitDate = visit.scheduledDate ? new Date(visit.scheduledDate) : null;
+    let dateStr: string | undefined;
+    if (visitDate) {
+      visitDate.setHours(0, 0, 0, 0);
+      const dateToUse = visitDate >= today ? visitDate : today;
+      dateStr = format(dateToUse, 'yyyy-MM-dd');
+    } else {
+      dateStr = format(today, 'yyyy-MM-dd');
+    }
+    return {
+      confirmedDate: dateStr,
       confirmedTime: visit.scheduledTime,
       notes: '',
-    },
+    };
+  }, [visit.scheduledDate, visit.scheduledTime, today]);
+
+  const { register, handleSubmit, setValue, watch, reset } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: initialFormValues,
   });
 
   // Update selectedDate when visit changes
   useEffect(() => {
-    if (visit.scheduledDate) {
-      setSelectedDate(new Date(visit.scheduledDate));
-      setValue('confirmedDate', visit.scheduledDate, { shouldValidate: false });
+    const visitDate = visit.scheduledDate ? new Date(visit.scheduledDate) : null;
+    if (visitDate) {
+      visitDate.setHours(0, 0, 0, 0);
+      const dateToUse = visitDate >= today ? visitDate : today;
+      setSelectedDate(dateToUse);
+      const dateStr = format(dateToUse, 'yyyy-MM-dd');
+      setValue('confirmedDate', dateStr, { shouldValidate: false });
     } else {
-      setSelectedDate(null);
-      setValue('confirmedDate', undefined, { shouldValidate: false });
+      setSelectedDate(today);
+      const dateStr = format(today, 'yyyy-MM-dd');
+      setValue('confirmedDate', dateStr, { shouldValidate: false });
     }
     if (visit.scheduledTime) {
       setValue('confirmedTime', visit.scheduledTime, { shouldValidate: false });
     }
-  }, [visit.scheduledDate, visit.scheduledTime, setValue]);
+  }, [visit.scheduledDate, visit.scheduledTime, setValue, today]);
 
   const onSubmit = (data: FormData) => {
     onAccept({
@@ -162,14 +194,11 @@ export function AcceptVisitModal({
                     value={selectedDate}
                     onChange={(date) => {
                       setSelectedDate(date);
-                      setValue(
-                        'confirmedDate',
-                        date ? date.toISOString().split('T')[0] : undefined,
-                        {
-                          shouldValidate: true,
-                        }
-                      );
+                      setValue('confirmedDate', date ? format(date, 'yyyy-MM-dd') : undefined, {
+                        shouldValidate: true,
+                      });
                     }}
+                    minDate={today}
                     placeholder={t('accept.selectDate', { defaultValue: 'Select date' })}
                   />
                 </div>

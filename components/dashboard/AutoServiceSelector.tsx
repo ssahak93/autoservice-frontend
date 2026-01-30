@@ -52,7 +52,7 @@ export function AutoServiceSelector() {
             }
           : undefined,
         hasProfile: service.hasProfile,
-        isVerified: service.isVerified,
+        isApproved: service.isApproved,
       }));
       setAvailableAutoServices(mappedServices);
     } else if (!user) {
@@ -132,7 +132,7 @@ export function AutoServiceSelector() {
                 <ServiceAvatar
                   avatarFile={selectedService.avatarFile}
                   name={selectedService.name}
-                  isVerified={selectedService.isVerified}
+                  isApproved={selectedService.isApproved}
                   size="sm"
                   variant="primary"
                 />
@@ -205,7 +205,7 @@ export function AutoServiceSelector() {
                     <ServiceAvatar
                       avatarFile={service.avatarFile}
                       name={service.name}
-                      isVerified={service.isVerified}
+                      isApproved={service.isApproved}
                       size="sm"
                       variant="primary"
                     />

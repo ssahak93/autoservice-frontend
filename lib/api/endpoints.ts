@@ -109,9 +109,12 @@ export const API_ENDPOINTS = {
   // Locations
   LOCATIONS: {
     REGIONS: '/locations/regions',
-    CITIES: '/locations/cities',
-    DISTRICTS: '/locations/districts',
-    DISTRICTS_WITH_BOUNDS: '/locations/districts/with-bounds',
+    COMMUNITIES: '/locations/communities', // Replaces cities and districts
+  },
+
+  // Geocoding
+  GEOCODING: {
+    REVERSE: '/geocoding/reverse',
   },
 
   // Notifications
@@ -130,6 +133,11 @@ export const API_ENDPOINTS = {
     GENERATE_QR: '/auto-services/me/team/generate-qr',
     UPDATE: (memberId: string) => `/auto-services/me/team/${memberId}`,
     REMOVE: (memberId: string) => `/auto-services/me/team/${memberId}`,
+    CHECK_INVITATION: (code: string) => `/auto-services/team/invitation/${code}`,
+    ACCEPT_INVITATION: '/auto-services/team/accept-qr',
+    PENDING_INVITATIONS: '/auto-services/me/team/invitations',
+    CANCEL_INVITATION: (invitationId: string) =>
+      `/auto-services/me/team/invitations/${invitationId}`,
   },
 
   // Favorites

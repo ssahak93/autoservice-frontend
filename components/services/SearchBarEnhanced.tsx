@@ -66,11 +66,25 @@ export function SearchBarEnhanced({
     staleTime: 30000, // Cache for 30 seconds
   });
 
-  // Sync with external value
+  // Sync with external value (from URL or parent component)
   useEffect(() => {
-    if (!isTypingRef.current || previousValueRef.current !== value) {
-      setLocalValue(value);
-      previousValueRef.current = value;
+    // Always sync when value changes from external source (e.g., URL parameter)
+    // Only skip if user is currently typing
+    if (!isTypingRef.current) {
+      if (previousValueRef.current !== value) {
+        setLocalValue(value);
+        previousValueRef.current = value;
+      }
+    } else {
+      // If user was typing but value changed externally, update after a delay
+      const timeoutId = setTimeout(() => {
+        if (previousValueRef.current !== value) {
+          isTypingRef.current = false;
+          setLocalValue(value);
+          previousValueRef.current = value;
+        }
+      }, 500);
+      return () => clearTimeout(timeoutId);
     }
   }, [value]);
 

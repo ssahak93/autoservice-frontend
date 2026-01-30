@@ -5,11 +5,11 @@ import { X, User, Calendar, Clock, AlertCircle, Phone } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
-import { MessageInput } from '@/components/chat/MessageInput';
-import { MessageList } from '@/components/chat/MessageList';
-import { chatService } from '@/lib/services/chat.service';
 import { visitsService } from '@/lib/services/visits.service';
 import { cn } from '@/lib/utils/cn';
+import { MessageInput } from '@/modules/chat/components/MessageInput';
+import { MessageList } from '@/modules/chat/components/MessageList';
+import { chatService } from '@/modules/chat/services/chat.service';
 
 interface ChatWindowProps {
   visitId: string;

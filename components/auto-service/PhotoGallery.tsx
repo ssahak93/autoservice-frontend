@@ -12,6 +12,7 @@ import {
   useReorderPhotos,
   useUpdateProfilePhotos,
 } from '@/hooks/usePhotoMutations';
+import { FILE_CATEGORIES } from '@/lib/constants/file-categories.constants';
 import {
   type AutoServiceProfile,
   type PhotoItem,
@@ -368,7 +369,7 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
           maxFiles={10}
           multiple={true}
           label={t('uploadProfilePhotos', { defaultValue: 'Upload Profile Photos' })}
-          category="profile-photo"
+          category={FILE_CATEGORIES.PROFILE_PHOTOS}
           inputId="profile-photos-upload-input"
           onUpload={(files) => handlePhotoUpload(files, 'profile')}
           disabled={uploadingType === 'profile' || updateProfilePhotosMutation.isPending}
@@ -394,7 +395,7 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
           maxFiles={20}
           multiple={true}
           label={t('uploadWorkPhotos', { defaultValue: 'Upload Work Photos' })}
-          category="work-photo"
+          category={FILE_CATEGORIES.WORK_PHOTOS}
           inputId="work-photos-upload-input"
           onUpload={(files) => handlePhotoUpload(files, 'work')}
           disabled={uploadingType === 'work' || updateProfilePhotosMutation.isPending}

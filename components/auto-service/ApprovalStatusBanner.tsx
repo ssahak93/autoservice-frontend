@@ -45,7 +45,7 @@ export function ApprovalStatusBanner({ profile, onDismiss }: ApprovalStatusBanne
   }
 
   // Show approved banner
-  if (profile.isApproved) {
+  if (profile.autoService?.isApproved) {
     return (
       <motion.div
         suppressHydrationWarning
@@ -84,7 +84,7 @@ export function ApprovalStatusBanner({ profile, onDismiss }: ApprovalStatusBanne
   }
 
   // Show rejection banner with reason
-  if (!profile.isApproved && profile.rejectionReason) {
+  if (!profile.autoService?.isApproved && profile.autoService?.rejectionReason) {
     return (
       <motion.div
         suppressHydrationWarning
@@ -114,7 +114,7 @@ export function ApprovalStatusBanner({ profile, onDismiss }: ApprovalStatusBanne
                 {t('rejectionReason', { defaultValue: 'Rejection Reason' })}:
               </p>
               <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-                {profile.rejectionReason}
+                {profile.autoService?.rejectionReason}
               </p>
             </div>
           </div>

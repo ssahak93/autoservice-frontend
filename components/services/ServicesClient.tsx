@@ -1,7 +1,6 @@
 'use client';
 
 import { Search, SlidersHorizontal } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useMemo, useCallback } from 'react';
 
@@ -21,14 +20,7 @@ import { useServiceTypes } from '@/hooks/useServiceTypes';
 import type { ServiceSearchParams } from '@/lib/services/services.service';
 import type { AutoService, PaginatedResponse } from '@/types';
 
-// Lazy load DistrictMap to reduce initial bundle size
-const DistrictMap = dynamic(
-  () => import('@/components/services/DistrictMap').then((mod) => ({ default: mod.DistrictMap })),
-  {
-    loading: () => <div className="h-96 w-full animate-pulse rounded-lg bg-neutral-200" />,
-    ssr: false,
-  }
-);
+// DistrictMap removed - districts are now communities, no need for separate map component
 
 interface ServicesClientProps {
   initialData?: PaginatedResponse<AutoService>;
@@ -67,8 +59,8 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (searchParams.businessType) count++;
-    if (searchParams.city) count++;
-    if (searchParams.region) count++;
+    if (searchParams.regionId) count++;
+    if (searchParams.communityId) count++;
     if (searchParams.serviceType) count++;
     if (searchParams.minRating && searchParams.minRating > 0) count++;
     if (searchParams.query) count++;
@@ -132,31 +124,7 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
         />
       </div>
 
-      {/* District Map - Show if Yerevan is selected */}
-      {searchParams.city?.toLowerCase() === 'yerevan' && (
-        <div className="glass-light rounded-xl p-4 sm:p-6">
-          <DistrictMap
-            cityCode="yerevan"
-            selectedDistrictCode={searchParams.district}
-            onDistrictSelect={(districtCode) => {
-              updateSearch({ district: districtCode }, { resetPage: true });
-            }}
-            services={
-              displayData?.data
-                ?.filter((service: AutoService) => !service.isBlocked)
-                .map((service: AutoService) => ({
-                  id: service.id,
-                  name: service.companyName || service.firstName || 'Service',
-                  latitude: service.latitude ? Number(service.latitude) : 0,
-                  longitude: service.longitude ? Number(service.longitude) : 0,
-                  districtCode: service.district || undefined,
-                }))
-                .filter((s) => s.latitude !== 0 && s.longitude !== 0) || []
-            }
-            height="500px"
-          />
-        </div>
-      )}
+      {/* District Map removed - districts are now communities, can be filtered via communityId */}
 
       {/* Mobile Filters Button */}
       <div className="lg:hidden">

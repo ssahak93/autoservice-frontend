@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+import { useState, useEffect } from 'react';
 
 import { queryKeys, queryConfig } from '@/lib/api/query-config';
 import {
@@ -37,9 +38,15 @@ export function useNotifications(filters?: NotificationFilters) {
 export function useNotificationStats() {
   const { isAuthenticated, accessToken } = useAuthStore();
 
-  // Also check localStorage for token (in case store hasn't synced yet)
-  const hasToken =
-    typeof window !== 'undefined' && (!!accessToken || !!localStorage.getItem('accessToken'));
+  // Check if we're on client side and have a token
+  // Use useState to safely check localStorage only on client
+  const [hasToken, setHasToken] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHasToken(!!accessToken || !!localStorage.getItem('accessToken'));
+    }
+  }, [accessToken]);
 
   return useQuery({
     queryKey: queryKeys.notificationStats(),

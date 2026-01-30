@@ -12,9 +12,8 @@ export interface ServiceSearchParams {
     | 'towing'
     | 'tinting'
     | 'other';
-  city?: string;
-  region?: string;
-  district?: string;
+  regionId?: string;
+  communityId?: string;
   serviceType?: string;
   minRating?: number;
   latitude?: number;
@@ -23,7 +22,7 @@ export interface ServiceSearchParams {
   page?: number;
   limit?: number;
   sortBy?: 'rating' | 'distance' | 'reviews' | 'newest';
-  query?: string; // Text search query (for future backend support)
+  query?: string; // Text search query
 }
 
 export const servicesService = {

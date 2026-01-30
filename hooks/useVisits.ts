@@ -75,6 +75,10 @@ export const useCreateVisit = () => {
           data: old.data.map((visit) => (visit.id.startsWith('temp-') ? data : visit)),
         };
       });
+      // Update individual visit cache to ensure it's available when chat opens
+      if (data?.id) {
+        queryClient.setQueryData(queryKeys.visit(data.id), data);
+      }
       showToast(t('bookedSuccessfully', { defaultValue: 'Visit booked successfully' }), 'success');
     },
     onError: (error: Error, _variables, context) => {

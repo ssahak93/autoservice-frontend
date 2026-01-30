@@ -18,7 +18,7 @@ interface RecommendationsSectionProps {
  *
  * Отображает рекомендации услуг на главной странице
  */
-export function RecommendationsSection({ locale }: RecommendationsSectionProps) {
+export function RecommendationsSection({ locale: _locale }: RecommendationsSectionProps) {
   const t = useTranslations('home');
   const geolocation = useGeolocation();
 
@@ -74,8 +74,8 @@ export function RecommendationsSection({ locale }: RecommendationsSectionProps) 
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {recommendations.slice(0, 6).map((service) => (
-          <ServiceCard key={service.id} service={service} locale={locale} />
+        {recommendations.slice(0, 6).map((service, index) => (
+          <ServiceCard key={service.id} service={service} index={index} />
         ))}
       </div>
 
