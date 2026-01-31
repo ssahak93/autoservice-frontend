@@ -49,6 +49,7 @@ export function SearchBarEnhanced({
   const debouncedValue = useDebounce(localValue, 300);
   const isTypingRef = useRef(false);
   const previousValueRef = useRef(value);
+  const lastSearchedValueRef = useRef<string>(value); // Track last value that triggered search
   const containerRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +75,8 @@ export function SearchBarEnhanced({
       if (previousValueRef.current !== value) {
         setLocalValue(value);
         previousValueRef.current = value;
+        // Update lastSearchedValueRef when value changes from external source
+        lastSearchedValueRef.current = value;
       }
     } else {
       // If user was typing but value changed externally, update after a delay
@@ -82,6 +85,7 @@ export function SearchBarEnhanced({
           isTypingRef.current = false;
           setLocalValue(value);
           previousValueRef.current = value;
+          lastSearchedValueRef.current = value;
         }
       }, 500);
       return () => clearTimeout(timeoutId);
@@ -89,9 +93,30 @@ export function SearchBarEnhanced({
   }, [value]);
 
   // Trigger search on debounced value change
+  // IMPORTANT: Only call onSearch when debounced value actually changes
+  // This prevents multiple requests for each character typed
   useEffect(() => {
-    if (debouncedValue !== value && !isTypingRef.current) {
+    // CRITICAL: Prevent infinite loop - only search if:
+    // 1. Debounced value is different from last searched value
+    // 2. User is not actively typing
+    // 3. Debounced value is different from current URL value
+    const shouldSearch =
+      debouncedValue !== lastSearchedValueRef.current &&
+      !isTypingRef.current &&
+      debouncedValue !== value;
+
+    if (shouldSearch && debouncedValue.length >= 2) {
+      lastSearchedValueRef.current = debouncedValue;
       onSearch(debouncedValue);
+    } else if (debouncedValue === '' && value !== '' && lastSearchedValueRef.current !== '') {
+      // Clear search if debounced value is empty
+      lastSearchedValueRef.current = '';
+      onSearch('');
+    }
+
+    // Sync lastSearchedValueRef when value changes from external source (URL)
+    if (value !== lastSearchedValueRef.current && !isTypingRef.current) {
+      lastSearchedValueRef.current = value;
     }
   }, [debouncedValue, onSearch, value]);
 

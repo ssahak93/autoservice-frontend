@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -11,29 +10,11 @@ import { ServiceSchema } from '@/components/seo/ServiceSchema';
 import { ServiceDetailClient } from '@/components/services/ServiceDetailClient';
 import { ServiceGallery } from '@/components/services/ServiceGallery';
 import { ServiceInfo } from '@/components/services/ServiceInfo';
-// Lazy load heavy components
-const ServiceMap = dynamic(
-  () => import('@/components/services/ServiceMap').then((mod) => ({ default: mod.ServiceMap })),
-  {
-    loading: () => <div className="h-96 w-full animate-pulse rounded-lg bg-neutral-200" />,
-    ssr: false,
-  }
-);
 import { ServiceTypesList } from '@/components/services/ServiceTypesList';
 import { WorkingHours } from '@/components/services/WorkingHours';
 import { servicesServerService } from '@/lib/services/services.server';
 
 import { generateServiceMetadata } from './metadata';
-
-// Lazy load modal to reduce initial bundle size
-const BookVisitModal = dynamic(
-  () =>
-    import('@/components/visits/BookVisitModal').then((mod) => ({ default: mod.BookVisitModal })),
-  {
-    loading: () => <div className="h-10 w-32 animate-pulse rounded-lg bg-neutral-200" />,
-    ssr: false,
-  }
-);
 
 interface ServiceDetailPageProps {
   params: Promise<{ locale: string; id: string }>;
@@ -189,7 +170,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                 )}
 
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${service.address}, ${service.city}, ${service.region}`)}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${service.address}, ${service.community || ''}, ${service.region || ''}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 rounded-lg bg-white/20 px-2 py-1.5 text-sm font-medium transition-all hover:bg-white/30 hover:shadow-lg sm:gap-2 sm:px-3 sm:text-base"
@@ -215,7 +196,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     />
                   </svg>
                   <span className="line-clamp-1 max-w-[200px] sm:max-w-none">
-                    {service.address}, {service.city}
+                    {service.address}
+                    {service.community && `, ${service.community}`}
+                    {service.region && `, ${service.region}`}
                   </span>
                 </a>
               </div>
@@ -223,7 +206,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
             <div className="hidden lg:block">
               <ProtectedRoute redirect={false}>
-                <BookVisitModal serviceId={id} serviceName={name} />
+                <ServiceDetailClient
+                  serviceId={id}
+                  profileId={id}
+                  bookVisitModalProps={{ serviceId: id, serviceName: name }}
+                />
               </ProtectedRoute>
             </div>
           </div>
@@ -263,12 +250,16 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             {/* Map */}
             {service.latitude && service.longitude && (
               <div className="glass-light rounded-xl p-4 md:rounded-2xl md:p-8">
-                <ServiceMap
-                  latitude={service.latitude}
-                  longitude={service.longitude}
-                  address={service.address}
-                  city={service.city}
-                  name={name}
+                <ServiceDetailClient
+                  serviceId={id}
+                  profileId={id}
+                  serviceMapProps={{
+                    latitude: service.latitude,
+                    longitude: service.longitude,
+                    address: service.address,
+                    city: service.community || '',
+                    name,
+                  }}
                 />
               </div>
             )}
@@ -286,8 +277,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               <ServiceInfo
                 phoneNumber={service.phoneNumber}
                 address={service.address}
-                city={service.city}
-                region={service.region}
+                city={service.community || ''}
+                region={service.region || ''}
                 yearsOfExperience={service.yearsOfExperience}
                 serviceType={service.serviceType}
               />
@@ -304,7 +295,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             <div className="lg:hidden">
               <ProtectedRoute redirect={false}>
                 <div className="glass-light rounded-xl p-4 md:rounded-2xl">
-                  <BookVisitModal serviceId={id} serviceName={name} />
+                  <ServiceDetailClient
+                    serviceId={id}
+                    profileId={id}
+                    bookVisitModalProps={{ serviceId: id, serviceName: name }}
+                  />
                 </div>
               </ProtectedRoute>
             </div>

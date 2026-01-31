@@ -224,7 +224,7 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
                       )}
                     </div>
                   )}
-                  {validProfile.isApproved && (
+                  {validProfile.autoService?.isApproved && (
                     <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-green-500 shadow-lg ring-4 ring-white dark:ring-gray-800">
                       <CheckCircle2 className="h-5 w-5 text-white" />
                     </div>
@@ -247,10 +247,10 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
                       )}
                       <span className="capitalize">{autoService.serviceType}</span>
                     </span>
-                    {validProfile.city && (
+                    {validProfile.community && (
                       <span className="flex items-center gap-1.5">
-                        <span>{validProfile.city.name}</span>
-                        {validProfile.district && `, ${validProfile.district.name}`}
+                        <span>{validProfile.community}</span>
+                        {validProfile.region && `, ${validProfile.region}`}
                       </span>
                     )}
                   </div>
@@ -400,7 +400,7 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
                               {t('overview.status', { defaultValue: 'Status' })}
                             </p>
                             <p className="text-lg font-bold text-gray-900 dark:text-white">
-                              {validProfile.isApproved
+                              {validProfile.autoService?.isApproved
                                 ? t('overview.approved', { defaultValue: 'Approved' })
                                 : t('overview.pending', { defaultValue: 'Pending' })}
                             </p>

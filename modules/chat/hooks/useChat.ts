@@ -37,7 +37,7 @@ export function useChatMessages(visitId: string | null, options: ChatMessagesOpt
       try {
         const result = await chatService.getMessages(visitId, pageParam, limit);
         return result;
-      } catch (_error) {
+      } catch {
         return { data: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } };
       }
     },
@@ -215,7 +215,7 @@ export function useUnreadCount(visitId: string | null) {
       if (!visitId) return 0;
       try {
         return await chatService.getUnreadCount(visitId);
-      } catch (_error) {
+      } catch {
         return 0;
       }
     },
@@ -284,7 +284,7 @@ export function useAdminConversationMessages(
         }
 
         return result;
-      } catch (_error) {
+      } catch {
         return { data: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } };
       }
     },
@@ -388,7 +388,14 @@ export function useSendAdminConversationImageMessage() {
       conversationId: string;
       file: File;
       content?: string;
-    }) => chatService.sendAdminConversationImageMessage(conversationId, file, content),
+    }) => {
+      // First upload the image, then send message with imageFileId
+      return chatService
+        .uploadImage(file, true)
+        .then(({ fileId }) =>
+          chatService.sendAdminConversationMessage(conversationId, content || '', fileId)
+        );
+    },
     onSuccess: (data, variables) => {
       queryClient.setQueriesData(
         {

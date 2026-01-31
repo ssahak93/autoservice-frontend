@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 
 import { autoServicesService } from '@/lib/services/auto-services.service';
+import type { AutoServiceRole } from '@/lib/services/team.service';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -71,8 +72,23 @@ export function useCreateAutoService() {
       setSelectedAutoServiceId(newService.id);
       // Update available services in store
       const response = await autoServicesService.getAvailableAutoServices();
-      const services = Array.isArray(response) ? response : response.data || [];
-      setAvailableAutoServices(services);
+      const services = Array.isArray(response)
+        ? response
+        : (response as { data?: typeof response })?.data || [];
+      // Map services to AutoServiceOption format with proper role type
+      const mappedServices = services.map((service) => ({
+        id: service.id,
+        name: service.name,
+        role: (service.role as AutoServiceRole) || ('owner' as const),
+        serviceType: service.serviceType,
+        companyName: service.companyName ?? undefined,
+        firstName: service.firstName ?? undefined,
+        lastName: service.lastName ?? undefined,
+        avatarFile: service.avatarFile ?? undefined,
+        hasProfile: service.hasProfile,
+        isApproved: service.isApproved,
+      }));
+      setAvailableAutoServices(mappedServices);
     },
     onError: (error: unknown) => {
       const errorObj = error as { response?: { data?: { message?: string } }; message?: string };

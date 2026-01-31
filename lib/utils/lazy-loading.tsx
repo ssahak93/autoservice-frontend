@@ -31,10 +31,13 @@ export function createLazyComponent<T extends ComponentType<Record<string, unkno
     return () => null;
   }
 
-  return dynamic(importFn, {
-    loading: loading || (() => null),
-    ssr,
-  });
+  return dynamic(
+    importFn as () => Promise<{ default: React.ComponentType<Record<string, unknown>> }>,
+    {
+      loading: (loading as () => JSX.Element | null) || (() => null),
+      ssr,
+    }
+  );
 }
 
 /**

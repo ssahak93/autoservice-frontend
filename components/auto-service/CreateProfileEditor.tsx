@@ -48,6 +48,7 @@ export function CreateProfileEditor() {
   const [mounted, setMounted] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
   const [selectedRegionId, setSelectedRegionId] = useState<string>('');
+  const [_selectedCommunityId, _setSelectedCommunityId] = useState<string>('');
 
   // Load regions and communities
   const { data: regions = [] } = useQuery({
@@ -75,9 +76,8 @@ export function CreateProfileEditor() {
     if (typeof window !== 'undefined') {
       // Dynamically import Leaflet only on client side
       import('leaflet').then((L) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, import/no-named-as-default-member
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (L.default.Icon.Default.prototype as any)._getIconUrl;
-        // eslint-disable-next-line import/no-named-as-default-member
         L.default.Icon.Default.mergeOptions({
           iconRetinaUrl:
             'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -179,7 +179,7 @@ export function CreateProfileEditor() {
   // Reset community when region changes
   useEffect(() => {
     if (selectedRegionId) {
-      setSelectedCommunityId('');
+      _setSelectedCommunityId('');
       setValue('communityId', '', { shouldValidate: false });
     }
   }, [selectedRegionId, setValue]);
@@ -475,7 +475,7 @@ export function CreateProfileEditor() {
                 {...field}
                 onChange={(e) => {
                   field.onChange(e);
-                  setSelectedCommunityId(e.target.value);
+                  _setSelectedCommunityId(e.target.value);
                 }}
                 disabled={!selectedRegionId}
                 className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 import type { AutoService } from '@/types';
 
@@ -11,39 +12,49 @@ export async function generateServiceMetadata(
   service: AutoService,
   locale: string
 ): Promise<Metadata> {
+  const t = await getTranslations({ locale, namespace: 'services.metadata' });
   const name = service.companyName || `${service.firstName} ${service.lastName}`;
+
+  // Build description with translations
+  const ratingText = service.averageRating
+    ? t('descriptionWithRating', {
+        rating: Number(service.averageRating).toFixed(1),
+      })
+    : '';
+
   const description =
     service.description ||
-    `Professional auto service in ${service.city}, ${service.region}. Book your appointment online. Verified service provider${service.averageRating ? ` with ${Number(service.averageRating).toFixed(1)} rating` : ''}.`;
+    t('description', {
+      community: service.community || 'Armenia',
+      region: service.region || 'Armenia',
+      rating: ratingText,
+    });
+
   const imageUrl = service.avatarFile?.fileUrl || `${baseUrl}/og-image.jpg`;
 
+  const keywords = t('keywords', {
+    community: service.community || '',
+    region: service.region || '',
+    specialization: service.specialization || 'auto repair',
+  });
+
   return {
-    title: `${name} - Auto Service Connect`,
+    title: t('title', { name }),
     description: description.substring(0, 160),
-    keywords: [
-      'auto service',
-      'car repair',
-      service.city,
-      service.region,
-      'Armenia',
-      'verified service',
-      service.specialization || 'auto repair',
-    ]
-      .filter(Boolean)
-      .join(', '),
-    authors: [{ name: 'Auto Service Connect' }],
-    creator: 'Auto Service Connect',
-    publisher: 'Auto Service Connect',
+    keywords,
+    authors: [{ name: t('siteName') }],
+    creator: t('siteName'),
+    publisher: t('siteName'),
     formatDetection: {
       email: false,
       address: false,
       telephone: false,
     },
     openGraph: {
-      title: `${name} - Auto Service Connect`,
+      title: t('title', { name }),
       description: description.substring(0, 160),
       url: `${baseUrl}/${locale}/services/${service.id}`,
-      siteName: 'Auto Service Connect',
+      siteName: t('siteName'),
       images: [
         {
           url: imageUrl,
@@ -57,7 +68,7 @@ export async function generateServiceMetadata(
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${name} - Auto Service Connect`,
+      title: t('title', { name }),
       description: description.substring(0, 160),
       images: [imageUrl],
       creator: '@autoserviceconnect',

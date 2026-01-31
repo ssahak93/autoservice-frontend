@@ -189,7 +189,7 @@ export const useCancelVisit = () => {
 
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
-      visitsService.cancel(id, reason),
+      visitsService.cancel(id, reason || ''),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visits'] });
       queryClient.invalidateQueries({ queryKey: ['visit'] });

@@ -332,7 +332,6 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
             wrapperClassName="w-full"
             calendarClassName="!rounded-lg !border-2 !border-neutral-200 !shadow-xl"
             dayClassName={getDayClassName}
-            selectedDayClassName="!bg-primary-500 !text-white hover:!bg-primary-600 !font-semibold"
             inline={inline}
             withPortal={withPortal}
             customInput={

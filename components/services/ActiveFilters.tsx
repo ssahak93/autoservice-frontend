@@ -28,45 +28,43 @@ export function ActiveFilters({
 
   const activeFilters: Array<{ key: keyof ServiceSearchParams; label: string; value: string }> = [];
 
-  if (filters.businessType) {
-    activeFilters.push({
-      key: 'businessType',
-      label: t('businessType', { defaultValue: 'Business Type' }),
-      value: t(`businessTypes.${filters.businessType}`, { defaultValue: filters.businessType }),
-    });
+  // Handle multiple business types
+  const businessTypes = filters.businessTypes || [];
+  if (businessTypes.length > 0) {
+    if (businessTypes.length === 1) {
+      activeFilters.push({
+        key: 'businessTypes',
+        label: t('businessType', { defaultValue: 'Business Type' }),
+        value: t(`businessTypes.${businessTypes[0]}`, { defaultValue: businessTypes[0] }),
+      });
+    } else {
+      activeFilters.push({
+        key: 'businessTypes',
+        label: t('businessType', { defaultValue: 'Business Type' }),
+        value: `${businessTypes.length} ${t('selected', { defaultValue: 'selected' })}`,
+      });
+    }
   }
 
-  if (filters.city) {
-    activeFilters.push({
-      key: 'city',
-      label: t('city'),
-      value: filters.city,
-    });
-  }
+  // Note: city, region, and district filters removed - use communityId and regionId instead
 
-  if (filters.region) {
-    activeFilters.push({
-      key: 'region',
-      label: t('region'),
-      value: filters.region,
-    });
-  }
-
-  if (filters.district) {
-    activeFilters.push({
-      key: 'district',
-      label: t('district', { defaultValue: 'District' }),
-      value: filters.district,
-    });
-  }
-
-  if (filters.serviceType && serviceTypeNames) {
-    const serviceName = serviceTypeNames.get(filters.serviceType) || filters.serviceType;
-    activeFilters.push({
-      key: 'serviceType',
-      label: t('serviceType'),
-      value: serviceName,
-    });
+  // Handle multiple service types
+  const serviceTypes = filters.serviceTypes || [];
+  if (serviceTypes.length > 0 && serviceTypeNames) {
+    if (serviceTypes.length === 1) {
+      const serviceName = serviceTypeNames.get(serviceTypes[0]) || serviceTypes[0];
+      activeFilters.push({
+        key: 'serviceTypes',
+        label: t('serviceType'),
+        value: serviceName,
+      });
+    } else {
+      activeFilters.push({
+        key: 'serviceTypes',
+        label: t('serviceType'),
+        value: `${serviceTypes.length} ${t('selected', { defaultValue: 'selected' })}`,
+      });
+    }
   }
 
   if (filters.minRating && filters.minRating > 0) {
@@ -119,6 +117,12 @@ export function ActiveFilters({
               onRemoveFilter('latitude');
               onRemoveFilter('longitude');
               onRemoveFilter('radius');
+            } else if (filter.key === 'businessTypes') {
+              // Remove business types array
+              onRemoveFilter('businessTypes');
+            } else if (filter.key === 'serviceTypes') {
+              // Remove service types array
+              onRemoveFilter('serviceTypes');
             } else {
               onRemoveFilter(filter.key);
             }

@@ -14,7 +14,10 @@ interface ServicesPageProps {
     city?: string;
     region?: string;
     district?: string;
-    serviceType?: string;
+    regionId?: string;
+    communityId?: string;
+    businessTypes?: string | string[];
+    serviceTypes?: string | string[];
     minRating?: string;
     latitude?: string;
     longitude?: string;
@@ -43,11 +46,36 @@ export default async function ServicesPage({ params, searchParams }: ServicesPag
   }
 
   // Parse search params
+  const businessTypesArray = Array.isArray(search.businessTypes)
+    ? search.businessTypes
+    : search.businessTypes
+      ? [search.businessTypes]
+      : undefined;
+  const serviceTypesArray = Array.isArray(search.serviceTypes)
+    ? search.serviceTypes
+    : search.serviceTypes
+      ? [search.serviceTypes]
+      : undefined;
+
   const filters = {
     city: search.city,
     region: search.region,
     district: search.district,
-    serviceType: search.serviceType,
+    regionId: search.regionId,
+    communityId: search.communityId,
+    businessTypes: businessTypesArray as
+      | Array<
+          | 'auto_service'
+          | 'auto_shop'
+          | 'car_wash'
+          | 'cleaning'
+          | 'tire_service'
+          | 'towing'
+          | 'tinting'
+          | 'other'
+        >
+      | undefined,
+    serviceTypes: serviceTypesArray,
     minRating: search.minRating ? parseFloat(search.minRating) : undefined,
     latitude: search.latitude ? parseFloat(search.latitude) : undefined,
     longitude: search.longitude ? parseFloat(search.longitude) : undefined,

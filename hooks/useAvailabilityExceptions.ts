@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 
 import { availabilityService } from '@/lib/services/availability.service';
-import { useAuthStore } from '@/stores/authStore';
+import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
 export interface AvailabilityException {
@@ -24,15 +24,15 @@ export function useAvailabilityExceptions(autoServiceId: string | null) {
   const t = useTranslations('myService.availability');
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const { selectedAutoServiceId: storeSelectedId } = useAutoServiceStore();
 
-  // Get selected auto service ID (if user owns multiple)
-  const selectedAutoServiceId = autoServiceId || user?.autoServices?.[0]?.id;
+  // Get selected auto service ID (use provided ID or from store)
+  const selectedAutoServiceId = autoServiceId || storeSelectedId;
 
   // Fetch exceptions
   const { data: exceptions = [], isLoading } = useQuery({
     queryKey: ['availability-exceptions', selectedAutoServiceId],
-    queryFn: () => availabilityService.getExceptions(selectedAutoServiceId),
+    queryFn: () => availabilityService.getExceptions(selectedAutoServiceId || undefined),
     enabled: !!selectedAutoServiceId,
   });
 
@@ -44,7 +44,7 @@ export function useAvailabilityExceptions(autoServiceId: string | null) {
       startTime?: string;
       endTime?: string;
       reason?: string;
-    }) => availabilityService.createException(data, selectedAutoServiceId),
+    }) => availabilityService.createException(data, selectedAutoServiceId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['availability-exceptions'] });
       queryClient.invalidateQueries({ queryKey: ['availability'] });
@@ -61,8 +61,15 @@ export function useAvailabilityExceptions(autoServiceId: string | null) {
 
   // Update exception mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<AvailabilityException> }) =>
-      availabilityService.updateException(id, data, selectedAutoServiceId),
+    mutationFn: ({ id, data }: { id: string; data: Partial<AvailabilityException> }) => {
+      const cleanData = {
+        ...data,
+        startTime: data.startTime ?? undefined,
+        endTime: data.endTime ?? undefined,
+        reason: data.reason ?? undefined,
+      };
+      return availabilityService.updateException(id, cleanData, selectedAutoServiceId || undefined);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['availability-exceptions'] });
       queryClient.invalidateQueries({ queryKey: ['availability'] });

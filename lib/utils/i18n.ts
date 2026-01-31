@@ -2,6 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 
+import { defaultLocale, locales, type Locale } from '@/i18n/routing';
+
 /**
  * Hook to get translations with type safety and missing translation warnings
  */
@@ -12,21 +14,19 @@ export function useT(namespace?: string) {
   return (key: string, values?: Record<string, string | number>) => {
     try {
       const translation = t(key, values);
-      
+
       // Check if translation is missing (returns the key itself)
       if (translation === key || translation === `${namespace || 'common'}.${key}`) {
         if (process.env.NODE_ENV === 'development') {
-          console.warn(
-            `[i18n] Missing translation: ${namespace ? `${namespace}.` : ''}${key}`,
-            {
-              namespace,
-              key,
-              locale: typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : 'unknown',
-            }
-          );
+          console.warn(`[i18n] Missing translation: ${namespace ? `${namespace}.` : ''}${key}`, {
+            namespace,
+            key,
+            locale:
+              typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : 'unknown',
+          });
         }
       }
-      
+
       return translation;
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -58,33 +58,33 @@ export function formatTranslation(
 /**
  * Get current locale from URL or storage
  */
-export function getCurrentLocale(): string {
+export function getCurrentLocale(): Locale {
   if (typeof window === 'undefined') {
-    return 'hy'; // Default for SSR
+    return defaultLocale; // Default for SSR
   }
 
   // Get from URL first (most reliable)
   const pathname = window.location.pathname;
   const localeMatch = pathname.match(/^\/(hy|en|ru)/);
-  if (localeMatch) {
-    return localeMatch[1];
+  if (localeMatch && locales.includes(localeMatch[1] as Locale)) {
+    return localeMatch[1] as Locale;
   }
 
   // Fallback to localStorage
   const storedLocale = localStorage.getItem('preferred-locale');
-  if (storedLocale && ['hy', 'en', 'ru'].includes(storedLocale)) {
-    return storedLocale;
+  if (storedLocale && locales.includes(storedLocale as Locale)) {
+    return storedLocale as Locale;
   }
 
   // Final fallback
-  return 'hy';
+  return defaultLocale;
 }
 
 /**
  * Store preferred locale
  */
-export function setPreferredLocale(locale: string): void {
-  if (typeof window !== 'undefined' && ['hy', 'en', 'ru'].includes(locale)) {
+export function setPreferredLocale(locale: Locale): void {
+  if (typeof window !== 'undefined' && locales.includes(locale)) {
     localStorage.setItem('preferred-locale', locale);
   }
 }

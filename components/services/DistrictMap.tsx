@@ -5,7 +5,17 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
-import { locationsService, DistrictWithBounds } from '@/lib/services/locations.service';
+import { locationsService } from '@/lib/services/locations.service';
+
+// DistrictWithBounds type definition (if not exported from locations.service)
+type DistrictWithBounds = {
+  id: string;
+  name: string;
+  code: string;
+  bounds?: unknown;
+  centerLat?: number;
+  centerLng?: number;
+};
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), {
@@ -66,9 +76,9 @@ export function DistrictMap({
     if (typeof window !== 'undefined') {
       // Dynamically import Leaflet only on client side
       import('leaflet').then((L) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, import/no-named-as-default-member
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (L.default.Icon.Default.prototype as any)._getIconUrl;
-        // eslint-disable-next-line import/no-named-as-default-member
+
         L.default.Icon.Default.mergeOptions({
           iconRetinaUrl:
             'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -92,7 +102,8 @@ export function DistrictMap({
       try {
         setLoading(true);
         setError(null);
-        const data = await locationsService.getDistrictsWithBounds(cityCode);
+        // Use getCommunities with type='district' filter
+        const data = await locationsService.getCommunities(undefined, 'district');
         setDistricts(data);
       } catch (err) {
         console.error('Failed to load districts:', err);
@@ -157,8 +168,17 @@ export function DistrictMap({
       return [40.1811, 44.5136]; // Yerevan center
     }
 
-    const centerLat = districts.reduce((sum, d) => sum + d.centerLat, 0) / districts.length;
-    const centerLng = districts.reduce((sum, d) => sum + d.centerLng, 0) / districts.length;
+    // Default center for Yerevan if no districts with coordinates
+    const districtsWithCoords = districts.filter((d) => d.centerLat && d.centerLng);
+    if (districtsWithCoords.length === 0) {
+      return [40.1811, 44.5136]; // Yerevan default
+    }
+    const centerLat =
+      districtsWithCoords.reduce((sum, d) => sum + (d.centerLat || 0), 0) /
+      districtsWithCoords.length;
+    const centerLng =
+      districtsWithCoords.reduce((sum, d) => sum + (d.centerLng || 0), 0) /
+      districtsWithCoords.length;
     return [centerLat, centerLng];
   };
 
@@ -228,7 +248,7 @@ export function DistrictMap({
             return (
               <GeoJSON
                 key={district.id}
-                data={district.bounds}
+                data={district.bounds as unknown as GeoJSON.GeoJsonObject}
                 style={() => getDistrictStyle(district)}
                 onEachFeature={(feature, layer) => onEachDistrict(district, layer)}
               />

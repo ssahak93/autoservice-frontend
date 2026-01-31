@@ -13,17 +13,35 @@ import type { ServiceSearchParams } from '@/lib/services/services.service';
 export function serializeSearchParams(params: ServiceSearchParams): URLSearchParams {
   const searchParams = new URLSearchParams();
 
-  if (params.city) searchParams.set('city', params.city);
-  if (params.region) searchParams.set('region', params.region);
-  if (params.district) searchParams.set('district', params.district);
-  if (params.serviceType) searchParams.set('serviceType', params.serviceType);
+  // Legacy fields removed - use regionId and communityId instead
+
+  // New fields (primary)
+  if (params.regionId) searchParams.set('regionId', params.regionId);
+  if (params.communityId) searchParams.set('communityId', params.communityId);
+  // Support multiple business types
+  if (params.businessTypes && params.businessTypes.length > 0) {
+    params.businessTypes.forEach((bt) => {
+      searchParams.append('businessTypes', bt);
+    });
+  }
+  // Support multiple service types
+  if (params.serviceTypes && params.serviceTypes.length > 0) {
+    params.serviceTypes.forEach((st) => {
+      searchParams.append('serviceTypes', st);
+    });
+  }
   if (params.minRating) searchParams.set('minRating', params.minRating.toString());
   if (params.latitude) searchParams.set('latitude', params.latitude.toString());
   if (params.longitude) searchParams.set('longitude', params.longitude.toString());
   if (params.radius) searchParams.set('radius', params.radius.toString());
   if (params.sortBy) searchParams.set('sortBy', params.sortBy);
-  if (params.query) searchParams.set('query', params.query); // For future text search
-  if (params.page && params.page > 1) searchParams.set('page', params.page.toString());
+  if (params.query) searchParams.set('query', params.query);
+  // Always include page (even if it's 1, for consistency and proper pagination)
+  // This ensures URL always reflects the current page state
+  const page = params.page !== undefined && params.page !== null ? params.page : 1;
+  if (page > 0) {
+    searchParams.set('page', page.toString());
+  }
   if (params.limit && params.limit !== 20) searchParams.set('limit', params.limit.toString());
 
   return searchParams;
@@ -38,17 +56,40 @@ export function deserializeSearchParams(searchParams: URLSearchParams): ServiceS
     limit: 20,
   };
 
-  const city = searchParams.get('city');
-  if (city) params.city = city;
+  // Legacy fields removed - use regionId and communityId instead
 
-  const region = searchParams.get('region');
-  if (region) params.region = region;
+  // New fields (primary)
+  const regionId = searchParams.get('regionId');
+  if (regionId) params.regionId = regionId;
 
-  const district = searchParams.get('district');
-  if (district) params.district = district;
+  const communityId = searchParams.get('communityId');
+  if (communityId) params.communityId = communityId;
 
-  const serviceType = searchParams.get('serviceType');
-  if (serviceType) params.serviceType = serviceType;
+  // Support multiple business types
+  const businessTypes = searchParams.getAll('businessTypes');
+  if (businessTypes.length > 0) {
+    const validTypes = businessTypes.filter((bt) =>
+      [
+        'auto_service',
+        'auto_shop',
+        'car_wash',
+        'cleaning',
+        'tire_service',
+        'towing',
+        'tinting',
+        'other',
+      ].includes(bt)
+    ) as ServiceSearchParams['businessTypes'];
+    if (validTypes && validTypes.length > 0) {
+      params.businessTypes = validTypes;
+    }
+  }
+
+  // Support multiple service types
+  const serviceTypes = searchParams.getAll('serviceTypes');
+  if (serviceTypes.length > 0) {
+    params.serviceTypes = serviceTypes;
+  }
 
   const minRating = searchParams.get('minRating');
   if (minRating) {
@@ -87,7 +128,12 @@ export function deserializeSearchParams(searchParams: URLSearchParams): ServiceS
   const page = searchParams.get('page');
   if (page) {
     const pageNum = parseInt(page, 10);
-    if (!isNaN(pageNum) && pageNum > 0) params.page = pageNum;
+    if (!isNaN(pageNum) && pageNum > 0) {
+      params.page = pageNum;
+    }
+  } else {
+    // If page is not in URL, default to 1 (explicit)
+    params.page = 1;
   }
 
   const limit = searchParams.get('limit');

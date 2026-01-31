@@ -23,7 +23,8 @@ export function useCommunities(regionId?: string, type?: 'city' | 'village' | 'd
     queryKey: ['communities', regionId, type],
     queryFn: () => locationsService.getCommunities(regionId, type),
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
-    enabled: true, // Always fetch, regionId is optional
+    // Only fetch if regionId is provided - communities are region-specific
+    enabled: !!regionId,
   });
 }
 

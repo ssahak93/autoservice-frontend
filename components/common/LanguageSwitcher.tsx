@@ -5,10 +5,11 @@ import { Globe } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import type { Locale } from '@/i18n/routing';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { setPreferredLocale } from '@/lib/utils/i18n';
 
-const languages = [
+const languages: Array<{ code: Locale; name: string; flag: string }> = [
   { code: 'hy', name: 'Հայերեն', flag: '🇦🇲' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
@@ -23,7 +24,7 @@ export function LanguageSwitcher() {
 
   const currentLanguage = languages.find((lang) => lang.code === locale) || languages[0];
 
-  const handleLanguageChange = (newLocale: string) => {
+  const handleLanguageChange = (newLocale: Locale) => {
     // Store preference in localStorage
     setPreferredLocale(newLocale);
 

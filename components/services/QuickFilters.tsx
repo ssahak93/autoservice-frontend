@@ -9,7 +9,7 @@ import type { ServiceSearchParams } from '@/lib/services/services.service';
 
 interface QuickFiltersProps {
   filters: ServiceSearchParams;
-  onFiltersChange: (filters: Partial<ServiceSearchParams>) => void;
+  onFiltersChange: (filters: ServiceSearchParams) => void;
 }
 
 const QUICK_FILTERS = [
@@ -50,15 +50,25 @@ export function QuickFilters({ filters, onFiltersChange }: QuickFiltersProps) {
 
   const handleQuickFilterClick = useCallback(
     (businessType: string) => {
-      if (filters.businessType === businessType) {
-        // If already selected, clear it
-        onFiltersChange({ businessType: undefined });
-      } else {
-        // Select the filter
-        onFiltersChange({ businessType: businessType as ServiceSearchParams['businessType'] });
-      }
+      const currentTypes = filters.businessTypes || [];
+      const isSelected = currentTypes.includes(
+        businessType as NonNullable<ServiceSearchParams['businessTypes']>[number]
+      );
+
+      const newTypes = isSelected
+        ? currentTypes.filter((bt) => bt !== businessType)
+        : [
+            ...currentTypes,
+            businessType as NonNullable<ServiceSearchParams['businessTypes']>[number],
+          ];
+
+      onFiltersChange({
+        ...filters,
+        businessTypes: newTypes.length > 0 ? newTypes : undefined,
+        page: 1,
+      });
     },
-    [filters.businessType, onFiltersChange]
+    [filters, onFiltersChange]
   );
 
   return (
@@ -69,7 +79,10 @@ export function QuickFilters({ filters, onFiltersChange }: QuickFiltersProps) {
       <div className="flex flex-wrap gap-2">
         {QUICK_FILTERS.map((filter) => {
           const Icon = filter.icon;
-          const isActive = filters.businessType === filter.key;
+          const currentTypes = filters.businessTypes || [];
+          const isActive = currentTypes.includes(
+            filter.key as NonNullable<ServiceSearchParams['businessTypes']>[number]
+          );
 
           return (
             <Button

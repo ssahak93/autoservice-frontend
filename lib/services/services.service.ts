@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import type { AutoService, PaginatedResponse } from '@/types';
 
 export interface ServiceSearchParams {
-  businessType?:
+  businessTypes?: Array<
     | 'auto_service'
     | 'auto_shop'
     | 'car_wash'
@@ -11,10 +11,11 @@ export interface ServiceSearchParams {
     | 'tire_service'
     | 'towing'
     | 'tinting'
-    | 'other';
+    | 'other'
+  >;
   regionId?: string;
   communityId?: string;
-  serviceType?: string;
+  serviceTypes?: string[];
   minRating?: number;
   latitude?: number;
   longitude?: number;
@@ -31,7 +32,12 @@ export const servicesService = {
     const cleanParams: Record<string, unknown> = {};
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
-        cleanParams[key] = value;
+        // Handle arrays (for multiple selections)
+        if (Array.isArray(value) && value.length > 0) {
+          cleanParams[key] = value;
+        } else if (!Array.isArray(value)) {
+          cleanParams[key] = value;
+        }
       }
     });
 

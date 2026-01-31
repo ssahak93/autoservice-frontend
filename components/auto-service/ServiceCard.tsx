@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { memo } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import type { ServiceType } from '@/lib/constants/service-type.constants';
 import { cn } from '@/lib/utils/cn';
 
 import { BlockedServiceWarning } from './BlockedServiceWarning';
@@ -16,9 +17,9 @@ import { ServiceStatusBadge } from './ServiceStatusBadge';
 interface Service {
   id: string;
   name: string;
-  serviceType: 'individual' | 'company';
+  serviceType?: ServiceType;
   avatarFile?: { fileUrl: string } | null;
-  hasProfile: boolean;
+  hasProfile?: boolean;
   isApproved?: boolean;
   rejectionReason?: string | null;
   isBlocked?: boolean;
@@ -30,7 +31,7 @@ interface ServiceCardProps {
   index: number;
   variant: 'incomplete' | 'complete';
   isSelected: boolean;
-  getServiceTypeLabel: (type: 'individual' | 'company') => string;
+  getServiceTypeLabel: (type: ServiceType) => string;
   onSelect: (serviceId: string) => void;
   onDelete: (serviceId: string, hasProfile: boolean) => void;
   deleting?: boolean;
@@ -148,9 +149,11 @@ export const ServiceCard = memo(function ServiceCard({
                   <h3 className="truncate text-lg font-bold text-gray-900 dark:text-white">
                     {service.name}
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {getServiceTypeLabel(service.serviceType)}
-                  </p>
+                  {service.serviceType && (
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      {getServiceTypeLabel(service.serviceType)}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -195,10 +198,10 @@ export const ServiceCard = memo(function ServiceCard({
           ) : (
             <ServiceActionsMenu
               serviceId={service.id}
-              hasProfile={service.hasProfile}
+              hasProfile={service.hasProfile || false}
               isBlocked={service.isBlocked || false}
               onManage={() => onSelect(service.id)}
-              onDelete={() => onDelete(service.id, true)}
+              onDelete={() => onDelete(service.id, service.hasProfile || false)}
               deleting={deleting}
             />
           )}

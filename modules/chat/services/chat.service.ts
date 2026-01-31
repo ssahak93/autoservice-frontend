@@ -311,11 +311,15 @@ export const chatService = {
   /**
    * Send a message in an admin conversation
    */
-  async sendAdminConversationMessage(conversationId: string, content: string): Promise<Message> {
+  async sendAdminConversationMessage(
+    conversationId: string,
+    content: string,
+    imageFileId?: string
+  ): Promise<Message> {
     try {
       const response = await apiClient.post<Message>(
         `/chat/admin/conversations/${conversationId}/messages`,
-        { content }
+        { content, imageFileId, messageType: imageFileId ? 'image' : 'text' }
       );
       return response.data;
     } catch (error) {

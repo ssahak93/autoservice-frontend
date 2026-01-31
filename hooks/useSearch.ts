@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams as useNextSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { useRouter, usePathname } from '@/i18n/routing';
 import type { ServiceSearchParams } from '@/lib/services/services.service';
@@ -13,6 +13,7 @@ import {
 
 /**
  * Custom hook for managing search state with URL synchronization.
+ * URL is the single source of truth - state is derived from URL on every render.
  * Follows SOLID principles:
  * - Single Responsibility: Manages only search state and URL sync
  * - Dependency Inversion: Abstracts Next.js router and URL handling
@@ -22,49 +23,36 @@ export function useSearch() {
   const pathname = usePathname();
   const nextSearchParams = useNextSearchParams();
 
-  // Initialize from Next.js search params (SSR-safe)
-  const [searchParams, setSearchParams] = useState<ServiceSearchParams>(() => {
-    // Use nextSearchParams which is SSR-safe
-    if (nextSearchParams) {
+  // Use ref to prevent infinite loops when updating search params
+  const isUpdatingRef = useRef(false);
+
+  // Derive searchParams directly from URL on every render (URL is source of truth)
+  // Use string comparison to prevent unnecessary recalculations
+  const searchParamsStringRef = useRef<string>('');
+  const searchParams = useMemo<ServiceSearchParams>(() => {
+    const currentString = nextSearchParams?.toString() || '';
+    // Only recalculate if URL actually changed
+    if (currentString !== searchParamsStringRef.current) {
+      searchParamsStringRef.current = currentString;
+      if (nextSearchParams && nextSearchParams.toString()) {
+        const urlParams = new URLSearchParams();
+        nextSearchParams.forEach((value, key) => {
+          urlParams.set(key, value);
+        });
+        return deserializeSearchParams(urlParams);
+      }
+      return getDefaultSearchParams();
+    }
+    // Return cached params if URL didn't change
+    if (nextSearchParams && nextSearchParams.toString()) {
       const urlParams = new URLSearchParams();
       nextSearchParams.forEach((value, key) => {
         urlParams.set(key, value);
       });
-      const params = deserializeSearchParams(urlParams);
-      // If we have any meaningful params, use them; otherwise use defaults
-      if (
-        params.query ||
-        params.city ||
-        params.region ||
-        params.district ||
-        params.serviceType ||
-        params.businessType ||
-        params.regionId ||
-        params.communityId
-      ) {
-        return params;
-      }
+      return deserializeSearchParams(urlParams);
     }
     return getDefaultSearchParams();
-  });
-
-  // Sync with URL search params changes (from browser navigation or SSR)
-  useEffect(() => {
-    if (nextSearchParams) {
-      const urlParams = new URLSearchParams();
-      nextSearchParams.forEach((value, key) => {
-        urlParams.set(key, value);
-      });
-      const params = deserializeSearchParams(urlParams);
-      // Only update if different from current state
-      const currentSerialized = serializeSearchParams(searchParams).toString();
-      const urlSerialized = urlParams.toString();
-      if (currentSerialized !== urlSerialized) {
-        setSearchParams(params);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nextSearchParams?.toString()]);
+  }, [nextSearchParams]);
 
   // Update search parameters and sync with URL
   const updateSearch = useCallback(
@@ -72,30 +60,48 @@ export function useSearch() {
       updates: Partial<ServiceSearchParams>,
       options?: { replace?: boolean; resetPage?: boolean }
     ) => {
+      // Prevent infinite loops - don't update if already updating
+      if (isUpdatingRef.current) {
+        return;
+      }
+
+      // Mark that we're updating
+      isUpdatingRef.current = true;
+
       const newParams: ServiceSearchParams = {
         ...searchParams,
         ...updates,
         ...(options?.resetPage ? { page: 1 } : {}),
       };
 
-      setSearchParams(newParams);
-
       const serialized = serializeSearchParams(newParams);
-      const newUrl = `${pathname}?${serialized.toString()}`;
+      const urlString = serialized.toString();
+      const currentUrl = `${pathname}${nextSearchParams?.toString() ? `?${nextSearchParams.toString()}` : ''}`;
+      const newUrl = `${pathname}${urlString ? `?${urlString}` : ''}`;
+
+      // Don't update if URL is already the same (prevents unnecessary navigation)
+      if (currentUrl === newUrl) {
+        isUpdatingRef.current = false;
+        return;
+      }
 
       if (options?.replace) {
         router.replace(newUrl);
       } else {
         router.push(newUrl);
       }
+
+      // Reset flag after URL navigation completes
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 100);
     },
-    [searchParams, pathname, router]
+    [searchParams, pathname, router, nextSearchParams]
   );
 
   // Reset all filters
   const resetSearch = useCallback(() => {
     const defaultParams = getDefaultSearchParams();
-    setSearchParams(defaultParams);
     const serialized = serializeSearchParams(defaultParams);
     router.push(`${pathname}?${serialized.toString()}`);
   }, [pathname, router]);

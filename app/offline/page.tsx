@@ -2,16 +2,36 @@
 
 import { WifiOff, RefreshCw, Home } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { useRouter } from '@/i18n/routing';
 
+// Disable static generation for offline page (requires browser APIs)
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge'; // Use edge runtime to avoid SSR issues
+
 export default function OfflinePage() {
   const t = useTranslations('offline');
   const router = useRouter();
+  const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
 
   const handleRetry = () => {
-    if (navigator.onLine) {
+    if (isOnline) {
       router.refresh();
     } else {
       // Show message that still offline

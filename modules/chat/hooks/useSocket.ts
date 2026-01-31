@@ -63,7 +63,7 @@ export function useSocket() {
       const timeoutId = reconnectTimeoutRef.current;
       if (timeoutId) {
         clearTimeout(timeoutId);
-        reconnectTimeoutRef.current = null;
+        reconnectTimeoutRef.current = undefined;
       }
     };
   }, [accessToken]);

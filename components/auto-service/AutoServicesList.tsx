@@ -10,6 +10,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useDeleteAutoService } from '@/hooks/useAutoServiceMutations';
 import { useAvailableAutoServices } from '@/hooks/useAvailableAutoServices';
 import { useRouter } from '@/i18n/routing';
+import type { ServiceType } from '@/lib/constants/service-type.constants';
+import { SERVICE_TYPE } from '@/lib/constants/service-type.constants';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 
@@ -88,8 +90,8 @@ export function AutoServicesList() {
 
   // Memoize helper function to prevent unnecessary re-renders
   const getServiceTypeLabel = useCallback(
-    (serviceType: 'individual' | 'company') => {
-      return serviceType === 'company'
+    (serviceType: ServiceType) => {
+      return serviceType === SERVICE_TYPE.COMPANY
         ? t('create.company', { defaultValue: 'Company' })
         : t('create.individual', { defaultValue: 'Individual' });
     },

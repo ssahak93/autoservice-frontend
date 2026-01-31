@@ -171,7 +171,7 @@ export function CreateAutoService() {
                               ? service.companyName || 'Service'
                               : `${service.firstName} ${service.lastName}`.trim() || 'Service'
                           }
-                          isApproved={service.isApproved}
+                          isApproved={false}
                           size="sm"
                           variant="primary"
                         />

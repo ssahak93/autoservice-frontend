@@ -22,7 +22,14 @@ export function extractErrorMessage(error: unknown): string {
   }
 
   if (error && typeof error === 'object') {
-    const errorObj = error as Record<string, unknown>;
+    const errorObj = error as Record<string, unknown> & {
+      response?: {
+        data?: {
+          error?: { message?: string; details?: { message?: string } };
+          message?: string;
+        };
+      };
+    };
 
     // Check for backend error response format: { success: false, error: { message: string } }
     // Priority 1: error.response.data.error.message (most specific)
@@ -74,7 +81,14 @@ export function extractErrorMessage(error: unknown): string {
  */
 export function extractErrorCode(error: unknown): string | undefined {
   if (error && typeof error === 'object') {
-    const errorObj = error as Record<string, unknown>;
+    const errorObj = error as Record<string, unknown> & {
+      code?: string;
+      response?: {
+        data?: {
+          code?: string;
+        };
+      };
+    };
 
     if (errorObj.code && typeof errorObj.code === 'string') {
       return errorObj.code;
@@ -93,7 +107,12 @@ export function extractErrorCode(error: unknown): string | undefined {
  */
 export function extractErrorStatus(error: unknown): number | undefined {
   if (error && typeof error === 'object') {
-    const errorObj = error as Record<string, unknown>;
+    const errorObj = error as Record<string, unknown> & {
+      status?: number;
+      response?: {
+        status?: number;
+      };
+    };
 
     if (errorObj.status && typeof errorObj.status === 'number') {
       return errorObj.status;

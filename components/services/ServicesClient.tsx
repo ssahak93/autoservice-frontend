@@ -1,8 +1,9 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef, useEffect } from 'react';
 
 import { EmptyState } from '@/components/common/EmptyState';
 import { Pagination } from '@/components/common/Pagination';
@@ -39,15 +40,38 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
   const { searchParams, updateSearch, resetSearch, setFilter } = useSearch();
   const { data: serviceTypes } = useServiceTypes();
 
+  // CRITICAL: Store URL page in ref to prevent automatic redirects
+  // This ensures URL page is NEVER changed automatically
+  const urlPageRef = useRef<number>(searchParams.page || 1);
+
+  // Update ref when URL page changes (user navigation)
+  useEffect(() => {
+    urlPageRef.current = searchParams.page || 1;
+  }, [searchParams.page]);
+
   // Use React Query for client-side updates, with initial server data
   const { data, isLoading, error, isFetching } = useServices(searchParams, {
     initialData,
   });
 
-  // Use server data if available and no client updates yet
+  // Simple: use data from query or initial server data
   const displayData = data || initialData;
   const displayError = error || initialError;
   const displayLoading = isLoading && !initialData;
+
+  // Simple: sync page from URL (source of truth)
+  // IMPORTANT: Always preserve URL page, even if backend returns different page
+  // This prevents automatic redirect to page 1
+  // Use ref to ensure we always use the URL page, not backend page
+  const syncedDisplayData = displayData
+    ? {
+        ...displayData,
+        pagination: {
+          ...displayData.pagination,
+          page: urlPageRef.current, // Always use URL page from ref - never change it
+        },
+      }
+    : undefined;
 
   // Create service type name map for ActiveFilters
   const serviceTypeNames = useMemo(() => {
@@ -58,10 +82,12 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
   // Count active filters for mobile button badge
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    if (searchParams.businessType) count++;
+    if (searchParams.businessTypes && searchParams.businessTypes.length > 0)
+      count += searchParams.businessTypes.length;
+    if (searchParams.serviceTypes && searchParams.serviceTypes.length > 0)
+      count += searchParams.serviceTypes.length;
     if (searchParams.regionId) count++;
     if (searchParams.communityId) count++;
-    if (searchParams.serviceType) count++;
     if (searchParams.minRating && searchParams.minRating > 0) count++;
     if (searchParams.query) count++;
     if (searchParams.latitude && searchParams.longitude) count++;
@@ -73,22 +99,18 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
 
   const handleSearch = useCallback(
     (query: string) => {
+      // Only update URL when user actually searches (debounced or Enter)
       updateSearch({ query }, { resetPage: true });
     },
     [updateSearch]
   );
 
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      // Update query immediately for UI responsiveness
-      // Don't reset page here, let debounced search handle it
-      // Only update if value actually changed to avoid unnecessary updates
-      if (value !== (searchParams.query || '')) {
-        updateSearch({ query: value || undefined }, { resetPage: false });
-      }
-    },
-    [updateSearch, searchParams.query]
-  );
+  const handleSearchChange = useCallback((_value: string) => {
+    // IMPORTANT: Do NOT update URL on every keystroke
+    // Only update local state - let debounced search handle URL update
+    // This prevents multiple requests for each character typed
+    // SearchBarEnhanced will call onSearch with debounced value
+  }, []);
 
   const handleRemoveFilter = useCallback(
     (key: keyof typeof searchParams) => {
@@ -106,9 +128,14 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
 
   const handleFiltersChange = useCallback(
     (newFilters: ServiceSearchParams) => {
-      updateSearch(newFilters, { resetPage: true });
+      // IMPORTANT: Do NOT reset page automatically - preserve URL page
+      // Only update filters, keep current page from URL
+      const filtersWithoutPage = { ...newFilters };
+      // Preserve current page from URL - don't reset to 1
+      filtersWithoutPage.page = searchParams.page || 1;
+      updateSearch(filtersWithoutPage, { resetPage: false });
     },
-    [updateSearch]
+    [updateSearch, searchParams.page]
   );
 
   return (
@@ -163,7 +190,19 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
           />
 
           {/* Loading State */}
-          {displayLoading && <SearchResultsSkeleton count={6} layout="grid" />}
+          <AnimatePresence mode="wait">
+            {displayLoading && (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <SearchResultsSkeleton count={6} layout="grid" />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Error State */}
           {displayError && (
@@ -188,56 +227,71 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
           )}
 
           {/* Empty State */}
-          {displayData && displayData.data.length === 0 && !displayLoading && (
-            <EmptyState
-              icon={Search}
-              title={t('noServices')}
-              description={
-                hasActiveFilters
-                  ? t('tryAdjustingFilters', {
-                      defaultValue:
-                        'Try adjusting your filters or search terms to find more services.',
-                    })
-                  : t('noServicesDescription', {
-                      defaultValue:
-                        'No services found. Check back later or try a different search.',
-                    })
-              }
-              action={
-                hasActiveFilters
-                  ? {
-                      label: t('clearAllFilters', { defaultValue: 'Clear All Filters' }),
-                      onClick: resetSearch,
-                      variant: 'primary' as const,
-                    }
-                  : undefined
-              }
-              secondaryAction={
-                hasActiveFilters
-                  ? {
-                      label: t('browseAll', { defaultValue: 'Browse All Services' }),
-                      onClick: resetSearch,
-                    }
-                  : undefined
-              }
-            />
-          )}
+          <AnimatePresence>
+            {syncedDisplayData && syncedDisplayData.data.length === 0 && !displayLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <EmptyState
+                  icon={Search}
+                  title={t('noServices')}
+                  description={
+                    hasActiveFilters
+                      ? t('tryAdjustingFilters', {
+                          defaultValue:
+                            'Try adjusting your filters or search terms to find more services.',
+                        })
+                      : t('noServicesDescription', {
+                          defaultValue:
+                            'No services found. Check back later or try a different search.',
+                        })
+                  }
+                  action={
+                    hasActiveFilters
+                      ? {
+                          label: t('clearAllFilters', { defaultValue: 'Clear All Filters' }),
+                          onClick: resetSearch,
+                          variant: 'primary' as const,
+                        }
+                      : undefined
+                  }
+                  secondaryAction={
+                    hasActiveFilters
+                      ? {
+                          label: t('browseAll', { defaultValue: 'Browse All Services' }),
+                          onClick: resetSearch,
+                        }
+                      : undefined
+                  }
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Results */}
-          {displayData && displayData.data.length > 0 && (
+          {syncedDisplayData && syncedDisplayData.data.length > 0 && (
             <>
               <div className="flex items-center justify-between">
                 <div className="text-sm text-neutral-600">
-                  {t('foundServices', { count: displayData.pagination.total })}
+                  {t('foundServices', { count: syncedDisplayData.pagination.total })}
                 </div>
                 {isFetching && (
-                  <div className="text-xs text-neutral-500">
-                    {t('updating', { defaultValue: 'Updating...' })}
+                  <div className="flex items-center gap-2 text-xs text-neutral-500">
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
+                    <span>{t('updating', { defaultValue: 'Updating...' })}</span>
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
-                {displayData.data
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2"
+              >
+                {syncedDisplayData.data
                   .filter((service: AutoService) => !service.isBlocked) // Filter out blocked services
                   .map((service: AutoService, index: number) => {
                     // Extract distance from search results if available
@@ -255,20 +309,33 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
                       />
                     );
                   })}
-              </div>
+              </motion.div>
 
               {/* Pagination */}
-              {displayData.pagination.totalPages > 1 && (
+              {syncedDisplayData.pagination.totalPages > 1 && (
                 <div className="mt-8">
                   <Pagination
-                    currentPage={displayData.pagination.page}
-                    totalPages={displayData.pagination.totalPages}
+                    currentPage={syncedDisplayData.pagination.page}
+                    totalPages={syncedDisplayData.pagination.totalPages}
                     onPageChange={handlePageChange}
                   />
                 </div>
               )}
             </>
           )}
+
+          {/* Show pagination if page is out of range - allow navigation */}
+          {syncedDisplayData &&
+            syncedDisplayData.pagination.totalPages > 0 &&
+            (searchParams.page || 1) > syncedDisplayData.pagination.totalPages && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={searchParams.page || 1}
+                  totalPages={syncedDisplayData.pagination.totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
         </div>
       </div>
     </div>

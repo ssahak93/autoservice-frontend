@@ -3,6 +3,7 @@
  * Updated for new architecture: Region -> Community (city/village/district)
  */
 
+import type { Locale } from '@/i18n/routing';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 
@@ -59,13 +60,17 @@ export const locationsService = {
   async reverseGeocodeAddress(
     latitude: number,
     longitude: number,
-    locale: 'hy' | 'en' | 'ru' = 'en'
+    locale: Locale = 'en'
   ): Promise<{
     address: string;
     addressHy: string | null;
     addressRu: string | null;
   }> {
-    const response = await apiClient.get(
+    const response = await apiClient.get<{
+      address: string;
+      addressHy: string | null;
+      addressRu: string | null;
+    }>(
       `${API_ENDPOINTS.GEOCODING.REVERSE}?latitude=${latitude}&longitude=${longitude}&locale=${locale}`
     );
     return response.data;

@@ -135,8 +135,11 @@ export function LeaveReviewModal({ isOpen, onClose, visit }: LeaveReviewModalPro
                       })}
                     </p>
                     <p className="mt-1 text-sm text-primary-700">
-                      {new Date(visit.scheduledDate || visit.preferredDate).toLocaleDateString()} at{' '}
-                      {visit.scheduledTime || visit.preferredTime}
+                      {(() => {
+                        const date = visit.scheduledDate || visit.preferredDate;
+                        return date ? new Date(date).toLocaleDateString() : '';
+                      })()}{' '}
+                      at {visit.scheduledTime || visit.preferredTime}
                     </p>
                     {visit.autoServiceProfile?.autoService && (
                       <p className="mt-1 text-xs text-primary-600">

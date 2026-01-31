@@ -25,7 +25,7 @@ const nextConfig = {
   // Compress output
   compress: true,
   // Optimize production builds
-  swcMinify: true,
+  // swcMinify: true, // Removed in Next.js 16 - minification is enabled by default
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns'],

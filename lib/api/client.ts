@@ -22,6 +22,26 @@ class ApiClient {
         'Content-Type': 'application/json',
       },
       timeout: 30000, // 30 seconds timeout
+      paramsSerializer: (params) => {
+        // Custom serializer to handle arrays without [] brackets
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+          if (value === undefined || value === null) {
+            return;
+          }
+          if (Array.isArray(value)) {
+            // For arrays, append each value with the same key (no brackets)
+            value.forEach((item) => {
+              if (item !== undefined && item !== null) {
+                searchParams.append(key, String(item));
+              }
+            });
+          } else {
+            searchParams.append(key, String(value));
+          }
+        });
+        return searchParams.toString();
+      },
     });
 
     // Request interceptor for auth token, locale, and optimization

@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import { getTranslations } from 'next-intl/server';
 
+import { ClientOnlySections } from '@/components/home/ClientOnlySections';
 import { HeroSearch } from '@/components/home/HeroSearch';
 import { Link } from '@/i18n/routing';
 import { SkeletonLoading } from '@/lib/utils/lazy-loading';
@@ -14,22 +15,6 @@ const RecommendationsSection = dynamic(
   {
     loading: () => <SkeletonLoading className="h-96 w-full" />,
     ssr: true,
-  }
-);
-
-const RecentSearches = dynamic(
-  () => import('@/components/home/RecentSearches').then((mod) => ({ default: mod.RecentSearches })),
-  {
-    loading: () => <SkeletonLoading className="h-48 w-full" />,
-    ssr: false, // Client-side only (requires user auth state)
-  }
-);
-
-const RecentViews = dynamic(
-  () => import('@/components/home/RecentViews').then((mod) => ({ default: mod.RecentViews })),
-  {
-    loading: () => <SkeletonLoading className="h-48 w-full" />,
-    ssr: false, // Client-side only (requires user auth state)
   }
 );
 
@@ -85,14 +70,7 @@ export default async function HomePage({ params }: HomePageProps) {
       {/* History Section */}
       <div className="relative z-10 border-t border-neutral-200 bg-neutral-50 py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div>
-              <RecentSearches />
-            </div>
-            <div>
-              <RecentViews />
-            </div>
-          </div>
+          <ClientOnlySections />
         </div>
       </div>
     </div>

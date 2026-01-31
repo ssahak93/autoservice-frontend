@@ -16,8 +16,18 @@ export function useUpdateServiceInfo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ autoServiceId, data }: { autoServiceId: string; data: unknown }) =>
-      autoServiceProfileService.updateServiceInfo(autoServiceId, data),
+    mutationFn: ({
+      autoServiceId,
+      data,
+    }: {
+      autoServiceId: string;
+      data: {
+        companyName?: string;
+        firstName?: string;
+        lastName?: string;
+        avatarFileId?: string;
+      };
+    }) => autoServiceProfileService.updateServiceInfo(autoServiceId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
       queryClient.invalidateQueries({ queryKey: ['availableAutoServices'] });
