@@ -166,7 +166,7 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
       const allIds = [...new Set([...currentIds, ...newPhotoIds])];
 
       await updateProfilePhotosMutation.mutateAsync({ newPhotoIds: allIds, type });
-    } catch (error) {
+    } catch {
       // Error is handled in mutation
     } finally {
       setUploadingType(null);
@@ -311,6 +311,7 @@ export function PhotoGallery({ profile: initialProfile }: PhotoGalleryProps) {
                 fill
                 className="pointer-events-none object-cover"
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                loading="eager"
                 unoptimized
                 draggable={false}
               />

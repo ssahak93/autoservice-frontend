@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { autoServicesService } from '@/lib/services/auto-services.service';
 import { teamService, type TeamMember } from '@/lib/services/team.service';
+import { getAvatarUrl } from '@/lib/utils/file';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -77,7 +78,7 @@ export function TeamManagementContent() {
         lastName: service.lastName ?? undefined,
         avatarFile: service.avatarFile
           ? {
-              fileUrl: service.avatarFile.fileUrl,
+              fileUrl: getAvatarUrl(service) || '',
             }
           : undefined,
         hasProfile: service.hasProfile,

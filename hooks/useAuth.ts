@@ -23,6 +23,7 @@ export const useAuth = () => {
 
   // Get current user - only fetch if we have a token (to validate it)
   // But don't fetch if user is already loaded (to avoid unnecessary requests)
+  // Also refetch if user exists but emailVerified might have changed
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
@@ -50,8 +51,11 @@ export const useAuth = () => {
     // Only fetch if:
     // 1. We have a token (to validate it), AND
     // 2. User is not already loaded (to avoid unnecessary requests)
-    enabled: hasToken && !user,
+    // OR if user exists but emailVerified is false (to check if it was verified)
+    enabled: hasToken && (!user || (user && !user.emailVerified)),
     retry: false,
+    // Refetch every 30 seconds if email is not verified (to check if user verified it)
+    refetchInterval: user && !user.emailVerified ? 30000 : false,
   });
 
   // Login mutation
@@ -179,12 +183,12 @@ export const useAuth = () => {
       await authService.logout();
       queryClient.clear();
       showToast(t('logoutSuccess', { defaultValue: 'Logged out successfully' }), 'success');
-      router.push('/login');
-    } catch (error) {
+      router.push('/auth/login');
+    } catch {
       // Even if logout fails, clear local state
       queryClient.clear();
       showToast(t('logoutSuccess', { defaultValue: 'Logged out successfully' }), 'success');
-      router.push('/login');
+      router.push('/auth/login');
     }
   };
 

@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { Link } from '@/i18n/routing';
 import { historyService } from '@/lib/services/history.service';
+import { getAvatarUrl } from '@/lib/utils/file';
 
 /**
  * RecentViews Component
@@ -57,7 +58,7 @@ export function RecentViews() {
 
           const name =
             service.companyName || `${service.firstName} ${service.lastName}` || 'Service';
-          const avatarUrl = service.avatarFile?.fileUrl;
+          const avatarUrl = getAvatarUrl(service);
 
           return (
             <Link

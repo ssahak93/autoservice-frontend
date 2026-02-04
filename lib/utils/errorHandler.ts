@@ -239,6 +239,16 @@ export function logError(error: unknown, context?: string): void {
     return;
   }
 
+  // Don't log silent errors (optional endpoints like /notifications/stats)
+  if (
+    error &&
+    typeof error === 'object' &&
+    'silent' in error &&
+    (error as { silent?: boolean }).silent
+  ) {
+    return;
+  }
+
   const errorInfo: ErrorInfo = {
     message: extractErrorMessage(error),
     code: extractErrorCode(error),

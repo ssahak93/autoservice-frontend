@@ -120,7 +120,7 @@ export default function InvitePage() {
   const handleAccept = async () => {
     if (!isAuthenticated) {
       // Redirect to login with return URL
-      router.push(`/login?redirect=${encodeURIComponent(`/invite/${code}`)}`);
+      router.push(`/auth/login?redirect=${encodeURIComponent(`/invite/${code}`)}`);
       return;
     }
 

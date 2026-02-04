@@ -69,6 +69,7 @@ export const notificationsService = {
     } catch (error) {
       // If request fails (e.g., 401, 404, 500), return default stats as fallback
       // This prevents UI errors and provides graceful degradation
+
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status?: number } };
         if (
@@ -76,6 +77,7 @@ export const notificationsService = {
           axiosError.response?.status === 404 ||
           axiosError.response?.status === 500
         ) {
+          // Return default stats silently - don't log errors for optional endpoints
           return {
             total: 0,
             unread: 0,

@@ -9,6 +9,7 @@ import { ServiceAvatar } from '@/components/auto-service/ServiceAvatar';
 import { useAuth } from '@/hooks/useAuth';
 import { autoServicesService } from '@/lib/services/auto-services.service';
 import { cn } from '@/lib/utils/cn';
+import { getAvatarUrl } from '@/lib/utils/file';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 
 export function AutoServiceSelector() {
@@ -46,9 +47,9 @@ export function AutoServiceSelector() {
         companyName: service.companyName ?? undefined,
         firstName: service.firstName ?? undefined,
         lastName: service.lastName ?? undefined,
-        avatarFile: service.avatarFile
+        avatarFile: getAvatarUrl(service)
           ? {
-              fileUrl: service.avatarFile.fileUrl,
+              fileUrl: getAvatarUrl(service)!,
             }
           : undefined,
         hasProfile: service.hasProfile,

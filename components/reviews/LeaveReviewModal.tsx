@@ -3,13 +3,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { useCreateReview } from '@/hooks/useReviews';
+import { formatDate } from '@/lib/utils/date';
+import { handleMutationError, handleMutationSuccess } from '@/lib/utils/toast';
+import { formatServiceName } from '@/lib/utils/user';
 import { useUIStore } from '@/stores/uiStore';
 import type { Visit } from '@/types';
 
@@ -34,6 +37,7 @@ type LeaveReviewFormData = z.infer<ReturnType<typeof leaveReviewSchemaFactory>>;
 
 export function LeaveReviewModal({ isOpen, onClose, visit }: LeaveReviewModalProps) {
   const t = useTranslations('reviews');
+  const locale = useLocale();
   const showToast = useUIStore((state) => state.showToast);
   const [hoveredRating, setHoveredRating] = useState(0);
   const createReview = useCreateReview();
@@ -63,26 +67,11 @@ export function LeaveReviewModal({ isOpen, onClose, visit }: LeaveReviewModalPro
         rating: data.rating,
         comment: data.comment,
       });
-      showToast(t('reviewCreated'), 'success');
+      handleMutationSuccess(t('reviewCreated'), showToast);
       reset();
       onClose();
     } catch (error: unknown) {
-      if (
-        error &&
-        typeof error === 'object' &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) {
-        showToast(error.response.data.message, 'error');
-      } else {
-        showToast(t('reviewError'), 'error');
-      }
+      handleMutationError(error, t('reviewError'), showToast);
     }
   };
 
@@ -110,9 +99,9 @@ export function LeaveReviewModal({ isOpen, onClose, visit }: LeaveReviewModalPro
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 px-4"
           >
-            <div className="glass-light mx-4 rounded-2xl p-6 shadow-2xl">
+            <div className="glass-light max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-2xl">
               {/* Header */}
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="font-display text-2xl font-semibold">{t('writeReview')}</h2>
@@ -137,14 +126,17 @@ export function LeaveReviewModal({ isOpen, onClose, visit }: LeaveReviewModalPro
                     <p className="mt-1 text-sm text-primary-700">
                       {(() => {
                         const date = visit.scheduledDate || visit.preferredDate;
-                        return date ? new Date(date).toLocaleDateString() : '';
+                        return date ? formatDate(date, locale) : '';
                       })()}{' '}
                       at {visit.scheduledTime || visit.preferredTime}
                     </p>
                     {visit.autoServiceProfile?.autoService && (
                       <p className="mt-1 text-xs text-primary-600">
-                        {visit.autoServiceProfile.autoService.companyName ||
-                          `${visit.autoServiceProfile.autoService.firstName || ''} ${visit.autoServiceProfile.autoService.lastName || ''}`.trim()}
+                        {formatServiceName(
+                          visit.autoServiceProfile.autoService.companyName,
+                          visit.autoServiceProfile.autoService.firstName,
+                          visit.autoServiceProfile.autoService.lastName
+                        )}
                       </p>
                     )}
                   </div>

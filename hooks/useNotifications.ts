@@ -55,20 +55,10 @@ export function useNotificationStats() {
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
     refetchInterval: 30000, // Poll every 30 seconds
-    retry: (failureCount, error) => {
-      // Don't retry on 401/404/500 errors (unauthorized or service will return default stats)
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { status?: number } };
-        if (
-          axiosError.response?.status === 401 ||
-          axiosError.response?.status === 404 ||
-          axiosError.response?.status === 500
-        ) {
-          return false;
-        }
-      }
-      // Retry other errors (network errors, etc.) up to 3 times
-      return failureCount < 3;
+    retry: false, // Don't retry - service will return default stats on error
+    // Suppress error logging for this query as 401 is expected for unauthenticated users
+    meta: {
+      errorMessage: undefined, // Prevent React Query from logging errors
     },
   });
 }

@@ -35,12 +35,12 @@ export function HeaderActions({ isAuthenticated, userName, onLogout }: HeaderAct
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <Link href="/login">
+          <Link href="/auth/login">
             <Button variant="ghost" size="sm">
               {t('login')}
             </Button>
           </Link>
-          <Link href="/register">
+          <Link href="/auth/register">
             <Button size="sm">{t('signUp')}</Button>
           </Link>
         </div>

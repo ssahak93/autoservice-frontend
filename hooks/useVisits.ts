@@ -8,10 +8,17 @@ import { visitsService } from '@/lib/services/visits.service';
 import { useUIStore } from '@/stores/uiStore';
 import type { CreateVisitRequest, Visit } from '@/types';
 
-export const useVisits = (params?: { status?: string; page?: number; limit?: number }) => {
+export const useVisits = (
+  params?: { status?: string; page?: number; limit?: number },
+  options?: { enabled?: boolean }
+) => {
+  // Check if user is authenticated
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+
   return useQuery({
     queryKey: queryKeys.visits(params),
     queryFn: () => visitsService.getList(params),
+    enabled: options?.enabled !== false && hasToken, // Only fetch if user is authenticated
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
     placeholderData: (previousData) => previousData,

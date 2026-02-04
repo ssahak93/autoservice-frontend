@@ -1,5 +1,7 @@
 'use client';
 
+import { getImageUrl } from '@/lib/utils/file';
+import { formatServiceName } from '@/lib/utils/user';
 import type { AutoService } from '@/types';
 
 interface ServiceSchemaProps {
@@ -7,14 +9,19 @@ interface ServiceSchemaProps {
 }
 
 export function ServiceSchema({ service }: ServiceSchemaProps) {
-  const name = service.companyName || `${service.firstName} ${service.lastName}`;
+  const name = formatServiceName(service.companyName, service.firstName, service.lastName);
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'https://autoserviceconnect.am');
 
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name,
     description: service.description,
-    image: service.avatarFile?.fileUrl,
+    image: getImageUrl(service, `${baseUrl}/og-image.jpg`),
     address: {
       '@type': 'PostalAddress',
       streetAddress: service.address,

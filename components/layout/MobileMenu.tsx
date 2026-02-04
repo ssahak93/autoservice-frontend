@@ -99,14 +99,14 @@ export function MobileMenu({
         {!isAuthenticated && (
           <div className="mt-2 space-y-2 border-t border-neutral-200 pt-2">
             <Link
-              href="/login"
+              href="/auth/login"
               className="block rounded-lg px-4 py-2 text-center text-neutral-700 transition-colors hover:bg-neutral-100"
               onClick={handleLinkClick}
             >
               {t('login')}
             </Link>
             <Link
-              href="/register"
+              href="/auth/register"
               className="block rounded-lg bg-primary-600 px-4 py-2 text-center text-white transition-colors hover:bg-primary-700"
               onClick={handleLinkClick}
             >

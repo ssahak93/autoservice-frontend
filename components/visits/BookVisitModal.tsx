@@ -2,8 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-// Import only needed functions from date-fns for tree shaking
-import { format } from 'date-fns/format';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -14,10 +12,12 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { TimePicker } from '@/components/ui/TimePicker';
+import { useEmailVerification } from '@/hooks/useEmailVerification';
 import { useModal } from '@/hooks/useModal';
 import { useCreateVisit, useUpdateVisit } from '@/hooks/useVisits';
 import { availabilityService } from '@/lib/services/availability.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
+import { formatDateISO } from '@/lib/utils/date';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -75,12 +75,14 @@ export function BookVisitModal({
   onSuccess: externalOnSuccess,
 }: BookVisitModalProps) {
   const t = useTranslations('visits');
+  const tAuth = useTranslations('auth');
   const { mutate: createVisit, isPending: isCreating } = useCreateVisit();
   const { mutate: updateVisit, isPending: isUpdating } = useUpdateVisit();
   const { isOpen: internalIsOpen, open, close: internalClose, closeButtonRef } = useModal();
   const variants = getAnimationVariants();
   const bookVisitSchema = createBookVisitSchema(t);
   const { user: _user } = useAuthStore();
+  const { isEmailVerificationRequired, redirectToVerification } = useEmailVerification();
   const { showToast } = useUIStore();
 
   // Use external isOpen/onClose in edit mode, internal in create mode
@@ -107,11 +109,8 @@ export function BookVisitModal({
 
   // Check if this is user's own service (only in create mode)
   // Use useMemo to prevent hydration mismatch
-  const startDate = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
-  const endDate = useMemo(
-    () => format(new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-    []
-  );
+  const startDate = useMemo(() => formatDateISO(new Date()), []);
+  const endDate = useMemo(() => formatDateISO(new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)), []);
 
   const { data: availability, isLoading: isLoadingAvailability } = useQuery({
     queryKey: ['availability', profileIdForAvailability, startDate, endDate],
@@ -138,6 +137,19 @@ export function BookVisitModal({
     // Wait for availability check to complete
     if (isLoadingAvailability) {
       return; // Don't open modal while checking
+    }
+
+    // Check if email verification is required
+    if (isEmailVerificationRequired) {
+      showToast(
+        tAuth('emailVerificationRequiredDescription', {
+          defaultValue:
+            'Please verify your email address to book a visit. We sent a verification link to your email.',
+        }),
+        'warning'
+      );
+      redirectToVerification();
+      return;
     }
 
     if (isOwnService) {
@@ -172,7 +184,7 @@ export function BookVisitModal({
       if (visit.scheduledDate) {
         const date = new Date(visit.scheduledDate);
         setSelectedDate(date);
-        setValue('scheduledDate', format(date, 'yyyy-MM-dd'));
+        setValue('scheduledDate', formatDateISO(date));
       }
       if (visit.scheduledTime) {
         setSelectedTime(visit.scheduledTime);
@@ -185,6 +197,19 @@ export function BookVisitModal({
   }, [isEditMode, visit, setValue]);
 
   const onSubmit = (data: BookVisitFormData) => {
+    // Check if email verification is required (only in create mode)
+    if (!isEditMode && isEmailVerificationRequired) {
+      showToast(
+        tAuth('emailVerificationRequiredDescription', {
+          defaultValue:
+            'Please verify your email address to book a visit. We sent a verification link to your email.',
+        }),
+        'warning'
+      );
+      redirectToVerification();
+      return;
+    }
+
     if (isEditMode) {
       // Edit mode - update existing visit
       if (!visitId) {
@@ -263,7 +288,7 @@ export function BookVisitModal({
   const handleDateChange = (date: Date | null) => {
     setSelectedDate(date);
     if (date) {
-      const formattedDate = format(date, 'yyyy-MM-dd');
+      const formattedDate = formatDateISO(date);
       setValue('scheduledDate', formattedDate, { shouldValidate: true });
     } else {
       setValue('scheduledDate', '', { shouldValidate: true });
@@ -288,15 +313,41 @@ export function BookVisitModal({
     <>
       {/* Only show button in create mode */}
       {!isEditMode && (
-        <Button onClick={handleOpen} disabled={isLoadingAvailability}>
-          {isLoadingAvailability
-            ? t('loading', { defaultValue: 'Loading...' })
-            : t('bookVisit', { defaultValue: 'Book Visit' })}
-        </Button>
+        <>
+          {isEmailVerificationRequired ? (
+            <div className="rounded-lg border border-warning-200 bg-warning-50 p-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-900/20 dark:text-warning-200">
+              <p className="font-medium">
+                {tAuth('emailVerificationRequired', {
+                  defaultValue: 'Email Verification Required',
+                })}
+              </p>
+              <p className="mt-1 text-xs">
+                {tAuth('emailVerificationRequiredDescription', {
+                  defaultValue:
+                    'Please verify your email address to book a visit. We sent a verification link to your email.',
+                })}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 w-full"
+                onClick={redirectToVerification}
+              >
+                {tAuth('resendVerificationEmail', { defaultValue: 'Verify Email' })}
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={handleOpen} disabled={isLoadingAvailability}>
+              {isLoadingAvailability
+                ? t('loading', { defaultValue: 'Loading...' })
+                : t('bookVisit', { defaultValue: 'Book Visit' })}
+            </Button>
+          )}
+        </>
       )}
 
       <AnimatePresence>
-        {isOpen && (!isEditMode ? !isOwnService : true) && (
+        {isOpen && (!isEditMode ? !isOwnService && !isEmailVerificationRequired : true) && (
           <>
             {/* Backdrop */}
             <motion.div
@@ -370,7 +421,7 @@ export function BookVisitModal({
                       const availableTimesForDate =
                         availability && typeof availability !== 'string' && selectedDate
                           ? availability.availableSlots.find(
-                              (slot) => slot.date === format(selectedDate, 'yyyy-MM-dd')
+                              (slot) => slot.date === formatDateISO(selectedDate)
                             )?.times || []
                           : [];
 

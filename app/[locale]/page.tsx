@@ -51,7 +51,7 @@ export default async function HomePage({ params }: HomePageProps) {
               {t('browseServices')}
             </Link>
             <Link
-              href="/login"
+              href="/auth/login"
               className="rounded-lg bg-white px-8 py-4 font-semibold text-primary-600 transition-transform hover:scale-105"
             >
               {t('getStarted')}

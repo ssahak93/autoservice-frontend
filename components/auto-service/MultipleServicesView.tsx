@@ -22,6 +22,8 @@ import { Button } from '@/components/ui/Button';
 import { useAutoServiceProfile } from '@/hooks/useAutoServiceProfile';
 import { useAvailableAutoServices } from '@/hooks/useAvailableAutoServices';
 import { getAnimationVariants } from '@/lib/utils/animations';
+import { getAvatarUrl } from '@/lib/utils/file';
+import { formatServiceName } from '@/lib/utils/user';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 
 import { ApprovalStatusBanner } from './ApprovalStatusBanner';
@@ -259,16 +261,19 @@ export function MultipleServicesView() {
               <div className="flex items-start gap-6">
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
-                  {autoService.avatarFile ? (
+                  {getAvatarUrl(autoService) ? (
                     <div className="relative h-24 w-24 overflow-hidden rounded-2xl shadow-xl ring-4 ring-white dark:ring-gray-800">
                       <Image
-                        src={autoService.avatarFile.fileUrl}
+                        src={getAvatarUrl(autoService)!}
                         alt={
                           autoService.companyName ||
                           `${autoService.firstName} ${autoService.lastName}`
                         }
                         fill
                         className="object-cover"
+                        loading="eager"
+                        unoptimized
+                        sizes="96px"
                       />
                     </div>
                   ) : (
@@ -290,9 +295,12 @@ export function MultipleServicesView() {
                 {/* Details */}
                 <div className="flex-1">
                   <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-                    {autoService.companyName ||
-                      `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim() ||
-                      t('myService', { defaultValue: 'My Service' })}
+                    {formatServiceName(
+                      autoService.companyName,
+                      autoService.firstName,
+                      autoService.lastName,
+                      t('myService', { defaultValue: 'My Service' })
+                    )}
                   </h1>
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <span className="flex items-center gap-1.5">

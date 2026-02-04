@@ -1,11 +1,9 @@
 'use client';
 
-// Import only needed functions from date-fns for tree shaking
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns/format';
 import { Flag, Star } from 'lucide-react';
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -14,6 +12,11 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useReportReview } from '@/hooks/useReviews';
+import { formatDateShort } from '@/lib/utils/date';
+import { getAvatarUrl } from '@/lib/utils/file';
+import { getReviewErrorMessage } from '@/lib/utils/review-error-handler';
+import { handleMutationSuccess } from '@/lib/utils/toast';
+import { formatUserName } from '@/lib/utils/user';
 import { useUIStore } from '@/stores/uiStore';
 import type { Review } from '@/types';
 
@@ -32,6 +35,7 @@ type ReportFormData = z.infer<typeof reportSchema>;
 
 export function ReviewCard({ review }: ReviewCardProps) {
   const t = useTranslations('reviews');
+  const locale = useLocale();
   const { user } = useAuth();
   const { showToast } = useUIStore();
   const [showReportDialog, setShowReportDialog] = useState(false);
@@ -46,9 +50,10 @@ export function ReviewCard({ review }: ReviewCardProps) {
     resolver: zodResolver(reportSchema),
   });
 
-  const driverName = review.driver
-    ? `${review.driver.firstName} ${review.driver.lastName}`
-    : t('anonymous');
+  const driverName =
+    review.userName ||
+    formatUserName(review.driver?.firstName, review.driver?.lastName, '') ||
+    t('anonymous');
 
   const handleReport = () => {
     setShowReportDialog(true);
@@ -65,10 +70,14 @@ export function ReviewCard({ review }: ReviewCardProps) {
         reviewId: review.id,
         reason: data.reason,
       });
-      showToast(t('reportSubmitted', { defaultValue: 'Review reported successfully' }), 'success');
+      handleMutationSuccess(
+        t('reportSubmitted', { defaultValue: 'Review reported successfully' }),
+        showToast
+      );
       handleCloseDialog();
     } catch (error) {
-      showToast(t('reportError', { defaultValue: 'Error reporting review' }), 'error');
+      const errorMessage = getReviewErrorMessage(error, t);
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -78,9 +87,9 @@ export function ReviewCard({ review }: ReviewCardProps) {
         <div className="flex items-start gap-4">
           {/* Avatar */}
           <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-neutral-200">
-            {review.driver?.avatarFile?.fileUrl ? (
+            {review.userAvatar || getAvatarUrl(review.driver) ? (
               <Image
-                src={review.driver.avatarFile.fileUrl}
+                src={review.userAvatar || getAvatarUrl(review.driver) || ''}
                 alt={driverName}
                 fill
                 className="object-cover"
@@ -116,12 +125,12 @@ export function ReviewCard({ review }: ReviewCardProps) {
             </div>
 
             {/* Date */}
-            <p className="text-sm text-neutral-500">{format(new Date(review.createdAt), 'PP')}</p>
+            <p className="text-sm text-neutral-500">{formatDateShort(review.createdAt, locale)}</p>
           </div>
         </div>
 
         {/* Report Button */}
-        {user && user.id !== review.driverId && (
+        {user && review.userName && !review.reportedByCurrentUser && (
           <Button
             variant="ghost"
             size="sm"
@@ -131,6 +140,16 @@ export function ReviewCard({ review }: ReviewCardProps) {
           >
             <Flag className="h-4 w-4" />
           </Button>
+        )}
+        {/* Already Reported Indicator */}
+        {user && review.userName && review.reportedByCurrentUser && (
+          <div
+            className="flex items-center gap-1 text-xs text-neutral-400"
+            title={t('alreadyReported', { defaultValue: 'You have already reported this review' })}
+          >
+            <Flag className="h-4 w-4 fill-neutral-400" />
+            <span className="hidden sm:inline">{t('reported', { defaultValue: 'Reported' })}</span>
+          </div>
         )}
       </div>
 

@@ -1,17 +1,17 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns/format';
 import { isSameDay } from 'date-fns/isSameDay';
 import { isToday } from 'date-fns/isToday';
 import { isYesterday } from 'date-fns/isYesterday';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
+import { formatDateSimple } from '@/lib/utils/date';
 
 import { useChatMessages, useAdminConversationMessages, useMarkAsRead } from '../hooks/useChat';
 import { useChatRealtime } from '../hooks/useChatRealtime';
@@ -22,6 +22,7 @@ import { MessageBubble } from './MessageBubble';
 interface MessageListProps {
   visitId?: string | null;
   conversationId?: string | null;
+  isReadOnly?: boolean;
 }
 
 interface GroupedMessage {
@@ -32,8 +33,9 @@ interface GroupedMessage {
   dateSeparator?: string;
 }
 
-export function MessageList({ visitId, conversationId }: MessageListProps) {
+export function MessageList({ visitId, conversationId, isReadOnly = false }: MessageListProps) {
   const { user } = useAuth();
+  const locale = useLocale();
   const { typingUsers, isConnected, socket } = useChatRealtime(
     visitId || null,
     conversationId || null,
@@ -90,7 +92,7 @@ export function MessageList({ visitId, conversationId }: MessageListProps) {
         } else if (isYesterday(messageDate)) {
           dateSeparator = t('yesterday', { defaultValue: 'Yesterday' });
         } else {
-          dateSeparator = format(messageDate, 'dd MMMM yyyy');
+          dateSeparator = formatDateSimple(messageDate, locale);
         }
       }
 
@@ -100,7 +102,8 @@ export function MessageList({ visitId, conversationId }: MessageListProps) {
         prevMessageDate &&
         messageDate.getTime() - prevMessageDate.getTime() < GROUP_TIME_THRESHOLD;
 
-      const showAvatar = !isGrouped || !prevMessage || prevMessage.senderId !== message.senderId;
+      // Show avatar for first message in group (not grouped) - for both own and other messages
+      const showAvatar = !isGrouped;
       const showName = !isGrouped && message.senderId !== user?.id;
 
       grouped.push({
@@ -113,7 +116,7 @@ export function MessageList({ visitId, conversationId }: MessageListProps) {
     });
 
     return grouped;
-  }, [messages, user?.id, t]);
+  }, [messages, user?.id, t, locale]);
 
   useEffect(() => {
     if (!isInitialLoading && messages.length > 0 && messagesContainerRef.current && isInitialLoad) {
@@ -330,6 +333,7 @@ export function MessageList({ visitId, conversationId }: MessageListProps) {
                 showAvatar={grouped.showAvatar}
                 showName={grouped.showName}
                 isGrouped={grouped.isGrouped}
+                isReadOnly={isReadOnly}
               />
             </motion.div>
           </div>
@@ -361,18 +365,14 @@ export function MessageList({ visitId, conversationId }: MessageListProps) {
             {Array.from(typingUsers.entries())
               .map(([_userId, userInfo], index, array) => {
                 let displayName = 'Someone';
-                if (userInfo.autoService && userInfo.teamMember) {
-                  const serviceName =
-                    userInfo.autoService.companyName ||
-                    `${userInfo.autoService.firstName || ''} ${userInfo.autoService.lastName || ''}`.trim() ||
-                    'Auto Service';
-                  displayName = `${userInfo.teamMember.firstName || 'Team member'} (${serviceName})`;
-                } else if (userInfo.autoService) {
+                // Always show only user name, not auto service info
+                if (userInfo.teamMember) {
+                  // If team member, show team member name
                   displayName =
-                    userInfo.autoService.companyName ||
-                    `${userInfo.autoService.firstName || ''} ${userInfo.autoService.lastName || ''}`.trim() ||
-                    'Auto Service';
+                    `${userInfo.teamMember.firstName || ''} ${userInfo.teamMember.lastName || ''}`.trim() ||
+                    'Team member';
                 } else if (userInfo.firstName || userInfo.lastName) {
+                  // Show user name (customer or owner)
                   displayName =
                     `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || 'User';
                 }

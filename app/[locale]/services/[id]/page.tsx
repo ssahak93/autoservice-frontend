@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { ServiceBreadcrumbs } from '@/components/common/ServiceBreadcrumbs';
+import { ReviewList } from '@/components/reviews/ReviewList';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { ServiceSchema } from '@/components/seo/ServiceSchema';
 import { ServiceDetailClient } from '@/components/services/ServiceDetailClient';
@@ -86,6 +87,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                   className="object-cover"
                   sizes="128px"
                   priority
+                  loading="eager"
                   unoptimized
                 />
               ) : (
@@ -264,9 +266,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
               </div>
             )}
 
-            {/* Reviews Section - Client component for interactivity */}
+            {/* Reviews Section */}
             <div className="glass-light rounded-xl p-4 md:rounded-2xl md:p-8">
-              <ServiceDetailClient serviceId={id} profileId={id} />
+              <ReviewList serviceId={id} />
             </div>
           </div>
 

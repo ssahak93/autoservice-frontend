@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { z } from 'zod';
 
-import { PHONE_PATTERN, PHONE_ERROR_MESSAGE } from '@/lib/utils/phone.util';
+import { commonValidations } from '@/lib/utils/validation';
 
 /**
  * Hook for profile form validation schemas
@@ -31,10 +31,13 @@ export function useProfileValidation() {
           .min(1, t('communityRequired', { defaultValue: 'Community is required' })),
         latitude: z.number().min(-90).max(90),
         longitude: z.number().min(-180).max(180),
-        phoneNumber: z
-          .string()
-          .min(1, t('phoneRequired', { defaultValue: 'Phone number is required' }))
-          .regex(PHONE_PATTERN, t('invalidPhoneNumber', { defaultValue: PHONE_ERROR_MESSAGE })),
+        phoneNumber: commonValidations.phoneRequired(
+          t('phoneRequired', { defaultValue: 'Phone number is required' }),
+          t('invalidPhoneNumber', {
+            defaultValue:
+              'Phone number must be 8 digits (e.g., 98222680) or 9 digits starting with 0 (e.g., 098222680)',
+          })
+        ),
         maxVisitsPerDay: z.number().min(1).max(50),
         serviceTypes: z
           .array(z.string())

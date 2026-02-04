@@ -1,16 +1,16 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns/format';
-import { parseISO } from 'date-fns/parseISO';
 import { Copy, QrCode, Trash2, Check, Clock, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
-// Import only needed functions from date-fns for tree shaking
 
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { teamService, type PendingInvitation } from '@/lib/services/team.service';
+import { formatDateFull } from '@/lib/utils/date';
+import { handleMutationError, handleMutationSuccess } from '@/lib/utils/toast';
+import { formatUserName } from '@/lib/utils/user';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -26,6 +26,7 @@ export function PendingInvitationsList({
   const t = useTranslations('dashboard.team.invitations');
   const tInvite = useTranslations('dashboard.team.invite'); // Use existing translations for QR code section
   const tCommon = useTranslations('common');
+  const locale = useLocale();
   const { showToast } = useUIStore();
   const { selectedAutoServiceId } = useAutoServiceStore();
   const queryClient = useQueryClient();
@@ -42,16 +43,6 @@ export function PendingInvitationsList({
     invitation: null,
   });
 
-  // Format date according to project standards
-  const formatDate = (dateStr: string) => {
-    try {
-      return format(parseISO(dateStr), 'PPP', { locale: undefined });
-    } catch {
-      // Fallback to simple format if parsing fails
-      return new Date(dateStr).toLocaleDateString();
-    }
-  };
-
   const cancelMutation = useMutation({
     mutationFn: (invitationId: string) =>
       teamService.cancelInvitation(
@@ -67,9 +58,10 @@ export function PendingInvitationsList({
       );
     },
     onError: (error: Error) => {
-      showToast(
-        error.message || t('cancelError', { defaultValue: 'Failed to cancel invitation' }),
-        'error'
+      handleMutationError(
+        error,
+        t('cancelError', { defaultValue: 'Failed to cancel invitation' }),
+        showToast
       );
     },
   });
@@ -78,10 +70,17 @@ export function PendingInvitationsList({
     try {
       await navigator.clipboard.writeText(url);
       setCopiedId(invitationId);
-      showToast(t('linkCopied', { defaultValue: 'Invitation link copied!' }), 'success');
+      handleMutationSuccess(
+        t('linkCopied', { defaultValue: 'Invitation link copied!' }),
+        showToast
+      );
       setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
-      showToast(t('copyError', { defaultValue: 'Failed to copy link' }), 'error');
+      handleMutationError(
+        error,
+        t('copyError', { defaultValue: 'Failed to copy link' }),
+        showToast
+      );
     }
   };
 
@@ -129,9 +128,11 @@ export function PendingInvitationsList({
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-gray-900 dark:text-white">
-                          {invitation.firstName || invitation.lastName
-                            ? `${invitation.firstName} ${invitation.lastName}`.trim()
-                            : t('pendingMember', { defaultValue: 'Pending Member' })}
+                          {formatUserName(
+                            invitation.firstName,
+                            invitation.lastName,
+                            t('pendingMember', { defaultValue: 'Pending Member' })
+                          )}
                         </p>
                         <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
                           {invitation.role}
@@ -144,7 +145,7 @@ export function PendingInvitationsList({
                       )}
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
                         {t('invitedAt', { defaultValue: 'Invited' })}:{' '}
-                        {formatDate(invitation.invitedAt)}
+                        {formatDateFull(invitation.invitedAt, locale)}
                       </p>
                     </div>
                   </div>

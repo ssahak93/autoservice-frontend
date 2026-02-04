@@ -1,15 +1,9 @@
 'use client';
 
 // Import only needed functions from date-fns for tree shaking
-import { format } from 'date-fns/format';
 import { isFuture } from 'date-fns/isFuture';
 import { isPast } from 'date-fns/isPast';
 import { isToday } from 'date-fns/isToday';
-// Import only needed locales for tree shaking
-import { enUS } from 'date-fns/locale/en-US';
-import { hy } from 'date-fns/locale/hy';
-import { ru } from 'date-fns/locale/ru';
-import { parseISO } from 'date-fns/parseISO';
 import {
   Calendar,
   CheckCircle2,
@@ -25,12 +19,14 @@ import { useState, useMemo } from 'react';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
+import { Pagination } from '@/components/common/Pagination';
 import { LeaveReviewModal } from '@/components/reviews/LeaveReviewModal';
 import { Button } from '@/components/ui/Button';
 import { BookVisitModal } from '@/components/visits/BookVisitModal';
 import { VisitChatButton } from '@/components/visits/VisitChatButton';
 import { useVisits, useCancelVisit } from '@/hooks/useVisits';
 import { Link } from '@/i18n/routing';
+import { formatDate } from '@/lib/utils/date';
 import type { Visit } from '@/types';
 
 const statusIcons = {
@@ -66,7 +62,12 @@ function VisitCard({
   const StatusIcon = statusIcons[visit.status];
   const canEdit = visit.status === 'pending' || visit.status === 'confirmed';
   const canCancel = visit.status !== 'completed' && visit.status !== 'cancelled';
-  const canReview = visit.status === 'completed';
+  // Can review if visit is completed, no review exists, and visit date has passed
+  const visitDate = visit.scheduledDate || visit.preferredDate;
+  const canReview =
+    visit.status === 'completed' &&
+    !visit.review &&
+    (visitDate ? new Date(visitDate) <= new Date() : true);
 
   return (
     <div className="glass-light rounded-xl p-6 transition-shadow hover:shadow-lg">
@@ -201,37 +202,25 @@ export default function VisitsPage() {
   const t = useTranslations('visits');
   const locale = useLocale();
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
   const [reviewingVisit, setReviewingVisit] = useState<Visit | null>(null);
+
+  // Reset page when filter changes
+  const handleStatusFilterChange = (status: string | undefined) => {
+    setStatusFilter(status);
+    setPage(1); // Reset to first page when filter changes
+  };
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
   const [cancellingVisit, setCancellingVisit] = useState<Visit | null>(null);
   const [cancelReason, setCancelReason] = useState('');
 
-  const { data, isLoading } = useVisits({ status: statusFilter });
+  const { data, isLoading } = useVisits({ status: statusFilter, page, limit: 20 });
   const cancelVisit = useCancelVisit();
 
-  // Get date-fns locale for formatting
-  const dateFnsLocale = useMemo(() => {
-    switch (locale) {
-      case 'ru':
-        return ru;
-      case 'hy':
-        return hy;
-      case 'en':
-      default:
-        return enUS;
-    }
-  }, [locale]);
-
-  // Format date with locale
-  const formatDate = (dateStr: string | undefined): string => {
+  // Format date with locale using utility
+  const formatDateLocal = (dateStr: string | undefined): string => {
     if (!dateStr) return t('dateNotSet', { defaultValue: 'Date not set' });
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return dateStr;
-      return format(date, 'd MMMM yyyy', { locale: dateFnsLocale });
-    } catch {
-      return dateStr;
-    }
+    return formatDate(dateStr, locale);
   };
 
   // Group visits by category: today, upcoming, past
@@ -299,7 +288,7 @@ export default function VisitsPage() {
         {/* Filters */}
         <div className="mb-6 flex gap-2">
           <button
-            onClick={() => setStatusFilter(undefined)}
+            onClick={() => handleStatusFilterChange(undefined)}
             className={`rounded-lg px-4 py-2 transition-colors ${
               !statusFilter
                 ? 'bg-primary-500 text-white'
@@ -311,7 +300,7 @@ export default function VisitsPage() {
           {(['pending', 'confirmed', 'cancelled', 'completed'] as const).map((status) => (
             <button
               key={status}
-              onClick={() => setStatusFilter(status)}
+              onClick={() => handleStatusFilterChange(status)}
               className={`rounded-lg px-4 py-2 capitalize transition-colors ${
                 statusFilter === status
                   ? 'bg-primary-500 text-white'
@@ -341,6 +330,20 @@ export default function VisitsPage() {
 
         {data && data.data.length > 0 && (
           <div className="space-y-8">
+            {/* Pagination - Top */}
+            {data.pagination && data.pagination.totalPages > 1 && (
+              <div className="flex justify-center">
+                <Pagination
+                  currentPage={data.pagination.page}
+                  totalPages={data.pagination.totalPages}
+                  onPageChange={(newPage) => {
+                    setPage(newPage);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              </div>
+            )}
+
             {/* Today's Visits */}
             {groupedVisits.today.length > 0 && (
               <div>
@@ -366,12 +369,13 @@ export default function VisitsPage() {
                       key={visit.id}
                       visit={visit}
                       t={t}
-                      formatDate={formatDate}
+                      formatDate={formatDateLocal}
                       onEdit={() => setEditingVisit(visit)}
                       onCancel={() => {
                         setCancellingVisit(visit);
                         setCancelReason('');
                       }}
+                      onLeaveReview={() => setReviewingVisit(visit)}
                     />
                   ))}
                 </div>
@@ -403,12 +407,13 @@ export default function VisitsPage() {
                       key={visit.id}
                       visit={visit}
                       t={t}
-                      formatDate={formatDate}
+                      formatDate={formatDateLocal}
                       onEdit={() => setEditingVisit(visit)}
                       onCancel={() => {
                         setCancellingVisit(visit);
                         setCancelReason('');
                       }}
+                      onLeaveReview={() => setReviewingVisit(visit)}
                     />
                   ))}
                 </div>
@@ -440,15 +445,30 @@ export default function VisitsPage() {
                       key={visit.id}
                       visit={visit}
                       t={t}
-                      formatDate={formatDate}
+                      formatDate={formatDateLocal}
                       onEdit={() => setEditingVisit(visit)}
                       onCancel={() => {
                         setCancellingVisit(visit);
                         setCancelReason('');
                       }}
+                      onLeaveReview={() => setReviewingVisit(visit)}
                     />
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Pagination - Bottom */}
+            {data.pagination && data.pagination.totalPages > 1 && (
+              <div className="flex justify-center">
+                <Pagination
+                  currentPage={data.pagination.page}
+                  totalPages={data.pagination.totalPages}
+                  onPageChange={(newPage) => {
+                    setPage(newPage);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
               </div>
             )}
           </div>

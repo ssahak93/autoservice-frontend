@@ -1,16 +1,17 @@
 'use client';
 
-// Import only needed functions from date-fns for tree shaking
-import { format } from 'date-fns/format';
 import { motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge';
 import { ErrorDisplay } from '@/components/common/ErrorDisplay';
 import { useAutoServiceVisits } from '@/hooks/useDashboard';
+import { formatDateShort } from '@/lib/utils/date';
+import { formatUserName } from '@/lib/utils/user';
 
 export function RecentVisits() {
   const t = useTranslations('dashboard');
+  const locale = useLocale();
   const { data, isLoading, error } = useAutoServiceVisits({
     page: 1,
     limit: 10,
@@ -102,13 +103,11 @@ export function RecentVisits() {
               >
                 <td className="px-4 py-3">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {visit.user?.firstName && visit.user?.lastName
-                      ? `${visit.user.firstName} ${visit.user.lastName}`
-                      : visit.user?.firstName || 'Unknown'}
+                    {formatUserName(visit.user?.firstName, visit.user?.lastName, 'Unknown')}
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                  {format(new Date(visit.scheduledDate), 'MMM dd, yyyy')}
+                  {formatDateShort(visit.scheduledDate, locale)}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                   {visit.scheduledTime}

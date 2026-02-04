@@ -15,6 +15,9 @@ import {
   type TeamMember,
   type UpdateTeamMemberRequest,
 } from '@/lib/services/team.service';
+import { getAvatarUrl } from '@/lib/utils/file';
+import { handleMutationError, handleMutationSuccess } from '@/lib/utils/toast';
+import { formatUserName } from '@/lib/utils/user';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -70,13 +73,17 @@ export function EditTeamMemberModal({
       teamService.updateTeamMember(member.id, data, selectedAutoServiceId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team'] });
-      showToast(t('success', { defaultValue: 'Team member updated successfully' }), 'success');
+      handleMutationSuccess(
+        t('success', { defaultValue: 'Team member updated successfully' }),
+        showToast
+      );
       onClose();
     },
     onError: (error: Error) => {
-      showToast(
-        error.message || t('error', { defaultValue: 'Failed to update team member' }),
-        'error'
+      handleMutationError(
+        error,
+        t('error', { defaultValue: 'Failed to update team member' }),
+        showToast
       );
     },
   });
@@ -125,10 +132,10 @@ export function EditTeamMemberModal({
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
-              {member.avatarUrl ? (
+              {getAvatarUrl({ avatarUrl: member.avatarUrl }) ? (
                 <Image
-                  src={member.avatarUrl}
-                  alt={`${member.firstName || ''} ${member.lastName || ''}`}
+                  src={getAvatarUrl({ avatarUrl: member.avatarUrl })!}
+                  alt={formatUserName(member.firstName, member.lastName, 'Team Member')}
                   width={64}
                   height={64}
                   className="h-16 w-16 rounded-full object-cover"
@@ -143,7 +150,7 @@ export function EditTeamMemberModal({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {member.firstName || ''} {member.lastName || ''}
+                  {formatUserName(member.firstName, member.lastName)}
                 </h3>
               </div>
               <div className="mt-1 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">

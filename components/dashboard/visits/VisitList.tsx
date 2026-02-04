@@ -1,17 +1,16 @@
 'use client';
 
-// Import only needed functions from date-fns for tree shaking
-import { format } from 'date-fns/format';
-import { parseISO } from 'date-fns/parseISO';
 import { motion } from 'framer-motion';
 import { Calendar, User } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useCallback } from 'react';
 
 import { ServiceCardSkeleton } from '@/components/auto-service/ServiceCardSkeleton';
 import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge';
 import { Button } from '@/components/ui/Button';
 import { getTransition } from '@/lib/utils/animations';
+import { formatDateFull } from '@/lib/utils/date';
+import { formatCustomerName } from '@/lib/utils/user';
 import type { Visit, PaginatedResponse } from '@/types';
 
 interface VisitListProps {
@@ -32,15 +31,7 @@ export function VisitList({
   onAction,
 }: VisitListProps) {
   const t = useTranslations('dashboard.visits');
-
-  // Memoize formatDate to prevent unnecessary re-creations
-  const formatDate = useCallback((dateStr: string) => {
-    try {
-      return format(parseISO(dateStr), 'PPP', { locale: undefined });
-    } catch {
-      return dateStr;
-    }
-  }, []);
+  const locale = useLocale();
 
   // Memoize getAvailableActions to prevent unnecessary re-creations
   const getAvailableActions = useCallback(
@@ -58,10 +49,24 @@ export function VisitList({
           label: t('actions.reschedule', { defaultValue: 'Reschedule' }),
         });
       } else if (visit.status === 'confirmed') {
-        actions.push({
-          key: 'complete',
-          label: t('actions.complete', { defaultValue: 'Complete' }),
-        });
+        // Check if scheduled date has passed before allowing completion
+        const scheduledDate = visit.scheduledDate || visit.preferredDate;
+        const canComplete = scheduledDate
+          ? (() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const visitDate = new Date(scheduledDate);
+              visitDate.setHours(0, 0, 0, 0);
+              return visitDate <= today;
+            })()
+          : true;
+
+        if (canComplete) {
+          actions.push({
+            key: 'complete',
+            label: t('actions.complete', { defaultValue: 'Complete' }),
+          });
+        }
         actions.push({ key: 'cancel', label: t('actions.cancel', { defaultValue: 'Cancel' }) });
         actions.push({
           key: 'reschedule',
@@ -98,10 +103,11 @@ export function VisitList({
     <div className="space-y-4">
       {visits.map((visit, index) => {
         const actions = getAvailableActions(visit);
-        const customerName =
-          visit.user?.firstName || visit.user?.lastName
-            ? `${visit.user.firstName || ''} ${visit.user.lastName || ''}`.trim()
-            : t('customer', { defaultValue: 'Customer' });
+        const customerName = formatCustomerName(
+          visit.user?.firstName,
+          visit.user?.lastName,
+          t('customer', { defaultValue: 'Customer' })
+        );
 
         return (
           <motion.div
@@ -129,8 +135,8 @@ export function VisitList({
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      {formatDate(visit.scheduledDate)} {t('at', { defaultValue: 'at' })}{' '}
-                      {visit.scheduledTime}
+                      {formatDateFull(visit.scheduledDate, locale)}{' '}
+                      {t('at', { defaultValue: 'at' })} {visit.scheduledTime}
                     </span>
                   </div>
 

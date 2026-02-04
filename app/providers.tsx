@@ -20,12 +20,31 @@ export function Providers({ children }: { children: React.ReactNode }) {
           onError: (error) => {
             // Don't show toast for 401 errors (handled by auth interceptor)
             if (isUnauthorizedError(error)) {
+              // Check if this is a silent error (optional endpoint)
+              if (
+                error &&
+                typeof error === 'object' &&
+                'silent' in error &&
+                (error as { silent?: boolean }).silent
+              ) {
+                return; // Don't log or show toast for silent errors
+              }
               return;
             }
 
             // Don't show toast for "No refresh token" errors (handled silently by auth interceptor)
             if (isNoRefreshTokenError(error)) {
               // Silently ignore - this is expected when user is not logged in
+              return;
+            }
+
+            // Don't log or show toast for silent errors (optional endpoints)
+            if (
+              error &&
+              typeof error === 'object' &&
+              'silent' in error &&
+              (error as { silent?: boolean }).silent
+            ) {
               return;
             }
 
@@ -41,12 +60,31 @@ export function Providers({ children }: { children: React.ReactNode }) {
           onError: (error) => {
             // Don't show toast for 401 errors (handled by auth interceptor)
             if (isUnauthorizedError(error)) {
+              // Check if this is a silent error (optional endpoint)
+              if (
+                error &&
+                typeof error === 'object' &&
+                'silent' in error &&
+                (error as { silent?: boolean }).silent
+              ) {
+                return; // Don't log or show toast for silent errors
+              }
               return;
             }
 
             // Don't show toast for "No refresh token" errors (handled silently by auth interceptor)
             if (isNoRefreshTokenError(error)) {
               // Silently ignore - this is expected when user is not logged in
+              return;
+            }
+
+            // Don't log or show toast for silent errors (optional endpoints)
+            if (
+              error &&
+              typeof error === 'object' &&
+              'silent' in error &&
+              (error as { silent?: boolean }).silent
+            ) {
               return;
             }
 

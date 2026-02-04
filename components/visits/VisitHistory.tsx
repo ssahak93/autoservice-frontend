@@ -1,11 +1,11 @@
 'use client';
 
-import { format } from 'date-fns';
 import { Calendar, Clock, FileText, XCircle, AlertCircle } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 import { useVisitHistory } from '@/hooks/useVisits';
 import type { VisitHistoryEntry } from '@/lib/services/visits.service';
+import { formatDate, formatDateFull } from '@/lib/utils/date';
 
 interface VisitHistoryProps {
   visitId: string;
@@ -29,15 +29,11 @@ const changeTypeColors: Record<string, string> = {
   cancellation: 'text-red-600',
 };
 
-const statusLabels: Record<string, string> = {
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  cancelled: 'Cancelled',
-  completed: 'Completed',
-};
+// Status labels are now translated by backend, so we don't need hardcoded labels
 
 export function VisitHistory({ visitId }: VisitHistoryProps) {
   const t = useTranslations('visits');
+  const locale = useLocale();
   const { data: history, isLoading } = useVisitHistory(visitId);
 
   if (isLoading) {
@@ -74,9 +70,14 @@ export function VisitHistory({ visitId }: VisitHistoryProps) {
 
   const formatValue = (value: string | null, changeType: string): string => {
     if (!value) return '-';
-    if (changeType === 'status') {
-      return statusLabels[value] || value;
+
+    // Format dates according to locale
+    if (changeType === 'scheduled_date') {
+      return formatDate(value, locale);
     }
+
+    // For status values, they are already translated by backend
+    // For other values (times, notes), return as-is
     return value;
   };
 
@@ -91,11 +92,11 @@ export function VisitHistory({ visitId }: VisitHistoryProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-neutral-900">
+    <div className="space-y-3">
+      <h3 className="text-base font-semibold text-neutral-900">
         {t('history.title', { defaultValue: 'Visit History' })}
       </h3>
-      <div className="space-y-3">
+      <div className="max-h-[400px] space-y-2 overflow-y-auto pr-2">
         {history.map((entry, index) => {
           const Icon = changeTypeIcons[entry.changeType] || FileText;
           const colorClass = changeTypeColors[entry.changeType] || 'text-neutral-600';
@@ -103,7 +104,7 @@ export function VisitHistory({ visitId }: VisitHistoryProps) {
           return (
             <div
               key={entry.id}
-              className="relative rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+              className="relative rounded-lg border border-neutral-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
             >
               {/* Timeline line */}
               {index < history.length - 1 && (
@@ -113,43 +114,47 @@ export function VisitHistory({ visitId }: VisitHistoryProps) {
               <div className="flex items-start gap-4">
                 {/* Icon */}
                 <div className={`flex-shrink-0 ${colorClass}`}>
-                  <div className="relative z-10 rounded-full bg-neutral-50 p-2">
-                    <Icon className="h-4 w-4" />
+                  <div className="relative z-10 rounded-full bg-neutral-50 p-1.5">
+                    <Icon className="h-3.5 w-3.5" />
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-neutral-900">
+                      <h4 className="text-sm font-semibold text-neutral-900">
                         {getChangeTypeLabel(entry.changeType)}
                       </h4>
                       <span className="text-xs text-neutral-500">{getChangedByLabel(entry)}</span>
                     </div>
                     <time className="text-xs text-neutral-500">
-                      {format(new Date(entry.createdAt), 'PPp')}
+                      {formatDateFull(entry.createdAt, locale)}
                     </time>
                   </div>
 
                   {entry.description && (
-                    <p className="mb-2 text-sm text-neutral-700">{entry.description}</p>
+                    <p className="mb-1.5 text-xs text-neutral-700">{entry.description}</p>
                   )}
 
                   {/* Old and new values */}
                   {(entry.oldValue || entry.newValue) && (
-                    <div className="mt-2 space-y-1 rounded-md bg-neutral-50 p-2 text-xs">
+                    <div className="mt-1.5 space-y-0.5 rounded-md bg-neutral-50 p-1.5 text-xs">
                       {entry.oldValue && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-neutral-500">From:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-neutral-500">
+                            {t('history.from', { defaultValue: 'From' })}:
+                          </span>
                           <span className="text-neutral-700 line-through">
                             {formatValue(entry.oldValue, entry.changeType)}
                           </span>
                         </div>
                       )}
                       {entry.newValue && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-neutral-500">To:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-neutral-500">
+                            {t('history.to', { defaultValue: 'To' })}:
+                          </span>
                           <span className="font-medium text-neutral-900">
                             {formatValue(entry.newValue, entry.changeType)}
                           </span>

@@ -42,12 +42,12 @@ export function Footer() {
             <h4 className="mb-4 font-semibold">{tFooter('account')}</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/login" className="text-neutral-600 hover:text-primary-600">
+                <Link href="/auth/login" className="text-neutral-600 hover:text-primary-600">
                   {tNav('login')}
                 </Link>
               </li>
               <li>
-                <Link href="/register" className="text-neutral-600 hover:text-primary-600">
+                <Link href="/auth/register" className="text-neutral-600 hover:text-primary-600">
                   {tNav('signUp')}
                 </Link>
               </li>

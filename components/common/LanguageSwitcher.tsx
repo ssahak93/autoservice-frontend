@@ -1,13 +1,17 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Globe } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import { useAuth } from '@/hooks/useAuth';
 import type { Locale } from '@/i18n/routing';
 import { usePathname, useRouter } from '@/i18n/routing';
+import { authService } from '@/lib/services/auth.service';
 import { setPreferredLocale } from '@/lib/utils/i18n';
+import { useAuthStore } from '@/stores/authStore';
 
 const languages: Array<{ code: Locale; name: string; flag: string }> = [
   { code: 'hy', name: 'Հայերեն', flag: '🇦🇲' },
@@ -21,12 +25,30 @@ export function LanguageSwitcher() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const t = useTranslations('navigation');
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+  const { setUser } = useAuthStore();
 
   const currentLanguage = languages.find((lang) => lang.code === locale) || languages[0];
 
-  const handleLanguageChange = (newLocale: Locale) => {
+  const handleLanguageChange = async (newLocale: Locale) => {
     // Store preference in localStorage
     setPreferredLocale(newLocale);
+
+    // If user is authenticated, update preferredLanguage in profile
+    if (isAuthenticated) {
+      try {
+        const updatedUser = await authService.updateProfile({
+          preferredLanguage: newLocale,
+        });
+        // Update user in store and React Query cache
+        setUser(updatedUser);
+        queryClient.setQueryData(['auth', 'me'], updatedUser);
+      } catch (error) {
+        // Silently fail - language switch should still work even if API call fails
+        console.error('Failed to update preferred language:', error);
+      }
+    }
 
     // Navigate to new locale
     router.replace(pathname, { locale: newLocale });

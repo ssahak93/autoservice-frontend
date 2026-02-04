@@ -3,19 +3,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { MessageSquare, Plus } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState, useEffect } from 'react';
 
 import { cn } from '@/lib/utils/cn';
+import { formatDateShort } from '@/lib/utils/date';
 import { useUIStore } from '@/stores/uiStore';
 
 import { useSocket } from '../hooks/useSocket';
 import { chatService, type AdminConversation } from '../services/chat.service';
-import { useChatStore } from '../state/chatStore';
 
-export function AdminConversationsList() {
+interface AdminConversationsListProps {
+  onConversationSelect?: (conversationId: string, title?: string) => void;
+  selectedConversationId?: string | null;
+}
+
+export function AdminConversationsList({
+  onConversationSelect,
+  selectedConversationId,
+}: AdminConversationsListProps = {}) {
   const t = useTranslations('chat');
-  const { setOpenAdminChat, openChat } = useChatStore();
+  const locale = useLocale();
   const { showToast } = useUIStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newConversationTitle, setNewConversationTitle] = useState('');
@@ -57,7 +65,9 @@ export function AdminConversationsList() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'conversations'] });
       setShowCreateModal(false);
       setNewConversationTitle('');
-      setOpenAdminChat(conversation.id, conversation.title);
+      if (onConversationSelect) {
+        onConversationSelect(conversation.id, conversation.title);
+      }
       showToast(t('conversationCreated', { defaultValue: 'Conversation created' }), 'success');
     },
     onError: (error: Error) => {
@@ -112,13 +122,14 @@ export function AdminConversationsList() {
         ) : (
           <div className="space-y-1">
             {data.data.map((conversation) => {
-              const isSelected =
-                openChat?.type === 'admin' && openChat.conversationId === conversation.id;
+              const isSelected = selectedConversationId === conversation.id;
               return (
                 <motion.button
                   key={conversation.id}
                   onClick={async () => {
-                    setOpenAdminChat(conversation.id, conversation.title);
+                    if (onConversationSelect) {
+                      onConversationSelect(conversation.id, conversation.title);
+                    }
 
                     // Mark messages as read when conversation is opened
                     if (conversation.unreadCount > 0) {
@@ -190,7 +201,7 @@ export function AdminConversationsList() {
                             : 'text-gray-400 dark:text-gray-500'
                         )}
                       >
-                        {new Date(conversation.updatedAt).toLocaleDateString()}
+                        {formatDateShort(conversation.updatedAt, locale)}
                       </p>
                     </div>
                     {conversation.unreadCount > 0 && (

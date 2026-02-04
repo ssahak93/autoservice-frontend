@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns/format';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -15,6 +14,7 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { TimePicker } from '@/components/ui/TimePicker';
 import { availabilityService } from '@/lib/services/availability.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
+import { formatDateISO } from '@/lib/utils/date';
 import type { Visit } from '@/types';
 
 interface RescheduleVisitModalProps {
@@ -46,13 +46,13 @@ export function RescheduleVisitModal({
   const startDate = useMemo(() => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
-    return format(date, 'yyyy-MM-dd');
+    return formatDateISO(date);
   }, []);
 
   const endDate = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() + 60);
-    return format(date, 'yyyy-MM-dd');
+    return formatDateISO(date);
   }, []);
 
   // Fetch availability if profile ID is available
@@ -105,7 +105,7 @@ export function RescheduleVisitModal({
   const handleDateChange = (date: Date | null) => {
     setSelectedDate(date);
     if (date) {
-      const formattedDate = date.toISOString().split('T')[0];
+      const formattedDate = formatDateISO(date);
       setValue('scheduledDate', formattedDate, { shouldValidate: true });
     } else {
       setValue('scheduledDate', '', { shouldValidate: true });
@@ -210,7 +210,7 @@ export function RescheduleVisitModal({
                     availableTimes={
                       availability && typeof availability !== 'string' && selectedDate
                         ? availability.availableSlots.find(
-                            (slot) => slot.date === format(selectedDate, 'yyyy-MM-dd')
+                            (slot) => slot.date === formatDateISO(selectedDate)
                           )?.times || []
                         : []
                     }

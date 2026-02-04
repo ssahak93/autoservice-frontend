@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { memo } from 'react';
 
 import { getTransition } from '@/lib/utils/animations';
+import { getFileUrl } from '@/lib/utils/file';
 
 interface ServiceAvatarProps {
   avatarFile?: { fileUrl: string } | null;
@@ -51,7 +52,15 @@ export const ServiceAvatar = memo(function ServiceAvatar({
         <div
           className={`relative ${sizeClasses[size]} overflow-hidden rounded-xl ring-2 ${ringColors[variant]}`}
         >
-          <Image src={avatarFile.fileUrl} alt={name} fill className="object-cover" unoptimized />
+          <Image
+            src={getFileUrl(avatarFile) || ''}
+            alt={name}
+            fill
+            className="object-cover"
+            loading="eager"
+            unoptimized
+            sizes="(max-width: 640px) 48px, 64px"
+          />
         </div>
       ) : (
         <div

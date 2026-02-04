@@ -124,6 +124,8 @@ class ApiClient {
           if (isOptionalRequest) {
             // For optional requests (history, stats), just reject the error - no logout
             // These endpoints are optional and may return 401 for unauthenticated users
+            // Mark error as silent to prevent console logging in services
+            (error as { silent?: boolean }).silent = true;
             return Promise.reject(error);
           }
 
@@ -230,13 +232,30 @@ class ApiClient {
     if (typeof window !== 'undefined') {
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+      // Also save to cookies for middleware access
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 7);
+      document.cookie = `accessToken=${accessToken}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
     }
   }
 
   private logout(): void {
     if (typeof window !== 'undefined') {
+      // Clear localStorage tokens
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      // Also clear cookies
+      document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+      // Clear auth store (Zustand)
+      // Use dynamic import to avoid circular dependency
+      import('@/stores/authStore').then(({ useAuthStore }) => {
+        useAuthStore.getState().logout();
+      });
+
+      // Clear React Query cache
+      // Dispatch event that will be handled by a component that has access to queryClient
+      window.dispatchEvent(new CustomEvent('auth:clear-cache'));
     }
   }
 

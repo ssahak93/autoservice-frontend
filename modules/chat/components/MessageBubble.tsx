@@ -1,8 +1,5 @@
 'use client';
 
-import { format } from 'date-fns/format';
-import { isToday } from 'date-fns/isToday';
-import { isYesterday } from 'date-fns/isYesterday';
 import { Smile, Check, CheckCheck } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -10,6 +7,10 @@ import { useState } from 'react';
 
 import { ImageLightbox } from '@/components/common/ImageLightbox';
 import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils/cn';
+import { formatTimeWithSeconds } from '@/lib/utils/date';
+import { getAvatarUrl } from '@/lib/utils/file';
+import { formatMessageReadTime, formatMessageSentTime } from '@/lib/utils/time';
 
 import { useAddReaction } from '../hooks/useChat';
 import type { Message } from '../services/chat.service';
@@ -21,6 +22,7 @@ interface MessageBubbleProps {
   showAvatar?: boolean;
   showName?: boolean;
   isGrouped?: boolean;
+  isReadOnly?: boolean;
 }
 
 export function MessageBubble({
@@ -28,6 +30,7 @@ export function MessageBubble({
   showAvatar = true,
   showName = true,
   isGrouped = false,
+  isReadOnly = false,
 }: MessageBubbleProps) {
   const t = useTranslations('chat');
   const { user } = useAuth();
@@ -53,22 +56,10 @@ export function MessageBubble({
       {} as Record<string, typeof message.reactions>
     ) || {};
 
-  const messageTime = new Date(message.createdAt);
-  const timeString = format(messageTime, 'HH:mm');
+  const timeString = formatMessageSentTime(message.createdAt);
 
   const getReadTimeString = () => {
-    if (!message.readAt) return null;
-    const readTime = new Date(message.readAt);
-    if (isToday(readTime)) {
-      return format(readTime, 'HH:mm');
-    }
-    if (isYesterday(readTime)) {
-      return t('yesterdayAt', {
-        time: format(readTime, 'HH:mm'),
-        defaultValue: `Yesterday at ${format(readTime, 'HH:mm')}`,
-      });
-    }
-    return format(readTime, 'dd.MM.yyyy HH:mm');
+    return formatMessageReadTime(message.readAt, message.createdAt, t);
   };
 
   const getSenderName = () => {
@@ -95,33 +86,42 @@ export function MessageBubble({
     ? `${message.teamMember.firstName} ${message.teamMember.lastName}`.trim()
     : null;
 
-  return (
-    <div
-      className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${isGrouped ? 'mt-1' : 'mt-4'}`}
-    >
-      {showAvatar && (
-        <div className="relative h-10 w-10 flex-shrink-0">
-          <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-primary-400 to-primary-600 shadow-md ring-2 ring-white">
-            {message.autoService?.avatarFile?.fileUrl ||
-            message.teamMember?.avatarFile?.fileUrl ||
-            message.sender?.avatarFile?.fileUrl ? (
-              <Image
-                src={
-                  message.autoService?.avatarFile?.fileUrl ||
-                  message.teamMember?.avatarFile?.fileUrl ||
-                  message.sender?.avatarFile?.fileUrl ||
-                  ''
-                }
-                alt={senderName}
-                fill
-                className="object-cover"
-                sizes="40px"
-                unoptimized
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600 text-white">
-                <span className="text-sm font-bold">
-                  {message.autoService?.serviceType === 'company'
+  // Avatar component
+  const renderAvatar = () => {
+    if (!showAvatar) {
+      return <div className="w-10 flex-shrink-0" />;
+    }
+
+    const avatarUrl = isOwnMessage
+      ? getAvatarUrl(user)
+      : getAvatarUrl(message.autoService) ||
+        getAvatarUrl(message.teamMember) ||
+        getAvatarUrl(message.sender);
+
+    const displayName = isOwnMessage
+      ? `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'You'
+      : senderName;
+
+    return (
+      <div className="relative h-10 w-10 flex-shrink-0">
+        <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-primary-400 to-primary-600 shadow-md ring-2 ring-white">
+          {avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt={displayName}
+              fill
+              className="object-cover"
+              sizes="40px"
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600 text-white">
+              <span className="text-sm font-bold">
+                {isOwnMessage
+                  ? user?.firstName?.charAt(0).toUpperCase() ||
+                    user?.lastName?.charAt(0).toUpperCase() ||
+                    'U'
+                  : message.autoService?.serviceType === 'company'
                     ? message.autoService.companyName?.charAt(0).toUpperCase() || 'A'
                     : message.autoService?.firstName?.charAt(0).toUpperCase() ||
                       message.autoService?.lastName?.charAt(0).toUpperCase() ||
@@ -130,17 +130,21 @@ export function MessageBubble({
                       message.sender?.firstName?.charAt(0).toUpperCase() ||
                       message.sender?.lastName?.charAt(0).toUpperCase() ||
                       'U'}
-                </span>
-              </div>
-            )}
-          </div>
-          {!isOwnMessage && (
-            <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
+              </span>
+            </div>
           )}
         </div>
-      )}
+        {!isOwnMessage && (
+          <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
+        )}
+      </div>
+    );
+  };
 
-      {!showAvatar && <div className="w-10 flex-shrink-0" />}
+  return (
+    <div className={`flex gap-3 ${isGrouped ? 'mt-1' : 'mt-4'}`}>
+      {/* Avatar - left for others */}
+      {!isOwnMessage && renderAvatar()}
 
       <div
         className={`flex flex-1 flex-col gap-1 ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%]`}
@@ -152,7 +156,6 @@ export function MessageBubble({
               {teamMemberName && (
                 <span className="text-xs text-neutral-500">({teamMemberName})</span>
               )}
-              <span className="text-xs text-neutral-500">{timeString}</span>
             </div>
             {message.autoService && teamMemberName && (
               <span className="text-xs text-neutral-400">
@@ -209,25 +212,29 @@ export function MessageBubble({
               </p>
             )}
 
-            <button
-              onClick={() => setShowReactionPicker(!showReactionPicker)}
-              className={`absolute -bottom-2 ${
-                isOwnMessage ? 'left-2' : 'right-2'
-              } z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white opacity-0 shadow-lg ring-2 ring-primary-200 transition-all hover:scale-110 hover:bg-primary-50 hover:ring-primary-300 group-hover:opacity-100`}
-              aria-label={t('addReaction', { defaultValue: 'Add reaction' })}
-            >
-              <Smile className="h-4 w-4 text-primary-600" />
-            </button>
+            {!isReadOnly && (
+              <>
+                <button
+                  onClick={() => setShowReactionPicker(!showReactionPicker)}
+                  className={`absolute -bottom-2 ${
+                    isOwnMessage ? 'left-2' : 'right-2'
+                  } z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white opacity-0 shadow-lg ring-2 ring-primary-200 transition-all hover:scale-110 hover:bg-primary-50 hover:ring-primary-300 group-hover:opacity-100`}
+                  aria-label={t('addReaction', { defaultValue: 'Add reaction' })}
+                >
+                  <Smile className="h-4 w-4 text-primary-600" />
+                </button>
 
-            {showReactionPicker && (
-              <div
-                className={`absolute z-20 ${isOwnMessage ? 'left-0' : 'right-0'} bottom-full mb-2`}
-              >
-                <ReactionPicker
-                  onSelect={handleReaction}
-                  onClose={() => setShowReactionPicker(false)}
-                />
-              </div>
+                {showReactionPicker && (
+                  <div
+                    className={`absolute z-20 ${isOwnMessage ? 'left-0' : 'right-0'} bottom-full mb-2`}
+                  >
+                    <ReactionPicker
+                      onSelect={handleReaction}
+                      onClose={() => setShowReactionPicker(false)}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -238,8 +245,14 @@ export function MessageBubble({
               {Object.entries(reactionsByEmoji).map(([emoji, reactions]) => (
                 <button
                   key={emoji}
-                  onClick={() => handleReaction(emoji)}
-                  className="flex items-center gap-1 rounded-full border-2 border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-all hover:scale-105 hover:border-primary-400 hover:bg-primary-50 hover:shadow-md active:scale-95"
+                  onClick={() => !isReadOnly && handleReaction(emoji)}
+                  disabled={isReadOnly}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full border-2 border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium shadow-sm transition-all',
+                    isReadOnly
+                      ? 'cursor-default opacity-75'
+                      : 'hover:scale-105 hover:border-primary-400 hover:bg-primary-50 hover:shadow-md active:scale-95'
+                  )}
                   title={reactions
                     ?.map((reaction) => reaction.user?.firstName || 'User')
                     .join(', ')}
@@ -254,46 +267,55 @@ export function MessageBubble({
           )}
         </div>
 
-        <div
-          className={`flex items-center gap-1.5 px-1 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
-        >
+        <div className={`flex flex-col gap-0.5 px-1 ${isOwnMessage ? 'items-end' : 'items-start'}`}>
+          {/* Sent time - always shown */}
+          <span className="text-xs font-medium text-neutral-500">{timeString}</span>
+
+          {/* Read status and read time - only for own messages, shown separately */}
           {isOwnMessage && (
-            <>
+            <div className="flex items-center gap-1">
               {message.isRead ? (
-                <div
-                  className="flex items-center gap-1"
-                  title={getReadTimeString() || t('read', { defaultValue: 'Read' })}
-                >
-                  <CheckCheck className="h-4 w-4 text-primary-500" />
+                <>
+                  <CheckCheck className="h-3.5 w-3.5 text-primary-500" />
                   {message.readAt && (
-                    <span className="text-xs font-medium text-primary-600">
-                      {format(new Date(message.readAt), 'HH:mm')}
+                    <span
+                      className="text-xs font-medium text-primary-600"
+                      title={getReadTimeString() || t('read', { defaultValue: 'Read' })}
+                    >
+                      {(() => {
+                        const readTimeString = formatMessageReadTime(
+                          message.readAt,
+                          message.createdAt,
+                          t
+                        );
+                        // If it's the same minute, show with seconds, otherwise use the formatted string
+                        if (readTimeString) {
+                          const readTime = new Date(message.readAt);
+                          const sentTime = new Date(message.createdAt);
+                          const timeDiff = readTime.getTime() - sentTime.getTime();
+                          const isSameMinute = Math.abs(timeDiff) < 60000;
+                          return isSameMinute
+                            ? formatTimeWithSeconds(message.readAt)
+                            : readTimeString;
+                        }
+                        return null;
+                      })()}
                     </span>
                   )}
-                </div>
+                </>
               ) : (
-                <div
-                  className="flex items-center gap-0.5"
-                  title={t('sent', { defaultValue: 'Sent' })}
-                >
-                  <Check className="h-4 w-4 text-neutral-400" />
-                </div>
+                <Check
+                  className="h-3.5 w-3.5 text-neutral-400"
+                  aria-label={t('sent', { defaultValue: 'Sent' })}
+                />
               )}
-            </>
-          )}
-          {!isOwnMessage && (
-            <span className="text-xs font-medium text-neutral-500">{timeString}</span>
-          )}
-          {isOwnMessage && !message.isRead && (
-            <span className="text-xs font-medium text-neutral-500">{timeString}</span>
-          )}
-          {message.isRead && message.readAt && isOwnMessage && getReadTimeString() && (
-            <span className="text-xs text-neutral-500" title={getReadTimeString() || ''}>
-              • {getReadTimeString()}
-            </span>
+            </div>
           )}
         </div>
       </div>
+
+      {/* Avatar - right for own messages */}
+      {isOwnMessage && renderAvatar()}
     </div>
   );
 }

@@ -12,43 +12,49 @@ import { PasswordInput } from '@/components/ui/PasswordInput';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useRouter } from '@/i18n/routing';
-import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '@/lib/utils/password.util';
-import { PHONE_PATTERN, PHONE_ERROR_MESSAGE, formatPhoneForBackend } from '@/lib/utils/phone.util';
+import { formatPhoneForBackend } from '@/lib/utils/phone.util';
+import { commonValidations, createPasswordConfirmationRefinement } from '@/lib/utils/validation';
+import type { RegisterRequest } from '@/types';
 
 export default function RegisterPage() {
   const t = useTranslations('auth');
   const { register: registerUser, isRegistering, isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const registerSchema = z
-    .object({
-      email: z
-        .string()
-        .min(1, t('emailRequired'))
-        .email(t('invalidEmail', { defaultValue: 'Invalid email address' })),
-      password: z
-        .string()
-        .min(8, t('passwordMinLength'))
-        .regex(PASSWORD_PATTERN, t('passwordInvalid', { defaultValue: PASSWORD_ERROR_MESSAGE })),
-      confirmPassword: z
-        .string()
-        .min(1, t('confirmPasswordRequired', { defaultValue: 'Please confirm your password' })),
-      firstName: z
-        .string()
-        .min(1, t('firstNameRequired', { defaultValue: 'First name is required' })),
-      lastName: z.string().min(1, t('lastNameRequired', { defaultValue: 'Last name is required' })),
-      phoneNumber: z
-        .string()
-        .optional()
-        .refine(
-          (val) => !val || PHONE_PATTERN.test(val),
-          t('invalidPhoneNumber', { defaultValue: PHONE_ERROR_MESSAGE })
-        ),
+  const registerSchema = createPasswordConfirmationRefinement(
+    'password',
+    'confirmPassword',
+    t('passwordsDontMatch', { defaultValue: "Passwords don't match" })
+  )(
+    z.object({
+      email: commonValidations.email(
+        t('emailRequired'),
+        t('invalidEmail', { defaultValue: 'Invalid email address' })
+      ),
+      password: commonValidations.password(
+        t('passwordMinLength'),
+        t('passwordInvalid', {
+          defaultValue:
+            'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)',
+        })
+      ),
+      confirmPassword: commonValidations.requiredString(
+        t('confirmPasswordRequired', { defaultValue: 'Please confirm your password' })
+      ),
+      firstName: commonValidations.firstName(
+        t('firstNameRequired', { defaultValue: 'First name is required' })
+      ),
+      lastName: commonValidations.lastName(
+        t('lastNameRequired', { defaultValue: 'Last name is required' })
+      ),
+      phoneNumber: commonValidations.phoneOptional(
+        t('invalidPhoneNumber', {
+          defaultValue:
+            'Phone number must be 8 digits (e.g., 98222680) or 9 digits starting with 0 (e.g., 098222680)',
+        })
+      ),
     })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: t('passwordsDontMatch', { defaultValue: "Passwords don't match" }),
-      path: ['confirmPassword'],
-    });
+  );
 
   type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -89,7 +95,7 @@ export default function RegisterPage() {
     if (registerData.phoneNumber) {
       registerData.phoneNumber = formatPhoneForBackend(registerData.phoneNumber);
     }
-    registerUser(registerData);
+    registerUser(registerData as RegisterRequest);
   };
 
   // Don't render form if already authenticated
@@ -114,7 +120,7 @@ export default function RegisterPage() {
             <Input
               label={t('firstName')}
               placeholder="John"
-              error={errors.firstName?.message}
+              error={errors.firstName?.message as string | undefined}
               disabled={isRegistering || isSubmitting}
               autoComplete="given-name"
               {...register('firstName')}
@@ -122,7 +128,7 @@ export default function RegisterPage() {
             <Input
               label={t('lastName')}
               placeholder="Doe"
-              error={errors.lastName?.message}
+              error={errors.lastName?.message as string | undefined}
               disabled={isRegistering || isSubmitting}
               autoComplete="family-name"
               {...register('lastName')}
@@ -133,7 +139,7 @@ export default function RegisterPage() {
             label={t('email')}
             type="email"
             placeholder="your@email.com"
-            error={errors.email?.message}
+            error={errors.email?.message as string | undefined}
             disabled={isRegistering || isSubmitting}
             autoComplete="email"
             {...register('email')}
@@ -147,7 +153,7 @@ export default function RegisterPage() {
                 label={t('phoneNumber')}
                 value={field.value || ''}
                 onChange={field.onChange}
-                error={errors.phoneNumber?.message}
+                error={errors.phoneNumber?.message as string | undefined}
                 disabled={isRegistering || isSubmitting}
                 helperText={t('phoneNumberHelper', {
                   defaultValue: 'Optional. Enter 8 or 9 digits (e.g., 98222680 or 098222680)',
@@ -159,7 +165,7 @@ export default function RegisterPage() {
           <PasswordInput
             label={t('password')}
             placeholder="••••••••"
-            error={errors.password?.message}
+            error={errors.password?.message as string | undefined}
             disabled={isRegistering || isSubmitting}
             autoComplete="new-password"
             helperText={t('passwordHelper', { defaultValue: 'At least 8 characters' })}
@@ -169,7 +175,7 @@ export default function RegisterPage() {
           <PasswordInput
             label={t('confirmPassword', { defaultValue: 'Confirm Password' })}
             placeholder="••••••••"
-            error={errors.confirmPassword?.message}
+            error={errors.confirmPassword?.message as string | undefined}
             disabled={isRegistering || isSubmitting}
             autoComplete="new-password"
             {...register('confirmPassword')}
@@ -188,7 +194,7 @@ export default function RegisterPage() {
         <div className="mt-6 text-center text-sm">
           <span className="text-neutral-600">{t('hasAccount')} </span>
           <Link
-            href="/login"
+            href="/auth/login"
             className="font-medium text-primary-600 transition-colors hover:text-primary-700 hover:underline"
           >
             {t('signIn')}

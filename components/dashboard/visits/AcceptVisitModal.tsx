@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns/format';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -15,6 +14,7 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { TimePicker } from '@/components/ui/TimePicker';
 import { availabilityService } from '@/lib/services/availability.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
+import { formatDateISO } from '@/lib/utils/date';
 import type { Visit } from '@/types';
 
 interface AcceptVisitModalProps {
@@ -78,13 +78,13 @@ export function AcceptVisitModal({
   const startDate = useMemo(() => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
-    return format(date, 'yyyy-MM-dd');
+    return formatDateISO(date);
   }, []);
 
   const endDate = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() + 60);
-    return format(date, 'yyyy-MM-dd');
+    return formatDateISO(date);
   }, []);
 
   // Fetch availability if profile ID is available
@@ -104,9 +104,9 @@ export function AcceptVisitModal({
     if (visitDate) {
       visitDate.setHours(0, 0, 0, 0);
       const dateToUse = visitDate >= today ? visitDate : today;
-      dateStr = format(dateToUse, 'yyyy-MM-dd');
+      dateStr = formatDateISO(dateToUse);
     } else {
-      dateStr = format(today, 'yyyy-MM-dd');
+      dateStr = formatDateISO(today);
     }
     return {
       confirmedDate: dateStr,
@@ -127,11 +127,11 @@ export function AcceptVisitModal({
       visitDate.setHours(0, 0, 0, 0);
       const dateToUse = visitDate >= today ? visitDate : today;
       setSelectedDate(dateToUse);
-      const dateStr = format(dateToUse, 'yyyy-MM-dd');
+      const dateStr = formatDateISO(dateToUse);
       setValue('confirmedDate', dateStr, { shouldValidate: false });
     } else {
       setSelectedDate(today);
-      const dateStr = format(today, 'yyyy-MM-dd');
+      const dateStr = formatDateISO(today);
       setValue('confirmedDate', dateStr, { shouldValidate: false });
     }
     if (visit.scheduledTime) {
@@ -194,7 +194,7 @@ export function AcceptVisitModal({
                     value={selectedDate}
                     onChange={(date) => {
                       setSelectedDate(date);
-                      setValue('confirmedDate', date ? format(date, 'yyyy-MM-dd') : undefined, {
+                      setValue('confirmedDate', date ? formatDateISO(date) : undefined, {
                         shouldValidate: true,
                       });
                     }}
@@ -214,7 +214,7 @@ export function AcceptVisitModal({
                     availableTimes={
                       availability && typeof availability !== 'string' && selectedDate
                         ? availability.availableSlots.find(
-                            (slot) => slot.date === format(selectedDate, 'yyyy-MM-dd')
+                            (slot) => slot.date === formatDateISO(selectedDate)
                           )?.times || []
                         : []
                     }

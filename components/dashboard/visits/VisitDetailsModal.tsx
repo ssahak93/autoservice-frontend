@@ -1,15 +1,14 @@
 'use client';
 
-// Import only needed functions from date-fns for tree shaking
-import { format } from 'date-fns/format';
-import { parseISO } from 'date-fns/parseISO';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Calendar, User, FileText } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 import { Button } from '@/components/ui/Button';
 import { getAnimationVariants } from '@/lib/utils/animations';
+import { formatDate } from '@/lib/utils/date';
+import { formatCustomerName } from '@/lib/utils/user';
 import type { Visit } from '@/types';
 
 // Lazy load VisitHistory component
@@ -29,20 +28,14 @@ interface VisitDetailsModalProps {
 
 export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDetailsModalProps) {
   const t = useTranslations('dashboard.visits');
+  const locale = useLocale();
   const variants = getAnimationVariants();
 
-  const formatDate = (dateStr: string) => {
-    try {
-      return format(parseISO(dateStr), 'PPP', { locale: undefined });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const customerName =
-    visit.user?.firstName || visit.user?.lastName
-      ? `${visit.user.firstName || ''} ${visit.user.lastName || ''}`.trim()
-      : t('customer', { defaultValue: 'Customer' });
+  const customerName = formatCustomerName(
+    visit.user?.firstName,
+    visit.user?.lastName,
+    t('customer', { defaultValue: 'Customer' })
+  );
 
   const getAvailableActions = () => {
     const actions: Array<{ key: 'accept' | 'complete' | 'cancel' | 'reschedule'; label: string }> =
@@ -91,7 +84,7 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
               initial={variants.modal.initial}
               animate={variants.modal.animate}
               exit={variants.modal.exit}
-              className="glass-light w-full max-w-2xl rounded-xl p-6 shadow-2xl"
+              className="glass-light max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
@@ -135,7 +128,7 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
                     <Calendar className="h-5 w-5 text-gray-400" />
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {formatDate(visit.scheduledDate)}
+                        {formatDate(visit.scheduledDate, locale)}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {t('details.time', { defaultValue: 'Time' })}: {visit.scheduledTime}

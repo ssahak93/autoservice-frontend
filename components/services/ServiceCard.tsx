@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/routing';
+import { getAvatarUrl } from '@/lib/utils/file';
+import { formatServiceName } from '@/lib/utils/user';
 import { isCurrentlyOpen, type WorkingHours as WorkingHoursUtil } from '@/lib/utils/workingHours';
 import type { AutoService } from '@/types';
 
@@ -24,10 +26,12 @@ interface ServiceCardProps {
 export function ServiceCard({ service, index = 0, distance }: ServiceCardProps) {
   const t = useTranslations('services');
   // Safely construct name, handling undefined/null values
-  const name =
-    service.companyName ||
-    [service.firstName, service.lastName].filter(Boolean).join(' ') ||
-    t('unknownService', { defaultValue: 'Unknown Service' });
+  const name = formatServiceName(
+    service.companyName,
+    service.firstName,
+    service.lastName,
+    t('unknownService', { defaultValue: 'Unknown Service' })
+  );
   const rating = service.averageRating || 0;
   const reviewsCount = service.totalReviews || 0;
   const isOpen = service.workingHours
@@ -44,9 +48,9 @@ export function ServiceCard({ service, index = 0, distance }: ServiceCardProps) 
     >
       <Link href={`/services/${service.id}`} aria-label={`View details for ${name}`}>
         <div className="relative h-48 w-full overflow-hidden">
-          {service.avatarFile?.fileUrl ? (
+          {getAvatarUrl(service) ? (
             <Image
-              src={service.avatarFile.fileUrl}
+              src={getAvatarUrl(service)!}
               alt={name}
               fill
               className="object-cover"

@@ -10,8 +10,9 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'http',
-        hostname: 'localhost',
-        port: '3000',
+        hostname: process.env.NEXT_PUBLIC_BACKEND_HOSTNAME || 'localhost',
+        port: process.env.NEXT_PUBLIC_BACKEND_PORT || '3000',
+        pathname: '/api/files/**',
       },
       {
         protocol: 'https',
@@ -21,6 +22,9 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Disable image optimization for proxy URLs to prevent caching issues
+    // Images from /api/files/proxy are already optimized on backend
+    minimumCacheTTL: 60,
   },
   // Compress output
   compress: true,

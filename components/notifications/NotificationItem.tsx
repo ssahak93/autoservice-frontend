@@ -1,7 +1,5 @@
 'use client';
 
-// Import only needed functions from date-fns for tree shaking
-import { format } from 'date-fns/format';
 import { motion } from 'framer-motion';
 import {
   Bell,
@@ -17,8 +15,11 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 
+import { useAuth } from '@/hooks/useAuth';
 import { useMarkNotificationAsRead, useDeleteNotification } from '@/hooks/useNotifications';
+import { useVisit } from '@/hooks/useVisits';
 import type { Notification } from '@/lib/services/notifications.service';
+import { formatDateFull } from '@/lib/utils/date';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -49,6 +50,7 @@ export function NotificationItem({ notification, compact = false }: Notification
   const markAsRead = useMarkNotificationAsRead();
   const deleteNotification = useDeleteNotification();
   const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useAuth();
 
   const Icon = notificationIcons[notification.type] || Bell;
   const colorClass = notificationColors[notification.type] || 'text-neutral-500';
@@ -57,14 +59,20 @@ export function NotificationItem({ notification, compact = false }: Notification
   const visitId = notification.data?.visitId as string | undefined;
   const messageId = notification.data?.messageId as string | undefined;
 
+  // Load visit data to determine if user is the service owner
+  const { data: visit } = useVisit(visitId || null);
+
   // Determine navigation link based on notification type
   const getNotificationLink = () => {
     if (visitId) {
-      // For visit-related notifications, link to visits page or dashboard visits
-      if (notification.type.includes('visit')) {
-        return `/${locale}/visits`;
+      // For visit-related notifications, determine if user is service owner or customer
+      const isServiceOwner = visit?.autoService?.userId === user?.id;
+
+      // If user is service owner, link to dashboard visits; otherwise to user visits
+      if (isServiceOwner) {
+        return `/${locale}/dashboard/visits`;
       }
-      return `/${locale}/dashboard/visits`;
+      return `/${locale}/visits`;
     }
     if (messageId || notification.type === 'new_message') {
       return `/${locale}/dashboard/messages`;
@@ -135,7 +143,7 @@ export function NotificationItem({ notification, compact = false }: Notification
           <p className="mb-2 line-clamp-2 text-sm text-neutral-600">{notification.message}</p>
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs text-neutral-500">
-              {format(new Date(notification.createdAt), 'PPp')}
+              {formatDateFull(notification.createdAt, locale)}
             </p>
             {notificationLink && !compact && (
               <span className="flex items-center gap-1 text-xs font-medium text-primary-600">

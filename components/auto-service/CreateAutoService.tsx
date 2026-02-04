@@ -17,6 +17,7 @@ import { Link, useRouter } from '@/i18n/routing';
 import { FILE_CATEGORIES } from '@/lib/constants/file-categories.constants';
 import { MAX_AUTO_SERVICES_PER_USER } from '@/lib/services/auto-services.service';
 import { type UploadedFile } from '@/lib/services/files.service';
+import { formatServiceName } from '@/lib/utils/user';
 import { useAuthStore } from '@/stores/authStore';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 
@@ -169,7 +170,12 @@ export function CreateAutoService() {
                           name={
                             service.serviceType === 'company'
                               ? service.companyName || 'Service'
-                              : `${service.firstName} ${service.lastName}`.trim() || 'Service'
+                              : formatServiceName(
+                                  undefined,
+                                  service.firstName,
+                                  service.lastName,
+                                  'Service'
+                                )
                           }
                           isApproved={false}
                           size="sm"
@@ -179,8 +185,12 @@ export function CreateAutoService() {
                           <p className="font-medium text-gray-900 dark:text-white">
                             {service.serviceType === 'company'
                               ? service.companyName || 'My Service'
-                              : `${service.firstName || ''} ${service.lastName || ''}`.trim() ||
-                                'My Service'}
+                              : formatServiceName(
+                                  undefined,
+                                  service.firstName,
+                                  service.lastName,
+                                  'My Service'
+                                )}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {service.serviceType === 'company' ? 'Company' : 'Individual'}

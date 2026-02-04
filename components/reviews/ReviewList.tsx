@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
 import { useServiceReviews } from '@/hooks/useReviews';
+import { useVisits } from '@/hooks/useVisits';
 
 import { CreateReviewModal } from './CreateReviewModal';
 import { ReviewCard } from './ReviewCard';
@@ -33,6 +34,31 @@ export function ReviewList({ serviceId }: ReviewListProps) {
     limit,
     sortBy,
   });
+
+  // Check if user has available visits (completed without review) for this service
+  // Only fetch if user is authenticated
+  const { data: visitsData } = useVisits({ status: 'completed' }, { enabled: !!user });
+  const hasAvailableVisits =
+    user &&
+    visitsData?.data?.some((visit) => {
+      if (
+        visit.autoServiceProfileId !== serviceId ||
+        visit.status !== 'completed' ||
+        visit.review
+      ) {
+        return false;
+      }
+      // Check if scheduled date has passed
+      const scheduledDate = visit.scheduledDate || visit.preferredDate;
+      if (scheduledDate) {
+        const visitDate = new Date(scheduledDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        visitDate.setHours(0, 0, 0, 0);
+        return visitDate <= today;
+      }
+      return true;
+    });
 
   const reviews = data?.data || [];
   const pagination = data?.pagination;
@@ -66,7 +92,7 @@ export function ReviewList({ serviceId }: ReviewListProps) {
           {t('reviews')} ({pagination?.total || 0})
         </h3>
         <div className="flex items-center gap-2">
-          {user && (
+          {user && hasAvailableVisits && (
             <Button
               variant="primary"
               size="sm"

@@ -1,27 +1,75 @@
-import { NextRequest } from 'next/server';
-import createMiddleware from 'next-intl/middleware';
+import { NextRequest, NextResponse } from 'next/server';
+import createIntlMiddleware from 'next-intl/middleware';
 
 import { routing } from './i18n/routing';
 
-const intlMiddleware = createMiddleware({
-  ...routing,
-  // Detect locale from Accept-Language header or default to Armenian
-  localeDetection: true,
-  localePrefix: 'always',
-});
+// Protected routes that require authentication
+const protectedRoutes = ['/visits', '/dashboard', '/profile', '/notifications', '/my-service'];
 
-export function proxy(request: NextRequest) {
-  return intlMiddleware(request);
+// Public routes that don't require authentication
+const publicRoutes = [
+  '/auth',
+  '/services',
+  '/invite', // Can be accessed without auth for accepting invitations
+];
+
+// Routes that require authentication but allow unverified email
+
+const _unverifiedEmailRoutes = [
+  '/auth/verify-email-required', // Allow access to verification required page
+];
+
+const intlMiddleware = createIntlMiddleware(routing);
+
+export default function middleware(request: NextRequest) {
+  // First, apply internationalization middleware
+  const response = intlMiddleware(request);
+
+  // Get the pathname without locale prefix
+  const pathname = request.nextUrl.pathname;
+  const locale = pathname.split('/')[1];
+  const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
+
+  // Check if the route is protected
+  const isProtectedRoute = protectedRoutes.some((route) => pathWithoutLocale.startsWith(route));
+
+  // Check if the route is public (explicitly allowed)
+  const isPublicRoute =
+    publicRoutes.some((route) => pathWithoutLocale.startsWith(route)) || pathWithoutLocale === '/';
+
+  // If it's a protected route, check for authentication
+  if (isProtectedRoute && !isPublicRoute) {
+    // Check for access token in cookies
+    const accessToken = request.cookies.get('accessToken')?.value;
+
+    if (!accessToken) {
+      // No token found, redirect to login
+      const loginUrl = new URL(`/${locale}/auth/login`, request.url);
+      // Save the current URL for redirect after login
+      loginUrl.searchParams.set('redirect', pathWithoutLocale);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // If user is on auth pages and already authenticated, redirect to services
+  if (
+    pathWithoutLocale.startsWith('/auth/login') ||
+    pathWithoutLocale.startsWith('/auth/register')
+  ) {
+    const accessToken = request.cookies.get('accessToken')?.value;
+    if (accessToken) {
+      // User is already authenticated, redirect to services
+      const servicesUrl = new URL(`/${locale}/services`, request.url);
+      return NextResponse.redirect(servicesUrl);
+    }
+  }
+
+  return response;
 }
 
-// Match all pathnames except static files and API routes
 export const config = {
-  matcher: [
-    // Match all pathnames except:
-    // - api routes
-    // - _next (Next.js internals)
-    // - _vercel (Vercel internals)
-    // - static files (images, etc.)
-    '/((?!api|_next|_vercel|.*\\..*).*)',
-  ],
+  // Match all pathnames except for
+  // - … if they start with `/api`, `/_next` or `/_vercel`
+  // - … the ones containing a dot (e.g. `favicon.ico`)
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
 };

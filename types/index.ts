@@ -2,6 +2,7 @@
 export interface User {
   id: string;
   email: string;
+  emailVerified?: boolean;
   firstName: string;
   lastName: string;
   phoneNumber?: string;
@@ -172,6 +173,10 @@ export interface Visit {
       companyName?: string;
       firstName?: string;
       lastName?: string;
+      avatarFile?: {
+        id: string;
+        fileUrl: string;
+      };
     };
   };
   user?: {
@@ -187,6 +192,12 @@ export interface Visit {
   preferredDate?: string;
   preferredTime?: string;
   description?: string;
+  review?: {
+    id: string;
+    rating: number;
+    comment?: string | null;
+    createdAt: string;
+  } | null;
 }
 
 export interface CreateVisitRequest {
@@ -200,11 +211,16 @@ export interface CreateVisitRequest {
 export interface Review {
   id: string;
   rating: number;
-  comment?: string;
-  driverId: string;
-  autoServiceProfileId: string;
-  visitId?: string;
+  comment?: string | null;
+  userName: string;
+  userAvatar?: string | null;
+  userAvatarFileId?: string | null;
   createdAt: string;
+  isVerified?: boolean;
+  userId?: string; // User ID who created the review
+  reportedByCurrentUser?: boolean; // Whether current user has reported this review
+  autoServiceProfileId?: string;
+  visitId?: string;
   driver?: {
     firstName: string;
     lastName: string;

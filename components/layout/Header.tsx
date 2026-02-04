@@ -11,6 +11,7 @@ import { MobileMenu } from '@/components/layout/MobileMenu';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from '@/i18n/routing';
+import { formatUserName } from '@/lib/utils/user';
 
 /**
  * Header Component
@@ -30,7 +31,7 @@ export function Header() {
     setMounted(true);
   }, []);
 
-  const userName = user ? `${user.firstName} ${user.lastName}` : undefined;
+  const userName = user ? formatUserName(user.firstName, user.lastName) : undefined;
 
   // Use mounted state to ensure server and client render match initially
   // On server, mounted is always false, so we render non-auth version

@@ -51,6 +51,8 @@ export function useCreateReview() {
         queryClient.invalidateQueries({ queryKey: ['service', profileId] });
       }
       queryClient.invalidateQueries({ queryKey: ['reviews', 'user'] });
+      // Invalidate visits query to update review status
+      queryClient.invalidateQueries({ queryKey: ['visits'] });
     },
   });
 }
@@ -59,8 +61,13 @@ export function useCreateReview() {
  * Hook to report a review
  */
 export function useReportReview() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ reviewId, reason }: { reviewId: string; reason: string }) =>
       reviewsService.reportReview(reviewId, reason),
+    onSuccess: () => {
+      // Invalidate reviews queries to refresh reportedByCurrentUser status
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    },
   });
 }

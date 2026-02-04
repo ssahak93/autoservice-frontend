@@ -17,6 +17,7 @@ import { useServiceInfoValidation } from '@/hooks/useServiceInfoValidation';
 import { autoServicesService } from '@/lib/services/auto-services.service';
 import { filesService } from '@/lib/services/files.service';
 import { cn } from '@/lib/utils/cn';
+import { getAvatarUrl } from '@/lib/utils/file';
 import { validateFile, createImagePreview } from '@/lib/utils/fileValidation';
 
 interface AutoServiceEditorProps {
@@ -67,7 +68,7 @@ export function AutoServiceEditor({ autoServiceId }: AutoServiceEditorProps) {
     try {
       const previewUrl = await createImagePreview(file);
       setPreview(previewUrl);
-    } catch (err) {
+    } catch {
       setError(t('previewError', { defaultValue: 'Failed to create preview' }));
       return;
     }
@@ -76,7 +77,7 @@ export function AutoServiceEditor({ autoServiceId }: AutoServiceEditorProps) {
     try {
       await uploadAvatar.mutateAsync(file);
       setPreview(null);
-    } catch (err) {
+    } catch {
       // Error is handled in the hook
     }
   };
@@ -187,9 +188,9 @@ export function AutoServiceEditor({ autoServiceId }: AutoServiceEditorProps) {
             className="relative mx-auto h-32 w-32 overflow-hidden rounded-full sm:h-40 sm:w-40"
             suppressHydrationWarning
           >
-            {preview || autoService?.avatarFile?.fileUrl ? (
+            {preview || getAvatarUrl(autoService) ? (
               <Image
-                src={preview || autoService.avatarFile?.fileUrl || ''}
+                src={preview || getAvatarUrl(autoService) || ''}
                 alt="Avatar"
                 fill
                 className="object-cover"

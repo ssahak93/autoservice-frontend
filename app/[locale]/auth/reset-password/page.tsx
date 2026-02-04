@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Link, useRouter } from '@/i18n/routing';
 import { authService } from '@/lib/services/auth.service';
-import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '@/lib/utils/password.util';
+// Password validation is handled by commonValidations
 import { useUIStore } from '@/stores/uiStore';
 
 export default function ResetPasswordPage() {
@@ -31,23 +31,28 @@ export default function ResetPasswordPage() {
         t('invalidResetToken', { defaultValue: 'Invalid or missing reset token' }),
         'error'
       );
-      router.push('/forgot-password');
+      router.push('/auth/forgot-password');
       return;
     }
     setToken(tokenParam);
   }, [searchParams, router, showToast, t]);
 
-  const resetPasswordSchema = z
-    .object({
-      newPassword: z.string().min(8, t('passwordMinLength')).regex(PASSWORD_PATTERN, {
-        message: PASSWORD_ERROR_MESSAGE,
-      }),
-      confirmPassword: z.string().min(1, t('confirmPasswordRequired')),
+  const resetPasswordSchema = createPasswordConfirmationRefinement(
+    'newPassword',
+    'confirmPassword',
+    t('passwordsDontMatch')
+  )(
+    z.object({
+      newPassword: commonValidations.password(
+        t('passwordMinLength'),
+        t('passwordInvalid', {
+          defaultValue:
+            'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)',
+        })
+      ),
+      confirmPassword: commonValidations.requiredString(t('confirmPasswordRequired')),
     })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-      message: t('passwordsDontMatch'),
-      path: ['confirmPassword'],
-    });
+  );
 
   type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
@@ -82,7 +87,7 @@ export default function ResetPasswordPage() {
       );
       // Redirect to login after 2 seconds
       setTimeout(() => {
-        router.push('/login');
+        router.push('/auth/login');
       }, 2000);
     } catch (error) {
       const errorMessage =
@@ -125,7 +130,7 @@ export default function ResetPasswordPage() {
             </p>
           </div>
 
-          <Button type="button" className="w-full" onClick={() => router.push('/login')}>
+          <Button type="button" className="w-full" onClick={() => router.push('/auth/login')}>
             {t('backToLogin', { defaultValue: 'Back to Login' })}
           </Button>
         </div>
@@ -178,7 +183,7 @@ export default function ResetPasswordPage() {
 
         <div className="mt-6 text-center">
           <Link
-            href="/login"
+            href="/auth/login"
             className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 hover:underline"
           >
             <ArrowLeft className="h-4 w-4" />

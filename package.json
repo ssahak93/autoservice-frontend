@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
+    "dev:no-turbo": "set NEXT_PRIVATE_SKIP_TURBO=1 && next dev -p 3001",
+    "dev:turbo": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

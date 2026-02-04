@@ -1,9 +1,7 @@
 'use client';
 
-import { format } from 'date-fns/format';
-import { parseISO } from 'date-fns/parseISO';
 import { Calendar, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -15,6 +13,7 @@ import {
   type AvailabilityException,
 } from '@/hooks/useAvailabilityExceptions';
 import type { AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
+import { formatDateFull } from '@/lib/utils/date';
 import { useUIStore } from '@/stores/uiStore';
 
 interface AvailabilityExceptionsManagerProps {
@@ -23,6 +22,7 @@ interface AvailabilityExceptionsManagerProps {
 
 export function AvailabilityExceptionsManager({ profile }: AvailabilityExceptionsManagerProps) {
   const t = useTranslations('myService.availability');
+  const locale = useLocale();
   const { showToast } = useUIStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingException, setEditingException] = useState<AvailabilityException | null>(null);
@@ -161,7 +161,7 @@ export function AvailabilityExceptionsManager({ profile }: AvailabilityException
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {format(parseISO(exception.date), 'PPP')}
+                    {formatDateFull(exception.date, locale)}
                   </span>
                   {exception.isAvailable ? (
                     <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-800 dark:bg-green-900 dark:text-green-200">

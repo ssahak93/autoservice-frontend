@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -11,17 +12,19 @@ import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useRouter } from '@/i18n/routing';
+import { commonValidations } from '@/lib/utils/validation';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
   const { login, isLoggingIn, isAuthenticated } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const loginSchema = z.object({
-    email: z
-      .string()
-      .min(1, t('emailRequired'))
-      .email(t('invalidEmail', { defaultValue: 'Invalid email address' })),
+    email: commonValidations.email(
+      t('emailRequired'),
+      t('invalidEmail', { defaultValue: 'Invalid email address' })
+    ),
     password: z.string().min(8, t('passwordMinLength')),
   });
 
@@ -39,22 +42,30 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Check if there's a saved redirect URL
+      // Check for redirect parameter from URL (set by middleware)
+      const redirectParam = searchParams.get('redirect');
+
+      // Check if there's a saved redirect URL in sessionStorage
       const redirectUrl =
         typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
 
-      if (redirectUrl) {
+      // Priority: URL parameter > sessionStorage > default
+      const targetUrl = redirectParam || redirectUrl;
+
+      if (targetUrl) {
         // Remove the saved URL and redirect there
-        sessionStorage.removeItem('redirectAfterLogin');
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('redirectAfterLogin');
+        }
         // Strip locale prefix if present (for backward compatibility)
-        const normalizedUrl = redirectUrl.replace(/^\/(hy|en|ru)(\/|$)/, '/');
+        const normalizedUrl = targetUrl.replace(/^\/(hy|en|ru)(\/|$)/, '/');
         router.push(normalizedUrl);
       } else {
         // Default redirect to services
         router.push('/services');
       }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, searchParams]);
 
   const onSubmit = (data: LoginFormData) => {
     login(data);
@@ -107,7 +118,7 @@ export default function LoginPage() {
               <span className="text-neutral-700">{t('rememberMe')}</span>
             </label>
             <Link
-              href="/forgot-password"
+              href="/auth/forgot-password"
               className="text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 hover:underline"
             >
               {t('forgotPassword')}
@@ -127,7 +138,7 @@ export default function LoginPage() {
         <div className="mt-6 text-center text-sm">
           <span className="text-neutral-600">{t('noAccount')} </span>
           <Link
-            href="/register"
+            href="/auth/register"
             className="font-medium text-primary-600 transition-colors hover:text-primary-700 hover:underline"
           >
             {t('signUp')}

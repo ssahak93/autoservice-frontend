@@ -4,6 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import { z } from 'zod';
 
+import { commonValidations } from '@/lib/utils/validation';
+
 /**
  * Hook for service info form validation schemas
  * Follows Single Responsibility Principle - handles only validation logic
@@ -20,10 +22,14 @@ export function useServiceInfoValidation(isCompany: boolean) {
               .min(1, t('companyNameRequired', { defaultValue: 'Company name is required' }))
           : z.string().optional(),
         firstName: !isCompany
-          ? z.string().min(1, t('firstNameRequired', { defaultValue: 'First name is required' }))
+          ? commonValidations.firstName(
+              t('firstNameRequired', { defaultValue: 'First name is required' })
+            )
           : z.string().optional(),
         lastName: !isCompany
-          ? z.string().min(1, t('lastNameRequired', { defaultValue: 'Last name is required' }))
+          ? commonValidations.lastName(
+              t('lastNameRequired', { defaultValue: 'Last name is required' })
+            )
           : z.string().optional(),
       }),
     [isCompany, t]

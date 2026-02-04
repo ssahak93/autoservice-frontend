@@ -17,13 +17,14 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, accessToken } = useAuthStore();
 
-  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
-  const { data: stats } = useNotificationStats();
-  const unreadCount = stats?.unread || 0;
-
   // Check if we have a token (either in store or localStorage)
   const hasToken =
     typeof window !== 'undefined' && (!!accessToken || !!localStorage.getItem('accessToken'));
+
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  // Only call useNotificationStats if user is authenticated and has token
+  const { data: stats } = useNotificationStats();
+  const unreadCount = stats?.unread || 0;
 
   // Don't render if not authenticated or no token
   if (!isAuthenticated || !hasToken) {

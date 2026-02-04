@@ -20,12 +20,7 @@ import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpdateProfile } from '@/hooks/useProfile';
 import { getAnimationVariants } from '@/lib/utils/animations';
-import {
-  PHONE_PATTERN,
-  PHONE_ERROR_MESSAGE,
-  formatPhoneForBackend,
-  parsePhoneFromBackend,
-} from '@/lib/utils/phone.util';
+import { formatPhoneForBackend, parsePhoneFromBackend } from '@/lib/utils/phone.util';
 
 /**
  * Profile Page Component
@@ -33,11 +28,13 @@ import {
  * Single Responsibility: Displays and manages user profile information
  * Responsive: Mobile-first design with breakpoints for tablet and desktop
  */
-// Helper function to format dates consistently (always use same format to avoid hydration issues)
+// Note: This is a server component, so we use a simple ISO formatter
+// For client components, use formatDateISO from @/lib/utils/date
 const formatDate = (dateString: string): string => {
   if (!dateString) return '';
   try {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
     // Always use ISO format for consistent server/client rendering
     // Format as YYYY-MM-DD
     const year = date.getFullYear();
@@ -64,17 +61,18 @@ export default function ProfilePage() {
 
   // Form validation schema
   const profileSchema = z.object({
-    firstName: z
-      .string()
-      .min(1, t('firstNameRequired', { defaultValue: 'First name is required' })),
-    lastName: z.string().min(1, t('lastNameRequired', { defaultValue: 'Last name is required' })),
-    phoneNumber: z
-      .string()
-      .optional()
-      .refine(
-        (val) => !val || PHONE_PATTERN.test(val),
-        t('invalidPhoneNumber', { defaultValue: PHONE_ERROR_MESSAGE })
-      ),
+    firstName: commonValidations.firstName(
+      t('firstNameRequired', { defaultValue: 'First name is required' })
+    ),
+    lastName: commonValidations.lastName(
+      t('lastNameRequired', { defaultValue: 'Last name is required' })
+    ),
+    phoneNumber: commonValidations.phoneOptional(
+      t('invalidPhoneNumber', {
+        defaultValue:
+          'Phone number must be 8 digits (e.g., 98222680) or 9 digits starting with 0 (e.g., 098222680)',
+      })
+    ),
   });
 
   type ProfileFormData = z.infer<typeof profileSchema>;
@@ -113,7 +111,7 @@ export default function ProfilePage() {
         lastName: data.lastName,
         phoneNumber: data.phoneNumber ? formatPhoneForBackend(data.phoneNumber) : undefined,
       });
-    } catch (error) {
+    } catch {
       // Error is handled in the hook
     }
   };

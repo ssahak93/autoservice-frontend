@@ -7,6 +7,8 @@ import { useTranslations } from 'next-intl';
 
 import { visitsService } from '@/lib/services/visits.service';
 import { cn } from '@/lib/utils/cn';
+import { getAvatarUrl } from '@/lib/utils/file';
+import { formatCustomerName } from '@/lib/utils/user';
 import { MessageInput } from '@/modules/chat/components/MessageInput';
 import { MessageList } from '@/modules/chat/components/MessageList';
 import { chatService } from '@/modules/chat/services/chat.service';
@@ -37,10 +39,11 @@ export function ChatWindow({ visitId, onClose }: ChatWindowProps) {
     refetchInterval: 5000, // Refresh every 5 seconds
   });
 
-  const customerName =
-    visit?.user?.firstName && visit?.user?.lastName
-      ? `${visit.user.firstName} ${visit.user.lastName}`
-      : visit?.user?.firstName || t('customer', { defaultValue: 'Customer' });
+  const customerName = formatCustomerName(
+    visit?.user?.firstName,
+    visit?.user?.lastName,
+    t('customer', { defaultValue: 'Customer' })
+  );
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -93,9 +96,9 @@ export function ChatWindow({ visitId, onClose }: ChatWindowProps) {
         {/* Customer Info */}
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            {visit?.user?.avatarFile?.fileUrl ? (
+            {getAvatarUrl(visit?.user) ? (
               <Image
-                src={visit.user.avatarFile.fileUrl}
+                src={getAvatarUrl(visit.user)!}
                 alt={customerName}
                 width={48}
                 height={48}

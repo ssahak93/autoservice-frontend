@@ -1,8 +1,6 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-// Import only needed functions from date-fns for tree shaking
-import { format } from 'date-fns/format';
 // Import only needed locales for tree shaking
 import { enUS } from 'date-fns/locale/en-US';
 import { hy } from 'date-fns/locale/hy';
@@ -14,6 +12,7 @@ import ReactDatePicker, { registerLocale } from 'react-datepicker';
 
 import { availabilityService, type DateLoad } from '@/lib/services/availability.service';
 import { cn } from '@/lib/utils/cn';
+import { formatDateForPicker, formatDateISO } from '@/lib/utils/date';
 
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -40,20 +39,7 @@ const CustomDateInput = forwardRef<HTMLInputElement, CustomDateInputProps>(
     // Format the date with month name if we have selectedDate
     const displayValue = useMemo(() => {
       if (!selectedDate) return value || '';
-
-      try {
-        switch (locale) {
-          case 'ru':
-            return format(selectedDate, 'd MMMM yyyy', { locale: ru });
-          case 'hy':
-            return format(selectedDate, 'd MMMM yyyy', { locale: hy });
-          case 'en':
-          default:
-            return format(selectedDate, 'MMMM d, yyyy', { locale: enUS });
-        }
-      } catch {
-        return value || '';
-      }
+      return formatDateForPicker(selectedDate, locale);
     }, [selectedDate, locale, value]);
 
     return (
@@ -149,18 +135,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       }
     }, [locale]);
 
-    // Format date for display with month names
+    // Format date for display with month names (using utility)
     const _formatDisplayDate = (date: Date | null): string => {
       if (!date) return '';
-      switch (locale) {
-        case 'ru':
-          return format(date, 'd MMMM yyyy', { locale: ru }); // "17 января 2026"
-        case 'hy':
-          return format(date, 'd MMMM yyyy', { locale: hy }); // "17 հունվարի 2026"
-        case 'en':
-        default:
-          return format(date, 'MMMM d, yyyy', { locale: enUS }); // "January 17, 2026"
-      }
+      return formatDateForPicker(date, locale);
     };
 
     // Set default dateFormat for react-datepicker (used internally, not displayed)
@@ -191,14 +169,14 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       if (!isMounted) return '';
       const date = new Date();
       date.setHours(0, 0, 0, 0);
-      return format(date, 'yyyy-MM-dd');
+      return formatDateISO(date);
     }, [isMounted]);
 
     const endDate = useMemo(() => {
       if (!isMounted) return '';
       const date = new Date();
       date.setDate(date.getDate() + 60);
-      return format(date, 'yyyy-MM-dd');
+      return formatDateISO(date);
     }, [isMounted]);
 
     // Fetch availability if autoServiceId is provided (only after mount)

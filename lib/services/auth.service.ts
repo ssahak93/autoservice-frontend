@@ -17,6 +17,7 @@ export interface UpdateProfileRequest {
   lastName?: string;
   phoneNumber?: string;
   avatarFileId?: string;
+  preferredLanguage?: 'hy' | 'en' | 'ru';
 }
 
 export interface ChangePasswordRequest {
@@ -98,6 +99,31 @@ export const authService = {
     const response = await apiClient.post<{ success: boolean; message: string }>(
       API_ENDPOINTS.AUTH.RESET_PASSWORD,
       data
+    );
+    return response.data;
+  },
+
+  /**
+   * Verify email with token
+   */
+  async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.get<{ success: boolean; message: string }>(
+      API_ENDPOINTS.AUTH.VERIFY_EMAIL,
+      { params: { token } }
+    );
+    return response.data;
+  },
+
+  /**
+   * Resend verification email
+   */
+  async resendVerificationEmail(
+    email: string,
+    locale: string = 'hy'
+  ): Promise<{ message: string }> {
+    const response = await apiClient.post<{ message: string }>(
+      API_ENDPOINTS.AUTH.RESEND_VERIFICATION,
+      { email, locale }
     );
     return response.data;
   },

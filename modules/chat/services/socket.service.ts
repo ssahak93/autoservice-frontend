@@ -51,20 +51,13 @@ class SocketService {
           token = newToken;
         }
       }
-    } catch (_error) {
+    } catch {
       // ignore token parse failures
     }
 
     this.currentToken = token;
     const socketUrl = getSocketUrl();
     const namespaceUrl = `${socketUrl}/chat`;
-
-    // eslint-disable-next-line no-console
-    console.log('[Socket] Connecting to:', namespaceUrl);
-    // eslint-disable-next-line no-console
-    console.log('[Socket] Path: /socket.io');
-    // eslint-disable-next-line no-console
-    console.log('[Socket] Token:', token ? `${token.substring(0, 20)}...` : 'none');
 
     this.socket = io(namespaceUrl, {
       path: '/socket.io',
@@ -85,7 +78,7 @@ class SocketService {
       this.reconnectAttempts = 0;
     };
 
-    const handleDisconnect = (_reason: string) => {
+    const handleDisconnect = () => {
       // Socket.io will reconnect
     };
 
@@ -95,6 +88,7 @@ class SocketService {
         error: error,
         socketId: this.socket?.id,
         connected: this.socket?.connected,
+        reconnectAttempts: this.reconnectAttempts,
       });
       const errorMessage = error.message || '';
       if (
@@ -112,7 +106,7 @@ class SocketService {
             this.currentToken = null;
             return;
           }
-        } catch (_refreshError) {
+        } catch {
           this.socket?.disconnect();
           this.socket?.removeAllListeners();
           this.socket = null;
@@ -179,20 +173,20 @@ class SocketService {
           try {
             const { useAuthStore } = await import('@/stores/authStore');
             useAuthStore.getState().setTokens(accessToken, newRefreshToken);
-          } catch (_error) {
+          } catch {
             // ignore
           }
         }
 
         return accessToken;
-      } catch (_error) {
+      } catch {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           try {
             const { useAuthStore } = await import('@/stores/authStore');
             useAuthStore.getState().logout();
-          } catch (_e) {
+          } catch {
             // ignore
           }
         }

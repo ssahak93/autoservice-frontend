@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 interface User {
   id: string;
   email: string;
+  emailVerified?: boolean;
   firstName: string;
   lastName: string;
   avatarFileId?: string;
@@ -57,6 +58,11 @@ export const useAuthStore = create<AuthState>()(
           if (typeof window !== 'undefined') {
             localStorage.setItem('accessToken', accessToken);
             localStorage.setItem('refreshToken', refreshToken);
+            // Also save to cookies for middleware access
+            // Set cookie with 7 days expiration, httpOnly=false (needed for client access), secure in production
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 7);
+            document.cookie = `accessToken=${accessToken}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
           }
           set({ accessToken, refreshToken, isAuthenticated: true });
         },
@@ -65,6 +71,8 @@ export const useAuthStore = create<AuthState>()(
           if (typeof window !== 'undefined') {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
+            // Also clear cookies
+            document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
           }
           set({
             user: null,

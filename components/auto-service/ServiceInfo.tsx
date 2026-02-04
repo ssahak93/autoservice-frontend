@@ -4,6 +4,7 @@ import { MapPin, Phone, Star, CheckCircle2, XCircle, AlertCircle, ShieldCheck } 
 import { useTranslations } from 'next-intl';
 
 import type { AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
+import { formatServiceName } from '@/lib/utils/user';
 
 interface ServiceInfoProps {
   profile: AutoServiceProfile;
@@ -13,10 +14,11 @@ export function ServiceInfo({ profile }: ServiceInfoProps) {
   const t = useTranslations('myService.info');
   const tCreate = useTranslations('myService.create');
 
-  const serviceName =
-    profile.autoService?.serviceType === 'company'
-      ? profile.autoService.companyName
-      : `${profile.autoService?.firstName || ''} ${profile.autoService?.lastName || ''}`.trim();
+  const serviceName = formatServiceName(
+    profile.autoService?.companyName,
+    profile.autoService?.firstName,
+    profile.autoService?.lastName
+  );
 
   // Helper to get service type translation
   const getServiceTypeLabel = (serviceType?: 'individual' | 'company') => {

@@ -6,21 +6,26 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { visitsService } from '@/lib/services/visits.service';
 import { cn } from '@/lib/utils/cn';
+import { formatCustomerName } from '@/lib/utils/user';
 import { chatService } from '@/modules/chat/services/chat.service';
 import { useChatStore } from '@/modules/chat/state/chatStore';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 
 // Lazy load chat components to reduce initial bundle size
-const ChatWindow = dynamic(
-  () => import('./ChatWindow').then((mod) => ({ default: mod.ChatWindow })),
+const UnifiedChatWindow = dynamic(
+  () =>
+    import('@/components/chat/UnifiedChatWindow').then((mod) => ({
+      default: mod.UnifiedChatWindow,
+    })),
   {
     ssr: false,
     loading: () => (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+          <LoadingSpinner size="md" className="mx-auto mb-2" />
           <p className="text-sm text-gray-600 dark:text-gray-400">Loading chat...</p>
         </div>
       </div>
@@ -104,7 +109,7 @@ export function MessagesManagementContent() {
               : undefined,
             unreadCount,
           } as Conversation;
-        } catch (error) {
+        } catch {
           // If error, return conversation without last message
           return {
             visitId: visit.id,
@@ -124,8 +129,11 @@ export function MessagesManagementContent() {
   const filteredConversations = conversations.filter((conv) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    const customerName =
-      `${conv.visit.user.firstName || ''} ${conv.visit.user.lastName || ''}`.toLowerCase();
+    const customerName = formatCustomerName(
+      conv.visit.user.firstName,
+      conv.visit.user.lastName,
+      'customer'
+    ).toLowerCase();
     const problemDescription = (conv.visit.problemDescription || '').toLowerCase();
     return customerName.includes(query) || problemDescription.includes(query);
   });
@@ -150,7 +158,7 @@ export function MessagesManagementContent() {
   }
 
   return (
-    <div className="flex h-full gap-4 overflow-hidden px-2 py-2 sm:px-4 sm:py-4">
+    <div className="flex h-[calc(100vh-8rem)] gap-4 overflow-hidden px-2 py-2 sm:px-4 sm:py-4">
       {/* Conversations List */}
       <div
         className={cn(
@@ -204,11 +212,11 @@ export function MessagesManagementContent() {
         )}
       >
         {selectedVisitId ? (
-          <div className="relative h-full">
+          <div className="relative flex h-full flex-col">
             {/* Mobile back button */}
             <button
               onClick={() => setSelectedVisitId(null)}
-              className="mb-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors active:bg-gray-100 md:hidden dark:text-gray-300 dark:active:bg-gray-700"
+              className="mb-2 flex-shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors active:bg-gray-100 md:hidden dark:text-gray-300 dark:active:bg-gray-700"
             >
               <svg
                 className="h-5 w-5"
@@ -226,7 +234,14 @@ export function MessagesManagementContent() {
               </svg>
               {t('common.back', { defaultValue: 'Back' })}
             </button>
-            <ChatWindow visitId={selectedVisitId} onClose={() => setSelectedVisitId(null)} />
+            <div className="min-h-0 flex-1">
+              <UnifiedChatWindow
+                visitId={selectedVisitId}
+                isOpen={!!selectedVisitId}
+                onClose={() => setSelectedVisitId(null)}
+                variant="embedded"
+              />
+            </div>
           </div>
         ) : (
           <div className="glass-light flex h-[calc(100vh-8rem)] items-center justify-center rounded-xl">

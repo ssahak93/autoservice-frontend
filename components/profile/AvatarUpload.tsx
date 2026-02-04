@@ -51,7 +51,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, className }: AvatarUp
     try {
       const previewUrl = await createImagePreview(file);
       setPreview(previewUrl);
-    } catch (err) {
+    } catch {
       setError(t('previewError', { defaultValue: 'Failed to create preview' }));
       return;
     }
@@ -60,7 +60,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, className }: AvatarUp
     try {
       await uploadAvatar.mutateAsync(file);
       setPreview(null);
-    } catch (err) {
+    } catch {
       // Error is handled in the hook
     }
   };
@@ -88,6 +88,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, className }: AvatarUp
             fill
             className="object-cover"
             sizes="(max-width: 640px) 128px, 160px"
+            loading="eager"
             unoptimized
             suppressHydrationWarning
           />
