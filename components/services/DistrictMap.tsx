@@ -3,7 +3,7 @@
 import { MapPin } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import { locationsService } from '@/lib/services/locations.service';
 
@@ -70,6 +70,9 @@ export function DistrictMap({
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(
     selectedDistrictCode || null
   );
+
+  // Generate unique map key that persists across re-renders (prevents double initialization in Strict Mode)
+  const mapKeyRef = useRef(`district-map-${Date.now()}-${Math.random()}`);
 
   // Fix for default marker icons (must be done on client side only)
   useEffect(() => {
@@ -229,39 +232,42 @@ export function DistrictMap({
       </div>
 
       <div className="overflow-hidden rounded-lg border-2 border-neutral-200" style={{ height }}>
-        <MapContainer
-          center={getMapBounds()}
-          zoom={12}
-          style={{ height: '100%', width: '100%' }}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ZoomControl position="bottomright" />
+        {mounted && (
+          <MapContainer
+            key={mapKeyRef.current}
+            center={getMapBounds()}
+            zoom={12}
+            style={{ height: '100%', width: '100%' }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <ZoomControl position="bottomright" />
 
-          {/* Render district polygons */}
-          {districts.map((district) => {
-            if (!district.bounds) return null;
+            {/* Render district polygons */}
+            {districts.map((district) => {
+              if (!district.bounds) return null;
 
-            return (
-              <GeoJSON
-                key={district.id}
-                data={district.bounds as unknown as GeoJSON.GeoJsonObject}
-                style={() => getDistrictStyle(district)}
-                onEachFeature={(feature, layer) => onEachDistrict(district, layer)}
-              />
-            );
-          })}
+              return (
+                <GeoJSON
+                  key={district.id}
+                  data={district.bounds as unknown as GeoJSON.GeoJsonObject}
+                  style={() => getDistrictStyle(district)}
+                  onEachFeature={(feature, layer) => onEachDistrict(district, layer)}
+                />
+              );
+            })}
 
-          {/* Render service markers */}
-          {services.map((service) => (
-            <Marker key={service.id} position={[service.latitude, service.longitude]}>
-              {/* You can add a custom popup here */}
-            </Marker>
-          ))}
-        </MapContainer>
+            {/* Render service markers */}
+            {services.map((service) => (
+              <Marker key={service.id} position={[service.latitude, service.longitude]}>
+                {/* You can add a custom popup here */}
+              </Marker>
+            ))}
+          </MapContainer>
+        )}
       </div>
 
       {/* District legend */}

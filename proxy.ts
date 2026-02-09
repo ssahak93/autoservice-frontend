@@ -51,18 +51,9 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  // If user is on auth pages and already authenticated, redirect to services
-  if (
-    pathWithoutLocale.startsWith('/auth/login') ||
-    pathWithoutLocale.startsWith('/auth/register')
-  ) {
-    const accessToken = request.cookies.get('accessToken')?.value;
-    if (accessToken) {
-      // User is already authenticated, redirect to services
-      const servicesUrl = new URL(`/${locale}/services`, request.url);
-      return NextResponse.redirect(servicesUrl);
-    }
-  }
+  // Note: We don't redirect authenticated users away from auth pages in middleware
+  // Let the auth pages themselves handle this logic (they can validate token validity)
+  // This allows users to access login page even with potentially expired/invalid tokens
 
   return response;
 }

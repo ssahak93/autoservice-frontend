@@ -140,6 +140,74 @@ export interface WorkingHours {
   sunday?: { open: string; close: string };
 }
 
+// Vehicle types
+export type EngineType =
+  | 'gasoline'
+  | 'diesel'
+  | 'electric'
+  | 'hybrid'
+  | 'plug_in_hybrid'
+  | 'lpg'
+  | 'cng'
+  | 'other';
+
+export type LpgType = 'liquid_gas' | 'methane';
+
+export interface Vehicle {
+  id: string;
+  userId: string;
+  make: string;
+  model: string;
+  year?: number;
+  licensePlate?: string;
+  color?: string;
+  vin?: string;
+  technicalPassport?: string;
+  engine?: string;
+  engineType?: EngineType;
+  hasLpgSystem: boolean;
+  lpgType?: LpgType;
+  horsepower?: number;
+  notes?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  visitCount?: number; // Optional: number of visits for this vehicle
+}
+
+export interface CreateVehicleRequest {
+  make: string;
+  model: string;
+  year?: number;
+  licensePlate?: string;
+  color?: string;
+  vin?: string;
+  technicalPassport?: string;
+  engine?: string;
+  engineType?: EngineType;
+  hasLpgSystem?: boolean;
+  lpgType?: LpgType;
+  horsepower?: number;
+  notes?: string;
+}
+
+export interface UpdateVehicleRequest {
+  make?: string;
+  model?: string;
+  year?: number;
+  licensePlate?: string;
+  color?: string;
+  vin?: string;
+  technicalPassport?: string;
+  engine?: string;
+  engineType?: EngineType;
+  hasLpgSystem?: boolean;
+  lpgType?: LpgType | null;
+  horsepower?: number;
+  notes?: string;
+  isActive?: boolean;
+}
+
 // Visit types
 export interface Visit {
   id: string;
@@ -147,6 +215,7 @@ export interface Visit {
   autoServiceId: string;
   autoServiceProfileId: string;
   assignedEmployeeId?: string;
+  vehicleId?: string;
   scheduledDate: string; // ISO date string (YYYY-MM-DD or full ISO)
   scheduledTime: string; // HH:mm format
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
@@ -156,6 +225,19 @@ export interface Visit {
   confirmedTime?: string; // HH:mm format
   createdAt: string;
   updatedAt: string;
+  vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year?: number;
+    licensePlate?: string;
+    color?: string;
+    engine?: string;
+    engineType?: EngineType;
+    hasLpgSystem: boolean;
+    lpgType?: LpgType;
+    horsepower?: number;
+  };
   autoService?: {
     id: string;
     serviceType?: 'individual' | 'company';
@@ -205,6 +287,7 @@ export interface CreateVisitRequest {
   scheduledDate: string; // ISO 8601 date string (YYYY-MM-DD)
   scheduledTime: string; // HH:mm format
   problemDescription?: string;
+  vehicleId?: string; // Optional vehicle ID
 }
 
 // Review types

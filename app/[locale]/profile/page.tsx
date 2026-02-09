@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { Mail, Phone, User as UserIcon } from 'lucide-react';
+import { Car } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -19,8 +20,10 @@ import { Input } from '@/components/ui/Input';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpdateProfile } from '@/hooks/useProfile';
+import { Link } from '@/i18n/routing';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { formatPhoneForBackend, parsePhoneFromBackend } from '@/lib/utils/phone.util';
+import { commonValidations } from '@/lib/utils/validation';
 
 /**
  * Profile Page Component
@@ -230,6 +233,16 @@ export default function ProfilePage() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="mt-6 border-t border-neutral-200 pt-4">
+                  <Link href="/profile/vehicles">
+                    <Button variant="outline" fullWidth className="justify-start">
+                      <Car className="mr-2 h-4 w-4" />
+                      {t('myVehicles', { defaultValue: 'My Vehicles' })}
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>

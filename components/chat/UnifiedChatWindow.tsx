@@ -11,7 +11,7 @@ import { useVisit } from '@/hooks/useVisits';
 import { cn } from '@/lib/utils/cn';
 import { formatDateTime } from '@/lib/utils/date';
 import { getAvatarUrl } from '@/lib/utils/file';
-import { formatCustomerName } from '@/lib/utils/user';
+import { formatCustomerName, formatServiceName } from '@/lib/utils/user';
 import { MessageInput } from '@/modules/chat/components/MessageInput';
 import { MessageList } from '@/modules/chat/components/MessageList';
 import { chatService } from '@/modules/chat/services/chat.service';
@@ -59,7 +59,12 @@ export function UnifiedChatWindow({
   // Get unread count
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unreadCount', visitId],
-    queryFn: () => chatService.getUnreadCount(visitId!),
+    queryFn: () => {
+      if (!visitId) {
+        throw new Error('Visit ID is required');
+      }
+      return chatService.getUnreadCount(visitId);
+    },
     enabled: !!visitId,
     refetchInterval: 5000,
   });

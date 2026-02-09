@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Calendar, User } from 'lucide-react';
+import { Calendar, User, Car } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCallback } from 'react';
 
@@ -139,6 +139,17 @@ export function VisitList({
                       {t('at', { defaultValue: 'at' })} {visit.scheduledTime}
                     </span>
                   </div>
+
+                  {visit.vehicle && (
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <Car className="h-4 w-4" />
+                      <span className="text-sm">
+                        {visit.vehicle.make} {visit.vehicle.model}
+                        {visit.vehicle.year && ` ${visit.vehicle.year}`}
+                        {visit.vehicle.licensePlate && ` (${visit.vehicle.licensePlate})`}
+                      </span>
+                    </div>
+                  )}
 
                   {visit.problemDescription && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">

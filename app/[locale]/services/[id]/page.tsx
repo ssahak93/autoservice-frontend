@@ -233,7 +233,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             )}
 
             {/* Gallery */}
-            {(service.profilePhotoFileIds?.length || service.workPhotoFileIds?.length) && (
+            {((service.profilePhotoFileIds && service.profilePhotoFileIds.length > 0) ||
+              (service.workPhotoFileIds && service.workPhotoFileIds.length > 0)) && (
               <div className="glass-light rounded-xl p-4 md:rounded-2xl md:p-8">
                 <ServiceGallery
                   profilePhotos={service.profilePhotoFileIds}

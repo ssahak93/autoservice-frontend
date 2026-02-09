@@ -212,8 +212,22 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       if (!showAvailability || !autoServiceId || !availability || availability === 'OWN_SERVICE') {
         return null;
       }
-      const dateStr = format(date, 'yyyy-MM-dd');
-      return dateLoadMap.get(dateStr)?.status || null;
+      const dateStr = formatDateISO(date);
+      const load = dateLoadMap.get(dateStr);
+
+      // If date is in dateLoadMap, return its status
+      if (load) {
+        return load.status;
+      }
+
+      // If date is not in dateLoadMap but has available slots, it's available
+      const hasAvailableSlots = availability.availableSlots.some((slot) => slot.date === dateStr);
+      if (hasAvailableSlots) {
+        return 'available';
+      }
+
+      // Otherwise, no status (date is not a working day)
+      return null;
     };
 
     // Check if a date is a working day (has available slots)
@@ -222,7 +236,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
         return true; // Allow all dates if availability is not loaded
       }
 
-      const dateStr = format(date, 'yyyy-MM-dd');
+      const dateStr = formatDateISO(date);
       const availableSlot = availability.availableSlots.find((slot) => slot.date === dateStr);
       return !!availableSlot && availableSlot.times.length > 0;
     };
@@ -248,7 +262,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       const baseClasses = [];
 
       // Check if this is the selected date
-      const isSelected = value && format(date, 'yyyy-MM-dd') === format(value, 'yyyy-MM-dd');
+      const isSelected = value && formatDateISO(date) === formatDateISO(value);
 
       if (defaultMinDate && date < defaultMinDate) {
         return '!text-neutral-300 !cursor-not-allowed';
@@ -269,12 +283,14 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
 
       const status = getDateStatus(date);
       if (status === 'full') {
-        baseClasses.push('!bg-red-100 !text-red-700 hover:!bg-red-200');
+        baseClasses.push('!bg-red-100 !text-red-700 hover:!bg-red-200 !font-medium');
       } else if (status === 'heavy') {
-        baseClasses.push('!bg-yellow-100 !text-yellow-700 hover:!bg-yellow-200');
+        baseClasses.push('!bg-yellow-100 !text-yellow-700 hover:!bg-yellow-200 !font-medium');
       } else if (status === 'available') {
-        baseClasses.push('hover:!bg-primary-100');
+        // Available dates - subtle green background or default
+        baseClasses.push('!bg-green-50 hover:!bg-green-100 !text-green-800');
       } else {
+        // Default for dates without status (shouldn't happen if backend is correct)
         baseClasses.push('hover:!bg-primary-100');
       }
 
@@ -283,7 +299,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
 
     // Get selected date status for warning
     const selectedDateStatus = value ? getDateStatus(value) : null;
-    const selectedDateLoad = value ? dateLoadMap.get(format(value, 'yyyy-MM-dd')) : null;
+    const selectedDateLoad = value ? dateLoadMap.get(formatDateISO(value)) : null;
 
     return (
       <div className="w-full">
@@ -332,6 +348,32 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
           )}
         </div>
 
+        {/* Legend for availability colors - shown before calendar opens */}
+        {showAvailability && availability && availability !== 'OWN_SERVICE' && !inline && (
+          <div className="mt-2 flex flex-wrap gap-4 text-xs text-neutral-700">
+            <div className="flex items-center gap-1.5">
+              <div className="h-3.5 w-3.5 rounded border border-green-400 bg-green-100" />
+              <span className="font-medium">{t('available', { defaultValue: 'Available' })}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-3.5 w-3.5 rounded border border-yellow-400 bg-yellow-100" />
+              <span className="font-medium">
+                {t('heavy', {
+                  defaultValue: 'Heavy (80%+)',
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-3.5 w-3.5 rounded border border-red-400 bg-red-100" />
+              <span className="font-medium">
+                {t('full', {
+                  defaultValue: 'Full (100%)',
+                })}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Own service warning */}
         {isOwnService && (
           <div className="mt-2 rounded-lg border-2 border-blue-300 bg-blue-50 p-3 text-sm text-blue-800">
@@ -377,34 +419,6 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
                 defaultValue:
                   'You can still book, but the service may not be able to accommodate your visit.',
               })}
-            </div>
-          </div>
-        )}
-
-        {/* Legend for availability colors */}
-        {showAvailability && availability && availability !== 'OWN_SERVICE' && (
-          <div className="mt-2 flex flex-wrap gap-3 text-xs text-neutral-600">
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded border border-green-300 bg-green-100" />
-              <span>{t('available', { defaultValue: 'Available' })}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded border border-yellow-300 bg-yellow-100" />
-              <span>
-                {t('heavy', {
-                  defaultValue: 'Heavy ({min}+ visits)',
-                  min: Math.floor(availability.maxVisitsPerDay * 0.8),
-                })}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded border border-red-300 bg-red-100" />
-              <span>
-                {t('full', {
-                  defaultValue: 'Full ({max} visits)',
-                  max: availability.maxVisitsPerDay,
-                })}
-              </span>
             </div>
           </div>
         )}

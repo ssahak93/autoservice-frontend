@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Car } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 
 import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge';
@@ -88,6 +89,9 @@ export function RecentVisits() {
                 {t('recentVisits.time', { defaultValue: 'Time' })}
               </th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('recentVisits.vehicle', { defaultValue: 'Vehicle' })}
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t('recentVisits.status', { defaultValue: 'Status' })}
               </th>
             </tr>
@@ -111,6 +115,21 @@ export function RecentVisits() {
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                   {visit.scheduledTime}
+                </td>
+                <td className="px-4 py-3">
+                  {visit.vehicle ? (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Car className="h-4 w-4" />
+                      <span>
+                        {visit.vehicle.make} {visit.vehicle.model}
+                        {visit.vehicle.licensePlate && ` (${visit.vehicle.licensePlate})`}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400 dark:text-gray-500">
+                      {t('recentVisits.noVehicle', { defaultValue: 'No vehicle' })}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <ServiceStatusBadge

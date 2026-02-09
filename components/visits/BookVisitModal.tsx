@@ -11,9 +11,11 @@ import { z } from 'zod';
 
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { Select } from '@/components/ui/Select';
 import { TimePicker } from '@/components/ui/TimePicker';
 import { useEmailVerification } from '@/hooks/useEmailVerification';
 import { useModal } from '@/hooks/useModal';
+import { useVehicles } from '@/hooks/useVehicles';
 import { useCreateVisit, useUpdateVisit } from '@/hooks/useVisits';
 import { availabilityService } from '@/lib/services/availability.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
@@ -34,6 +36,7 @@ const createBookVisitSchema = (t: (key: string, options?: { defaultValue?: strin
         message: 'Time must be in HH:mm format',
       }),
     problemDescription: z.string().optional(),
+    vehicleId: z.string().optional(),
   });
 };
 
@@ -84,6 +87,7 @@ export function BookVisitModal({
   const { user: _user } = useAuthStore();
   const { isEmailVerificationRequired, redirectToVerification } = useEmailVerification();
   const { showToast } = useUIStore();
+  const { data: vehicles, isLoading: isLoadingVehicles } = useVehicles();
 
   // Use external isOpen/onClose in edit mode, internal in create mode
   const isEditMode = mode === 'edit';
@@ -262,6 +266,7 @@ export function BookVisitModal({
           scheduledDate: data.scheduledDate,
           scheduledTime: data.scheduledTime,
           problemDescription: data.problemDescription,
+          vehicleId: data.vehicleId || undefined,
         },
         {
           onSuccess: () => {
@@ -439,6 +444,48 @@ export function BookVisitModal({
                       );
                     }}
                   />
+
+                  {/* Vehicle Selector (only in create mode) */}
+                  {!isEditMode && (
+                    <Controller
+                      name="vehicleId"
+                      control={control}
+                      render={({ field }) => {
+                        const vehicleOptions = [
+                          {
+                            value: '',
+                            label: t('selectVehicle', {
+                              defaultValue: 'Select vehicle (optional)',
+                            }),
+                          },
+                          ...(vehicles || []).map((vehicle) => {
+                            const displayName = `${vehicle.make} ${vehicle.model}${vehicle.year ? ` ${vehicle.year}` : ''}${vehicle.licensePlate ? ` (${vehicle.licensePlate})` : ''}`;
+                            return {
+                              value: vehicle.id,
+                              label: displayName,
+                            };
+                          }),
+                        ];
+
+                        return (
+                          <Select
+                            {...field}
+                            label={t('vehicle', { defaultValue: 'Vehicle' })}
+                            options={vehicleOptions}
+                            disabled={isLoadingVehicles}
+                            helperText={
+                              vehicles && vehicles.length === 0
+                                ? t('noVehicles', {
+                                    defaultValue:
+                                      'No vehicles added yet. You can add one in your profile.',
+                                  })
+                                : undefined
+                            }
+                          />
+                        );
+                      }}
+                    />
+                  )}
 
                   {/* Problem Description */}
                   <div>

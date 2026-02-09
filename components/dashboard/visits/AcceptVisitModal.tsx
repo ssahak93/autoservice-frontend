@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Car } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -186,6 +186,23 @@ export function AcceptVisitModal({
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* Vehicle Info */}
+                {visit.vehicle && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Car className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t('accept.vehicle', { defaultValue: 'Vehicle' })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-900 dark:text-white">
+                      {visit.vehicle.make} {visit.vehicle.model}
+                      {visit.vehicle.year && ` ${visit.vehicle.year}`}
+                      {visit.vehicle.licensePlate && ` (${visit.vehicle.licensePlate})`}
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     {t('accept.confirmedDate', { defaultValue: 'Confirmed Date (optional)' })}

@@ -5,7 +5,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -48,6 +48,9 @@ export function CreateProfileEditor() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.1811, 44.5136]); // Yerevan default
   const [mounted, setMounted] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+
+  // Generate unique map key that persists across re-renders (prevents double initialization in Strict Mode)
+  const mapKeyRef = useRef(`map-${Date.now()}-${Math.random()}`);
   const [selectedRegionId, setSelectedRegionId] = useState<string>('');
   const [_selectedCommunityId, _setSelectedCommunityId] = useState<string>('');
 
@@ -312,11 +315,12 @@ export function CreateProfileEditor() {
         {/* Map Picker - Always Visible */}
         {mounted && (
           <div
-            id="map-container"
+            id={`map-container-${mapKeyRef.current}`}
+            key={`map-container-${mapKeyRef.current}`}
             className="h-96 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
           >
             <MapContainer
-              key="map-instance"
+              key={mapKeyRef.current}
               center={
                 watchedLatitude && watchedLongitude
                   ? [watchedLatitude, watchedLongitude]

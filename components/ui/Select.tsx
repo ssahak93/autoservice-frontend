@@ -38,7 +38,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <select
             ref={ref}
             className={cn(
-              'w-full appearance-none rounded-lg border-2 bg-white px-4 py-2.5 pr-10 text-sm',
+              'w-full appearance-none rounded-lg border-2 bg-white px-4 py-2.5 pr-10 text-sm text-neutral-900',
               'transition-all',
               'focus:outline-none focus:ring-2 focus:ring-offset-0',
               error
@@ -60,17 +60,15 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 key={option.key || `${option.value}-${index}`}
                 value={option.value}
                 disabled={option.disabled}
+                style={{ color: '#171717', backgroundColor: '#ffffff' }}
               >
                 {option.label}
               </option>
             ))}
           </select>
-          {/* Dropdown Icon */}
+          {/* Dropdown Icon - Always points down */}
           <ChevronDown
-            className={cn(
-              'pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 transition-transform',
-              isFocused && 'rotate-180'
-            )}
+            className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400"
             aria-hidden="true"
           />
           {/* Error Icon */}

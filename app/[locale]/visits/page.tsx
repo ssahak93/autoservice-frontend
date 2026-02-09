@@ -4,6 +4,7 @@
 import { isFuture } from 'date-fns/isFuture';
 import { isPast } from 'date-fns/isPast';
 import { isToday } from 'date-fns/isToday';
+import { parseISO } from 'date-fns/parseISO';
 import {
   Calendar,
   CheckCircle2,
@@ -115,6 +116,17 @@ function VisitCard({
                 {visit.scheduledTime || visit.preferredTime}
               </span>
             </div>
+
+            {visit.vehicle && (
+              <div className="flex items-center gap-2 text-neutral-600">
+                <Car className="h-4 w-4" />
+                <span className="text-sm">
+                  {visit.vehicle.make} {visit.vehicle.model}
+                  {visit.vehicle.year && ` ${visit.vehicle.year}`}
+                  {visit.vehicle.licensePlate && ` (${visit.vehicle.licensePlate})`}
+                </span>
+              </div>
+            )}
 
             {visit.confirmedDate && (
               <div className="flex items-center gap-2 text-sm text-success-600">

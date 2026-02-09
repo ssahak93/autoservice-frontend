@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Calendar, User, FileText } from 'lucide-react';
+import { X, Calendar, User, FileText, Car } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -136,6 +136,51 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
                     </div>
                   </div>
                 </div>
+
+                {/* Vehicle Info */}
+                {visit.vehicle && (
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <Car className="h-5 w-5 text-gray-400" />
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                        {t('details.vehicle', { defaultValue: 'Vehicle' })}
+                      </h3>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                      <div className="space-y-2">
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {visit.vehicle.make} {visit.vehicle.model}
+                          {visit.vehicle.year && ` ${visit.vehicle.year}`}
+                        </p>
+                        {visit.vehicle.licensePlate && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {t('details.licensePlate', { defaultValue: 'License Plate' })}:{' '}
+                            {visit.vehicle.licensePlate}
+                          </p>
+                        )}
+                        {visit.vehicle.color && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {t('details.color', { defaultValue: 'Color' })}: {visit.vehicle.color}
+                          </p>
+                        )}
+                        {(visit.vehicle.engine || visit.vehicle.engineType) && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {t('details.engine', { defaultValue: 'Engine' })}:{' '}
+                            {visit.vehicle.engine || ''}
+                            {visit.vehicle.engine && visit.vehicle.engineType && ' '}
+                            {visit.vehicle.engineType}
+                          </p>
+                        )}
+                        {visit.vehicle.horsepower && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {t('details.horsepower', { defaultValue: 'Horsepower' })}:{' '}
+                            {visit.vehicle.horsepower} HP
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Problem Description */}
                 {visit.problemDescription && (

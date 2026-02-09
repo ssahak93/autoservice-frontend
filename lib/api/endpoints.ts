@@ -155,6 +155,15 @@ export const API_ENDPOINTS = {
     SERVICE: (profileId: string) => `/analytics/services/${profileId}`,
   },
 
+  // Vehicles
+  VEHICLES: {
+    LIST: '/users/me/vehicles',
+    GET: (id: string) => `/users/me/vehicles/${id}`,
+    CREATE: '/users/me/vehicles',
+    UPDATE: (id: string) => `/users/me/vehicles/${id}`,
+    DELETE: (id: string) => `/users/me/vehicles/${id}`,
+  },
+
   // Admin
   ADMIN: {
     FEATURE_FLAGS: '/admin/feature-flags',
