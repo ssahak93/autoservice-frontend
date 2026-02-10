@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapResponseData, unwrapArrayResponse } from '@/lib/utils/api-response';
 
 export interface UploadedFile {
   id: string;
@@ -30,16 +31,14 @@ class FilesService {
       formData.append('category', category);
     }
 
-    const response = await apiClient.post<UploadFileResponse>(
-      API_ENDPOINTS.FILES.UPLOAD,
-      formData,
-      {
-        // Don't set Content-Type - let browser set it with boundary
-        // The interceptor will handle removing any Content-Type header
-      }
-    );
+    const response = await apiClient.post<
+      UploadFileResponse | { success: boolean; data: UploadFileResponse }
+    >(API_ENDPOINTS.FILES.UPLOAD, formData, {
+      // Don't set Content-Type - let browser set it with boundary
+      // The interceptor will handle removing any Content-Type header
+    });
 
-    return response.data;
+    return unwrapResponseData(response);
   }
 
   /**
@@ -58,16 +57,14 @@ class FilesService {
       formData.append('category', category);
     }
 
-    const response = await apiClient.post<UploadFileResponse[]>(
-      API_ENDPOINTS.FILES.UPLOAD_MULTIPLE,
-      formData,
-      {
-        // Don't set Content-Type - let browser set it with boundary
-        // The interceptor will handle removing any Content-Type header
-      }
-    );
+    const response = await apiClient.post<
+      UploadFileResponse[] | { success: boolean; data: UploadFileResponse[] }
+    >(API_ENDPOINTS.FILES.UPLOAD_MULTIPLE, formData, {
+      // Don't set Content-Type - let browser set it with boundary
+      // The interceptor will handle removing any Content-Type header
+    });
 
-    return response.data;
+    return unwrapArrayResponse(response);
   }
 
   /**
@@ -81,8 +78,10 @@ class FilesService {
    * Get file by ID
    */
   async getFileById(id: string): Promise<UploadFileResponse> {
-    const response = await apiClient.get<UploadFileResponse>(API_ENDPOINTS.FILES.GET(id));
-    return response.data;
+    const response = await apiClient.get<
+      UploadFileResponse | { success: boolean; data: UploadFileResponse }
+    >(API_ENDPOINTS.FILES.GET(id));
+    return unwrapResponseData(response);
   }
 
   /**

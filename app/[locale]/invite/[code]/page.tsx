@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Link, useRouter } from '@/i18n/routing';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapResponseData } from '@/lib/utils/api-response';
 import { extractErrorMessage, isConflictError } from '@/lib/utils/errorHandler';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -38,10 +39,10 @@ export default function InvitePage() {
   const { data: invitationStatus, isLoading } = useQuery<InvitationStatus>({
     queryKey: ['invitation', code],
     queryFn: async () => {
-      const response = await apiClient.get<InvitationStatus>(
-        API_ENDPOINTS.TEAM.CHECK_INVITATION(code)
-      );
-      return response.data;
+      const response = await apiClient.get<
+        InvitationStatus | { success: boolean; data: InvitationStatus }
+      >(API_ENDPOINTS.TEAM.CHECK_INVITATION(code));
+      return unwrapResponseData(response);
     },
     enabled: !!code,
     retry: false,
@@ -50,10 +51,13 @@ export default function InvitePage() {
   // Accept invitation mutation
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiClient.post(API_ENDPOINTS.TEAM.ACCEPT_INVITATION, {
+      const response = await apiClient.post<
+        | { success: boolean; message?: string }
+        | { success: boolean; data: { success: boolean; message?: string } }
+      >(API_ENDPOINTS.TEAM.ACCEPT_INVITATION, {
         invitationCode: code,
       });
-      return response.data;
+      return unwrapResponseData(response);
     },
     onSuccess: () => {
       showToast(

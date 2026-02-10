@@ -1,16 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
+import { queryKeys } from '@/lib/api/query-config';
 import { vehiclesService } from '@/lib/services/vehicles.service';
+import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
 import type { CreateVehicleRequest, UpdateVehicleRequest } from '@/types';
-
-const VEHICLES_QUERY_KEY = ['vehicles'] as const;
 
 /**
  * Get all vehicles for current user
  */
 export function useVehicles() {
   return useQuery({
-    queryKey: VEHICLES_QUERY_KEY,
+    queryKey: queryKeys.vehicles(),
     queryFn: () => vehiclesService.getList(),
   });
 }
@@ -20,7 +20,7 @@ export function useVehicles() {
  */
 export function useVehicle(vehicleId: string | undefined) {
   return useQuery({
-    queryKey: [...VEHICLES_QUERY_KEY, vehicleId],
+    queryKey: queryKeys.vehicle(vehicleId || ''),
     queryFn: () => {
       if (!vehicleId) {
         throw new Error('Vehicle ID is required');
@@ -35,13 +35,15 @@ export function useVehicle(vehicleId: string | undefined) {
  * Create vehicle mutation
  */
 export function useCreateVehicle() {
-  const queryClient = useQueryClient();
+  const callbacks = useMutationWithInvalidation(
+    [queryKeys.vehicles()],
+    'Vehicle created successfully',
+    'Failed to create vehicle'
+  );
 
   return useMutation({
     mutationFn: (data: CreateVehicleRequest) => vehiclesService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VEHICLES_QUERY_KEY });
-    },
+    ...callbacks,
   });
 }
 
@@ -49,14 +51,16 @@ export function useCreateVehicle() {
  * Update vehicle mutation
  */
 export function useUpdateVehicle() {
-  const queryClient = useQueryClient();
+  const callbacks = useMutationWithInvalidation(
+    [queryKeys.vehicles()],
+    'Vehicle updated successfully',
+    'Failed to update vehicle'
+  );
 
   return useMutation({
     mutationFn: ({ vehicleId, data }: { vehicleId: string; data: UpdateVehicleRequest }) =>
       vehiclesService.update(vehicleId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VEHICLES_QUERY_KEY });
-    },
+    ...callbacks,
   });
 }
 
@@ -64,12 +68,14 @@ export function useUpdateVehicle() {
  * Delete vehicle mutation
  */
 export function useDeleteVehicle() {
-  const queryClient = useQueryClient();
+  const callbacks = useMutationWithInvalidation(
+    [queryKeys.vehicles()],
+    'Vehicle deleted successfully',
+    'Failed to delete vehicle'
+  );
 
   return useMutation({
     mutationFn: (vehicleId: string) => vehiclesService.delete(vehicleId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: VEHICLES_QUERY_KEY });
-    },
+    ...callbacks,
   });
 }

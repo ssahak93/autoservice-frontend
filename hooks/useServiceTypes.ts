@@ -2,31 +2,20 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { serviceTypesService, type ServiceType } from '@/lib/services/service-types.service';
-import { getCurrentLocale } from '@/lib/utils/i18n';
+import { queryKeys, queryConfig } from '@/lib/api/query-config';
+import { serviceTypesService } from '@/lib/services/service-types.service';
+import { localizeServiceTypes } from '@/lib/utils/service-type-localization';
 
 /**
  * Hook to get all service types
  */
 export function useServiceTypes() {
-  const locale = getCurrentLocale();
-
   return useQuery({
-    queryKey: ['service-types', 'all'],
+    queryKey: queryKeys.serviceTypes(),
     queryFn: () => serviceTypesService.getAll(),
-    staleTime: 30 * 60 * 1000, // 30 minutes - service types don't change often
-    select: (data) => {
-      // Localize service type names based on current locale
-      return data.map((type) => ({
-        ...type,
-        displayName:
-          locale === 'hy' && type.nameHy
-            ? type.nameHy
-            : locale === 'ru' && type.nameRu
-              ? type.nameRu
-              : type.name,
-      }));
-    },
+    staleTime: queryConfig.staleTimes.long, // 30 minutes - service types don't change often
+    gcTime: queryConfig.gcTime,
+    select: (data) => localizeServiceTypes(data),
   });
 }
 
@@ -34,24 +23,12 @@ export function useServiceTypes() {
  * Hook to get service types by category
  */
 export function useServiceTypesByCategory(category: string) {
-  const locale = getCurrentLocale();
-
   return useQuery({
-    queryKey: ['service-types', 'category', category],
+    queryKey: queryKeys.serviceTypesByCategory(category),
     queryFn: () => serviceTypesService.getByCategory(category),
     enabled: !!category,
-    staleTime: 30 * 60 * 1000,
-    select: (data) => {
-      return data.map((type) => ({
-        ...type,
-        displayName:
-          locale === 'hy' && type.nameHy
-            ? type.nameHy
-            : locale === 'ru' && type.nameRu
-              ? type.nameRu
-              : type.name,
-      }));
-    },
+    staleTime: queryConfig.staleTimes.long, // 30 minutes
+    gcTime: queryConfig.gcTime,
+    select: (data) => localizeServiceTypes(data),
   });
 }
-

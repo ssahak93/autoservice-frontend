@@ -1,4 +1,10 @@
 import { apiClient } from '@/lib/api/client';
+import {
+  unwrapResponseData,
+  unwrapArrayResponse,
+  unwrapPaginatedResponse,
+} from '@/lib/utils/api-response';
+import { buildQueryParams } from '@/lib/utils/params';
 import type { PaginatedResponse, Review } from '@/types';
 
 export interface CreateReviewDto {
@@ -21,31 +27,35 @@ export const reviewsService = {
     serviceId: string,
     filters?: ReviewFilters
   ): Promise<PaginatedResponse<Review>> {
-    const params = new URLSearchParams();
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-    if (filters?.sortBy) params.append('sortBy', filters.sortBy);
+    const queryParams = buildQueryParams(filters || {}, false);
 
-    const response = await apiClient.get<PaginatedResponse<Review>>(
-      `/reviews/auto-service/${serviceId}${params.toString() ? `?${params.toString()}` : ''}`
-    );
-    return response.data;
+    const response = await apiClient.get<
+      PaginatedResponse<Review> | { success: boolean; data: PaginatedResponse<Review> } | Review[]
+    >(`/reviews/auto-service/${serviceId}`, {
+      params: queryParams,
+    });
+    return unwrapPaginatedResponse(response);
   },
 
   /**
    * Get user's reviews
    */
   async getUserReviews(): Promise<Review[]> {
-    const response = await apiClient.get<Review[]>('/reviews/user');
-    return response.data;
+    const response = await apiClient.get<Review[] | { success: boolean; data: Review[] }>(
+      '/reviews/user'
+    );
+    return unwrapArrayResponse(response);
   },
 
   /**
    * Create a review for a completed visit
    */
   async createReview(dto: CreateReviewDto): Promise<Review> {
-    const response = await apiClient.post<Review>('/reviews', dto);
-    return response.data;
+    const response = await apiClient.post<Review | { success: boolean; data: Review }>(
+      '/reviews',
+      dto
+    );
+    return unwrapResponseData(response);
   },
 
   /**
@@ -55,4 +65,3 @@ export const reviewsService = {
     await apiClient.post(`/reviews/${reviewId}/report`, { reason });
   },
 };
-

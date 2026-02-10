@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 
 import { autoServiceProfileService } from '@/lib/services/auto-service-profile.service';
+import { getMutationErrorMessage } from '@/lib/utils/mutation-helpers';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -44,11 +45,10 @@ export function useDeletePhoto(
         onErrorRollback(context);
       }
 
-      const errorObj = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage =
-        errorObj?.response?.data?.message ||
-        errorObj?.message ||
-        t('deleteError', { defaultValue: 'Failed to delete photo' });
+      const errorMessage = getMutationErrorMessage(
+        error,
+        t('deleteError', { defaultValue: 'Failed to delete photo' })
+      );
       showToast(errorMessage, 'error');
     },
   });
@@ -90,11 +90,10 @@ export function useReorderPhotos(
         onErrorRollback(context);
       }
 
-      const errorObj = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage =
-        errorObj?.response?.data?.message ||
-        errorObj?.message ||
-        t('reorderError', { defaultValue: 'Failed to reorder photos' });
+      const errorMessage = getMutationErrorMessage(
+        error,
+        t('reorderError', { defaultValue: 'Failed to reorder photos' })
+      );
       showToast(errorMessage, 'error');
     },
   });
@@ -125,11 +124,10 @@ export function useUpdateProfilePhotos() {
       queryClient.invalidateQueries({ queryKey: ['autoServiceProfile'] });
     },
     onError: (error: unknown) => {
-      const errorObj = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage =
-        errorObj?.response?.data?.message ||
-        errorObj?.message ||
-        t('uploadError', { defaultValue: 'Failed to upload photos' });
+      const errorMessage = getMutationErrorMessage(
+        error,
+        t('uploadError', { defaultValue: 'Failed to upload photos' })
+      );
       showToast(errorMessage, 'error');
     },
   });

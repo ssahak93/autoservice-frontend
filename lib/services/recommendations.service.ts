@@ -1,5 +1,7 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapArrayResponse } from '@/lib/utils/api-response';
+import { buildQueryParams } from '@/lib/utils/params';
 import type { AutoService } from '@/types';
 
 export interface RecommendationParams {
@@ -85,11 +87,7 @@ function transformRecommendationResult(result: {
 
 export const recommendationsService = {
   async getRecommendations(params?: RecommendationParams): Promise<ServiceRecommendation[]> {
-    const queryParams: Record<string, unknown> = {};
-    if (params?.userId) queryParams.userId = params.userId;
-    if (params?.lat) queryParams.lat = params.lat;
-    if (params?.lng) queryParams.lng = params.lng;
-    if (params?.businessType) queryParams.businessType = params.businessType;
+    const queryParams = buildQueryParams(params || {}, false);
 
     const response = await apiClient.get<
       Array<{
@@ -116,10 +114,11 @@ export const recommendationsService = {
         reason?: string;
       }>
     >(API_ENDPOINTS.SEARCH.RECOMMENDATIONS, {
-      params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+      params: queryParams,
     });
 
     // Transform backend SearchResult format to frontend AutoService format
-    return response.data.map(transformRecommendationResult);
+    const data = unwrapArrayResponse(response);
+    return data.map(transformRecommendationResult);
   },
 };

@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapArrayResponse } from '@/lib/utils/api-response';
 
 export interface SearchSuggestion {
   query: string;
@@ -18,13 +19,15 @@ export const searchSuggestionsService = {
     }
 
     try {
-      const response = await apiClient.get<SearchSuggestion[]>(API_ENDPOINTS.SEARCH.SUGGESTIONS, {
+      const response = await apiClient.get<
+        SearchSuggestion[] | { success: boolean; data: SearchSuggestion[] }
+      >(API_ENDPOINTS.SEARCH.SUGGESTIONS, {
         params: {
           query,
           limit,
         },
       });
-      return response.data;
+      return unwrapArrayResponse(response);
     } catch (error) {
       console.error('Failed to fetch search suggestions:', error);
       return [];
@@ -36,12 +39,14 @@ export const searchSuggestionsService = {
    */
   async getPopularSearches(limit: number = 5): Promise<SearchSuggestion[]> {
     try {
-      const response = await apiClient.get<SearchSuggestion[]>(API_ENDPOINTS.SEARCH.SUGGESTIONS, {
+      const response = await apiClient.get<
+        SearchSuggestion[] | { success: boolean; data: SearchSuggestion[] }
+      >(API_ENDPOINTS.SEARCH.SUGGESTIONS, {
         params: {
           limit,
         },
       });
-      return response.data;
+      return unwrapArrayResponse(response);
     } catch (error) {
       console.error('Failed to fetch popular searches:', error);
       return [];

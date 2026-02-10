@@ -1,5 +1,12 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import {
+  unwrapResponseData,
+  unwrapArrayResponse,
+  unwrapPaginatedResponse,
+  extractErrorMessage,
+  isErrorStatus,
+} from '@/lib/utils/api-response';
 import type { CreateVisitRequest, PaginatedResponse, Visit } from '@/types';
 
 export const visitsService = {
@@ -9,28 +16,11 @@ export const visitsService = {
         API_ENDPOINTS.VISITS.CREATE,
         data
       );
-      // Backend may return data directly or wrapped in {success, data}
-      if ('success' in response.data && response.data.success && 'data' in response.data) {
-        return response.data.data;
-      }
-      return response.data as Visit;
+      return unwrapResponseData(response);
     } catch (error) {
-      // Extract error message from backend response
-      const axiosError = error as {
-        response?: {
-          data?: { error?: { message?: string }; message?: string };
-          status?: number;
-        };
-      };
-
-      if (axiosError.response?.status === 400) {
-        const errorMessage =
-          axiosError.response.data?.error?.message ||
-          axiosError.response.data?.message ||
-          'Cannot book visit to your own service';
-        throw new Error(errorMessage);
+      if (isErrorStatus(error, 400)) {
+        throw new Error(extractErrorMessage(error, 'Cannot book visit to your own service'));
       }
-
       throw error;
     }
   },
@@ -47,37 +37,19 @@ export const visitsService = {
       }
     );
 
-    // Backend returns array directly, wrap it in PaginatedResponse format
-    if (Array.isArray(response.data)) {
-      const visits = response.data;
-      return {
-        success: true,
-        data: visits,
-        pagination: {
-          page: 1,
-          limit: visits.length,
-          total: visits.length,
-          totalPages: 1,
-        },
-      };
-    }
-
-    // If already in PaginatedResponse format, return as is
-    return response.data as PaginatedResponse<Visit>;
+    // Backend may return array directly or PaginatedResponse
+    return unwrapPaginatedResponse(response);
   },
 
   async getById(id: string): Promise<Visit> {
     const response = await apiClient.get<{ success: boolean; data: Visit } | Visit>(
       API_ENDPOINTS.VISITS.DETAIL(id)
     );
-    // Backend may return data directly or wrapped in {success, data}
-    if ('success' in response.data && response.data.success && 'data' in response.data) {
-      return response.data.data;
-    }
-    if (!response.data || (typeof response.data === 'object' && !('id' in response.data))) {
+    const visit = unwrapResponseData(response);
+    if (!visit || (typeof visit === 'object' && !('id' in visit))) {
       throw new Error('Visit not found');
     }
-    return response.data as Visit;
+    return visit;
   },
 
   async updateStatus(id: string, status: Visit['status'], autoServiceId?: string): Promise<Visit> {
@@ -88,7 +60,7 @@ export const visitsService = {
         params: autoServiceId ? { autoServiceId } : undefined,
       }
     );
-    return response.data.data;
+    return unwrapResponseData(response);
   },
 
   async update(id: string, data: Partial<CreateVisitRequest>): Promise<Visit> {
@@ -96,10 +68,7 @@ export const visitsService = {
       API_ENDPOINTS.VISITS.UPDATE(id),
       data
     );
-    if ('success' in response.data && response.data.success && 'data' in response.data) {
-      return response.data.data;
-    }
-    return response.data as Visit;
+    return unwrapResponseData(response);
   },
 
   async cancel(id: string, reason: string): Promise<Visit> {
@@ -110,17 +79,14 @@ export const visitsService = {
       API_ENDPOINTS.VISITS.CANCEL(id),
       { reason: reason.trim() }
     );
-    if ('success' in response.data && response.data.success && 'data' in response.data) {
-      return response.data.data;
-    }
-    return response.data as Visit;
+    return unwrapResponseData(response);
   },
 
   async delete(id: string): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.delete<{ success: boolean; message: string }>(
       API_ENDPOINTS.VISITS.DELETE(id)
     );
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   // Auto service methods
@@ -131,13 +97,12 @@ export const visitsService = {
     limit?: number;
     autoServiceId?: string;
   }): Promise<PaginatedResponse<Visit>> {
-    const response = await apiClient.get<PaginatedResponse<Visit>>(
-      API_ENDPOINTS.VISITS.AUTO_SERVICE_LIST,
-      {
-        params,
-      }
-    );
-    return response.data;
+    const response = await apiClient.get<
+      PaginatedResponse<Visit> | { success: boolean; data: PaginatedResponse<Visit> } | Visit[]
+    >(API_ENDPOINTS.VISITS.AUTO_SERVICE_LIST, {
+      params,
+    });
+    return unwrapPaginatedResponse(response);
   },
 
   async getAutoServiceStatistics(params?: {
@@ -152,17 +117,30 @@ export const visitsService = {
     cancelled: number;
     today: number;
   }> {
-    const response = await apiClient.get<{
-      total: number;
-      pending: number;
-      confirmed: number;
-      completed: number;
-      cancelled: number;
-      today: number;
-    }>(API_ENDPOINTS.VISITS.AUTO_SERVICE_STATISTICS, {
+    const response = await apiClient.get<
+      | {
+          total: number;
+          pending: number;
+          confirmed: number;
+          completed: number;
+          cancelled: number;
+          today: number;
+        }
+      | {
+          success: boolean;
+          data: {
+            total: number;
+            pending: number;
+            confirmed: number;
+            completed: number;
+            cancelled: number;
+            today: number;
+          };
+        }
+    >(API_ENDPOINTS.VISITS.AUTO_SERVICE_STATISTICS, {
       params,
     });
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   // Auto service visit actions
@@ -202,26 +180,11 @@ export const visitsService = {
           params: autoServiceId ? { autoServiceId } : undefined,
         }
       );
-      if ('success' in response.data && response.data.success && 'data' in response.data) {
-        return response.data.data;
-      }
-      return response.data as Visit;
+      return unwrapResponseData(response);
     } catch (error) {
-      const axiosError = error as {
-        response?: {
-          data?: { error?: { message?: string }; message?: string };
-          status?: number;
-        };
-      };
-
-      if (axiosError.response?.status === 400) {
-        const errorMessage =
-          axiosError.response.data?.error?.message ||
-          axiosError.response.data?.message ||
-          'Failed to accept visit';
-        throw new Error(errorMessage);
+      if (isErrorStatus(error, 400)) {
+        throw new Error(extractErrorMessage(error, 'Failed to accept visit'));
       }
-
       throw error;
     }
   },
@@ -234,10 +197,7 @@ export const visitsService = {
         params: autoServiceId ? { autoServiceId } : undefined,
       }
     );
-    if ('success' in response.data && response.data.success && 'data' in response.data) {
-      return response.data.data;
-    }
-    return response.data as Visit;
+    return unwrapResponseData(response);
   },
 
   async rescheduleVisit(
@@ -256,33 +216,20 @@ export const visitsService = {
           params: autoServiceId ? { autoServiceId } : undefined,
         }
       );
-      if ('success' in response.data && response.data.success && 'data' in response.data) {
-        return response.data.data;
-      }
-      return response.data as Visit;
+      return unwrapResponseData(response);
     } catch (error) {
-      const axiosError = error as {
-        response?: {
-          data?: { error?: { message?: string }; message?: string };
-          status?: number;
-        };
-      };
-
-      if (axiosError.response?.status === 400) {
-        const errorMessage =
-          axiosError.response.data?.error?.message ||
-          axiosError.response.data?.message ||
-          'Failed to reschedule visit';
-        throw new Error(errorMessage);
+      if (isErrorStatus(error, 400)) {
+        throw new Error(extractErrorMessage(error, 'Failed to reschedule visit'));
       }
-
       throw error;
     }
   },
 
   async getHistory(id: string): Promise<VisitHistoryEntry[]> {
-    const response = await apiClient.get<VisitHistoryEntry[]>(API_ENDPOINTS.VISITS.HISTORY(id));
-    return response.data;
+    const response = await apiClient.get<
+      VisitHistoryEntry[] | { success: boolean; data: VisitHistoryEntry[] }
+    >(API_ENDPOINTS.VISITS.HISTORY(id));
+    return unwrapArrayResponse(response);
   },
 };
 

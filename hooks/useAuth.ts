@@ -6,7 +6,9 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from '@/i18n/routing';
 import { authService } from '@/lib/services/auth.service';
+import { unwrapAuthResponse } from '@/lib/utils/auth-response';
 import { extractErrorMessage } from '@/lib/utils/errorHandler';
+import { getAndClearRedirectUrl } from '@/lib/utils/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { LoginRequest, RegisterRequest, User } from '@/types';
@@ -19,7 +21,7 @@ export const useAuth = () => {
   const t = useTranslations('auth');
 
   // Check if token exists in localStorage (for validating token on page reload)
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+  const hasToken = isAuthenticated();
 
   // Get current user - only fetch if we have a token (to validate it)
   // But don't fetch if user is already loaded (to avoid unnecessary requests)
@@ -62,14 +64,9 @@ export const useAuth = () => {
   const loginMutation = useMutation({
     mutationFn: (data: LoginRequest) => authService.login(data),
     onSuccess: (response) => {
-      // Backend returns data directly or wrapped in {success, data}
-      // Handle both cases for compatibility
-      const authData =
-        response.success && response.data
-          ? response.data
-          : (response as unknown as { accessToken: string; refreshToken: string; user: User });
+      const authData = unwrapAuthResponse(response);
 
-      if (authData && authData.accessToken && authData.refreshToken && authData.user) {
+      if (authData) {
         // Set tokens first to ensure API client can use them
         setTokens(authData.accessToken, authData.refreshToken);
         // Then set user
@@ -79,20 +76,8 @@ export const useAuth = () => {
         showToast(t('loginSuccess', { defaultValue: 'Login successful' }), 'success');
         // Small delay to ensure state is updated before redirect
         setTimeout(() => {
-          // Check if there's a saved redirect URL
-          const redirectUrl =
-            typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
-
-          if (redirectUrl) {
-            // Remove the saved URL and redirect there
-            sessionStorage.removeItem('redirectAfterLogin');
-            // Strip locale prefix if present (for backward compatibility)
-            const normalizedUrl = redirectUrl.replace(/^\/(hy|en|ru)(\/|$)/, '/');
-            router.push(normalizedUrl);
-          } else {
-            // Default redirect to services
-            router.push('/services');
-          }
+          const redirectUrl = getAndClearRedirectUrl();
+          router.push(redirectUrl || '/services');
         }, 100);
       } else {
         showToast(t('loginFailed', { defaultValue: 'Login failed. Please try again.' }), 'error');
@@ -120,14 +105,9 @@ export const useAuth = () => {
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
     onSuccess: (response) => {
-      // Backend returns data directly or wrapped in {success, data}
-      // Handle both cases for compatibility
-      const authData =
-        response.success && response.data
-          ? response.data
-          : (response as unknown as { accessToken: string; refreshToken: string; user: User });
+      const authData = unwrapAuthResponse(response);
 
-      if (authData && authData.accessToken && authData.refreshToken && authData.user) {
+      if (authData) {
         // Set tokens first to ensure API client can use them
         setTokens(authData.accessToken, authData.refreshToken);
         // Then set user
@@ -137,20 +117,8 @@ export const useAuth = () => {
         showToast(t('registrationSuccess', { defaultValue: 'Registration successful' }), 'success');
         // Small delay to ensure state is updated before redirect
         setTimeout(() => {
-          // Check if there's a saved redirect URL
-          const redirectUrl =
-            typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
-
-          if (redirectUrl) {
-            // Remove the saved URL and redirect there
-            sessionStorage.removeItem('redirectAfterLogin');
-            // Strip locale prefix if present (for backward compatibility)
-            const normalizedUrl = redirectUrl.replace(/^\/(hy|en|ru)(\/|$)/, '/');
-            router.push(normalizedUrl);
-          } else {
-            // Default redirect to services
-            router.push('/services');
-          }
+          const redirectUrl = getAndClearRedirectUrl();
+          router.push(redirectUrl || '/services');
         }, 100);
       } else {
         showToast(
@@ -202,10 +170,7 @@ export const useAuth = () => {
   }, []);
 
   // Check if we have a valid token (either in store or localStorage)
-  const hasValidToken =
-    mounted &&
-    typeof window !== 'undefined' &&
-    (!!accessToken || !!localStorage.getItem('accessToken'));
+  const hasValidToken = mounted && isAuthenticated(accessToken);
 
   return {
     user: (currentUser || user) as User | null,

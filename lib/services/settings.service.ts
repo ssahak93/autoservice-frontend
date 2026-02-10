@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapResponseData } from '@/lib/utils/api-response';
 
 export interface UserSettings {
   id: string;
@@ -38,16 +39,21 @@ export const settingsService = {
    * Get user settings
    */
   async getSettings(): Promise<UserSettings> {
-    const response = await apiClient.get<UserSettings>(API_ENDPOINTS.AUTH.SETTINGS);
-    return response.data;
+    const response = await apiClient.get<UserSettings | { success: boolean; data: UserSettings }>(
+      API_ENDPOINTS.AUTH.SETTINGS
+    );
+    return unwrapResponseData(response);
   },
 
   /**
    * Update user settings
    */
   async updateSettings(data: UpdateSettingsData): Promise<UserSettings> {
-    const response = await apiClient.put<UserSettings>(API_ENDPOINTS.AUTH.SETTINGS, data);
-    return response.data;
+    const response = await apiClient.put<UserSettings | { success: boolean; data: UserSettings }>(
+      API_ENDPOINTS.AUTH.SETTINGS,
+      data
+    );
+    return unwrapResponseData(response);
   },
 
   /**
@@ -88,6 +94,6 @@ export const settingsService = {
     const response = await apiClient.delete<{ success: boolean; message: string }>(
       API_ENDPOINTS.AUTH.DELETE_ACCOUNT
     );
-    return response.data;
+    return unwrapResponseData(response);
   },
 };

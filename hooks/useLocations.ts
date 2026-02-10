@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { queryKeys, queryConfig } from '@/lib/api/query-config';
 import { locationsService, type Region, type Community } from '@/lib/services/locations.service';
 
 /**
@@ -7,9 +8,10 @@ import { locationsService, type Region, type Community } from '@/lib/services/lo
  */
 export function useRegions() {
   return useQuery<Region[]>({
-    queryKey: ['regions'],
+    queryKey: queryKeys.regions(),
     queryFn: () => locationsService.getRegions(),
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours - regions don't change often
+    staleTime: queryConfig.staleTimes.veryLong, // 24 hours - regions don't change often
+    gcTime: queryConfig.gcTime,
   });
 }
 
@@ -20,9 +22,10 @@ export function useRegions() {
  */
 export function useCommunities(regionId?: string, type?: 'city' | 'village' | 'district') {
   return useQuery<Community[]>({
-    queryKey: ['communities', regionId, type],
+    queryKey: queryKeys.communities(regionId, type),
     queryFn: () => locationsService.getCommunities(regionId, type),
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours
+    staleTime: queryConfig.staleTimes.veryLong, // 24 hours
+    gcTime: queryConfig.gcTime,
     // Only fetch if regionId is provided - communities are region-specific
     enabled: !!regionId,
   });

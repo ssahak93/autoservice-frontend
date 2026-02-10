@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 
 import { queryKeys, queryConfig } from '@/lib/api/query-config';
 import { visitsService } from '@/lib/services/visits.service';
+import { isAuthenticated } from '@/lib/utils/auth-check';
+import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
 import { useUIStore } from '@/stores/uiStore';
 import type { CreateVisitRequest, Visit } from '@/types';
 
@@ -12,13 +14,10 @@ export const useVisits = (
   params?: { status?: string; page?: number; limit?: number },
   options?: { enabled?: boolean }
 ) => {
-  // Check if user is authenticated
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
-
   return useQuery({
     queryKey: queryKeys.visits(params),
     queryFn: () => visitsService.getList(params),
-    enabled: options?.enabled !== false && hasToken, // Only fetch if user is authenticated
+    enabled: options?.enabled !== false && isAuthenticated(), // Only fetch if user is authenticated
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
     placeholderData: (previousData) => previousData,
@@ -165,52 +164,32 @@ export const useUpdateVisitStatus = () => {
 };
 
 export const useUpdateVisit = () => {
-  const queryClient = useQueryClient();
-  const { showToast } = useUIStore();
-  const t = useTranslations('visits');
+  const callbacks = useMutationWithInvalidation(
+    [['visits'], ['visit']],
+    'updatedSuccessfully',
+    'failedToUpdate',
+    'visits'
+  );
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateVisitRequest> }) =>
       visitsService.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
-      queryClient.invalidateQueries({ queryKey: ['visit'] });
-      showToast(
-        t('updatedSuccessfully', { defaultValue: 'Visit updated successfully' }),
-        'success'
-      );
-    },
-    onError: (error: Error) => {
-      showToast(
-        error.message || t('failedToUpdate', { defaultValue: 'Failed to update visit' }),
-        'error'
-      );
-    },
+    ...callbacks,
   });
 };
 
 export const useCancelVisit = () => {
-  const queryClient = useQueryClient();
-  const { showToast } = useUIStore();
-  const t = useTranslations('visits');
+  const callbacks = useMutationWithInvalidation(
+    [['visits'], ['visit']],
+    'cancelledSuccessfully',
+    'failedToCancel',
+    'visits'
+  );
 
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
       visitsService.cancel(id, reason || ''),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
-      queryClient.invalidateQueries({ queryKey: ['visit'] });
-      showToast(
-        t('cancelledSuccessfully', { defaultValue: 'Visit cancelled successfully' }),
-        'success'
-      );
-    },
-    onError: (error: Error) => {
-      showToast(
-        error.message || t('failedToCancel', { defaultValue: 'Failed to cancel visit' }),
-        'error'
-      );
-    },
+    ...callbacks,
   });
 };
 

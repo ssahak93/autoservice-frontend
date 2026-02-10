@@ -1,16 +1,15 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
 
 import { queryKeys, queryConfig } from '@/lib/api/query-config';
 import {
   notificationsService,
   type NotificationFilters,
 } from '@/lib/services/notifications.service';
+import { isAuthenticated } from '@/lib/utils/auth-check';
+import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
 import { useAuthStore } from '@/stores/authStore';
-import { useUIStore } from '@/stores/uiStore';
 
 /**
  * Hook to get user notifications
@@ -25,7 +24,7 @@ export function useNotifications(filters?: NotificationFilters) {
     enabled: isAuthenticated, // Only fetch if user is authenticated
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: queryConfig.refetchIntervals.notifications,
     placeholderData: (previousData) => previousData,
   });
 }
@@ -36,25 +35,15 @@ export function useNotifications(filters?: NotificationFilters) {
  * Only fetches if user is authenticated and has a token
  */
 export function useNotificationStats() {
-  const { isAuthenticated, accessToken } = useAuthStore();
-
-  // Check if we're on client side and have a token
-  // Use useState to safely check localStorage only on client
-  const [hasToken, setHasToken] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setHasToken(!!accessToken || !!localStorage.getItem('accessToken'));
-    }
-  }, [accessToken]);
+  const { isAuthenticated: isAuthFromStore, accessToken } = useAuthStore();
 
   return useQuery({
     queryKey: queryKeys.notificationStats(),
     queryFn: () => notificationsService.getStats(),
-    enabled: isAuthenticated && hasToken, // Only fetch if user is authenticated and has token
+    enabled: isAuthFromStore && isAuthenticated(accessToken), // Only fetch if user is authenticated and has token
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: queryConfig.refetchIntervals.stats,
     retry: false, // Don't retry - service will return default stats on error
     // Suppress error logging for this query as 401 is expected for unauthenticated users
     meta: {
@@ -82,20 +71,16 @@ export function useMarkNotificationAsRead() {
  * Hook to mark all notifications as read
  */
 export function useMarkAllNotificationsAsRead() {
-  const queryClient = useQueryClient();
-  const { showToast } = useUIStore();
-  const t = useTranslations('notifications');
+  const callbacks = useMutationWithInvalidation(
+    [['notifications'], ['notifications', 'stats']],
+    'allMarkedAsRead',
+    undefined,
+    'notifications'
+  );
 
   return useMutation({
     mutationFn: () => notificationsService.markAllAsRead(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'stats'] });
-      showToast(
-        t('allMarkedAsRead', { defaultValue: 'All notifications marked as read' }),
-        'success'
-      );
-    },
+    ...callbacks,
   });
 }
 
@@ -118,16 +103,15 @@ export function useDeleteNotification() {
  * Hook to delete all read notifications
  */
 export function useDeleteAllReadNotifications() {
-  const queryClient = useQueryClient();
-  const { showToast } = useUIStore();
-  const t = useTranslations('notifications');
+  const callbacks = useMutationWithInvalidation(
+    [['notifications'], ['notifications', 'stats']],
+    'allReadDeleted',
+    undefined,
+    'notifications'
+  );
 
   return useMutation({
     mutationFn: () => notificationsService.deleteAllRead(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'stats'] });
-      showToast(t('allReadDeleted', { defaultValue: 'All read notifications deleted' }), 'success');
-    },
+    ...callbacks,
   });
 }

@@ -259,27 +259,7 @@ class ApiClient {
     }
   }
 
-  private getCurrentLocale(): string {
-    if (typeof window === 'undefined') {
-      return 'hy'; // Default for SSR
-    }
-
-    // Get from URL first (most reliable)
-    const pathname = window.location.pathname;
-    const localeMatch = pathname.match(/^\/(hy|en|ru)/);
-    if (localeMatch) {
-      return localeMatch[1];
-    }
-
-    // Fallback to localStorage
-    const storedLocale = localStorage.getItem('preferred-locale');
-    if (storedLocale && ['hy', 'en', 'ru'].includes(storedLocale)) {
-      return storedLocale;
-    }
-
-    // Final fallback
-    return 'hy';
-  }
+  // Removed getCurrentLocale - using getCurrentLocale from @/lib/utils/i18n instead
 
   // Public methods with request deduplication for GET requests
   get<T = unknown>(url: string, config?: AxiosRequestConfig) {

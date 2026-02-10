@@ -5,6 +5,7 @@
 
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { serverApiClient } from '@/lib/api/server-client';
+import { cleanParams } from '@/lib/utils/params';
 import type { AutoService, PaginatedResponse } from '@/types';
 
 export interface ServiceSearchParams {
@@ -218,23 +219,12 @@ export const servicesServerService = {
     params: ServiceSearchParams,
     locale: string = 'hy'
   ): Promise<PaginatedResponse<AutoService>> {
-    // Clean params - remove undefined values to ensure they're sent
-    const cleanParams: Record<string, unknown> = {};
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        // Handle arrays (for multiple selections)
-        if (Array.isArray(value) && value.length > 0) {
-          cleanParams[key] = value;
-        } else if (!Array.isArray(value)) {
-          cleanParams[key] = value;
-        }
-      }
-    });
+    const cleanedParams = cleanParams(params);
 
     const response = await serverApiClient.get<BackendSearchResponse>(
       API_ENDPOINTS.AUTO_SERVICES.SEARCH,
       {
-        params: cleanParams,
+        params: cleanedParams,
         headers: {
           'Accept-Language': locale,
         },

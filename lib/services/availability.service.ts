@@ -1,4 +1,10 @@
 import { apiClient } from '@/lib/api/client';
+import {
+  unwrapResponseData,
+  unwrapArrayResponse,
+  isErrorStatus,
+  extractErrorMessage,
+} from '@/lib/utils/api-response';
 
 export interface DateLoad {
   date: string;
@@ -59,37 +65,20 @@ export const availabilityService = {
     endDate: string
   ): Promise<AvailabilityResponse | null | 'OWN_SERVICE'> {
     try {
-      const response = await apiClient.get<AvailabilityResponse>(
-        `/auto-services/${autoServiceId}/availability`,
-        {
-          params: {
-            startDate,
-            endDate,
-          },
-        }
-      );
-      return response.data;
+      const response = await apiClient.get<
+        AvailabilityResponse | { success: boolean; data: AvailabilityResponse }
+      >(`/auto-services/${autoServiceId}/availability`, {
+        params: {
+          startDate,
+          endDate,
+        },
+      });
+      return unwrapResponseData(response);
     } catch (error) {
       // Check if this is the "own service" error
-      const axiosError = error as {
-        response?: {
-          status?: number;
-          data?: {
-            error?: {
-              message?: string;
-            };
-            message?: string;
-          };
-        };
-      };
-
       // If 400 error with "own service" message, return 'OWN_SERVICE'
-      if (axiosError.response?.status === 400) {
-        const errorData = axiosError.response.data;
-        const errorMessage =
-          (errorData as { error?: { message?: string }; message?: string })?.error?.message ||
-          (errorData as { message?: string })?.message ||
-          '';
+      if (isErrorStatus(error, 400)) {
+        const errorMessage = extractErrorMessage(error);
 
         // Check for own service error in any language
         if (
@@ -106,7 +95,7 @@ export const availabilityService = {
 
       // If profile not found or service not found, return null
       // This allows the datepicker to work without availability data
-      if (axiosError.response?.status === 404) {
+      if (isErrorStatus(error, 404)) {
         return null;
       }
 
@@ -126,10 +115,12 @@ export const availabilityService = {
     if (autoServiceId) {
       params.autoServiceId = autoServiceId;
     }
-    const response = await apiClient.get<AvailabilityResponse>('/auto-service/availability', {
+    const response = await apiClient.get<
+      AvailabilityResponse | { success: boolean; data: AvailabilityResponse }
+    >('/auto-service/availability', {
       params,
     });
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   /**
@@ -137,11 +128,10 @@ export const availabilityService = {
    */
   async getExceptions(autoServiceId?: string): Promise<AvailabilityException[]> {
     const params = autoServiceId ? { autoServiceId } : {};
-    const response = await apiClient.get<AvailabilityException[]>(
-      '/auto-service/availability/exceptions',
-      { params }
-    );
-    return response.data;
+    const response = await apiClient.get<
+      AvailabilityException[] | { success: boolean; data: AvailabilityException[] }
+    >('/auto-service/availability/exceptions', { params });
+    return unwrapArrayResponse(response);
   },
 
   /**
@@ -158,12 +148,10 @@ export const availabilityService = {
     autoServiceId?: string
   ): Promise<AvailabilityException> {
     const params = autoServiceId ? { autoServiceId } : {};
-    const response = await apiClient.post<AvailabilityException>(
-      '/auto-service/availability/exceptions',
-      data,
-      { params }
-    );
-    return response.data;
+    const response = await apiClient.post<
+      AvailabilityException | { success: boolean; data: AvailabilityException }
+    >('/auto-service/availability/exceptions', data, { params });
+    return unwrapResponseData(response);
   },
 
   /**
@@ -180,12 +168,10 @@ export const availabilityService = {
     autoServiceId?: string
   ): Promise<AvailabilityException> {
     const params = autoServiceId ? { autoServiceId } : {};
-    const response = await apiClient.put<AvailabilityException>(
-      `/auto-service/availability/exceptions/${exceptionId}`,
-      data,
-      { params }
-    );
-    return response.data;
+    const response = await apiClient.put<
+      AvailabilityException | { success: boolean; data: AvailabilityException }
+    >(`/auto-service/availability/exceptions/${exceptionId}`, data, { params });
+    return unwrapResponseData(response);
   },
 
   /**

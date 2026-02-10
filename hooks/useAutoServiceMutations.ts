@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { autoServicesService } from '@/lib/services/auto-services.service';
 import type { AutoServiceRole } from '@/lib/services/team.service';
+import { getMutationErrorMessage } from '@/lib/utils/mutation-helpers';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -36,11 +37,10 @@ export function useDeleteAutoService() {
       }
     },
     onError: (error: unknown) => {
-      const errorObj = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage =
-        errorObj?.response?.data?.message ||
-        errorObj?.message ||
-        t('servicesList.deleteError', { defaultValue: 'Failed to delete auto service' });
+      const errorMessage = getMutationErrorMessage(
+        error,
+        t('servicesList.deleteError', { defaultValue: 'Failed to delete auto service' })
+      );
       showToast(errorMessage, 'error');
     },
   });
@@ -91,11 +91,10 @@ export function useCreateAutoService() {
       setAvailableAutoServices(mappedServices);
     },
     onError: (error: unknown) => {
-      const errorObj = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage =
-        errorObj?.response?.data?.message ||
-        errorObj?.message ||
-        t('createError', { defaultValue: 'Failed to create auto service' });
+      const errorMessage = getMutationErrorMessage(
+        error,
+        t('createError', { defaultValue: 'Failed to create auto service' })
+      );
       showToast(errorMessage, 'error');
     },
   });

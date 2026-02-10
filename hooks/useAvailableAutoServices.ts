@@ -16,28 +16,12 @@ import { useAuth } from './useAuth';
 export function useAvailableAutoServices() {
   const { user } = useAuth();
 
-  const { data: availableServicesResponse, isLoading } = useQuery({
+  const { data: availableServices = [], isLoading } = useQuery({
     queryKey: ['availableAutoServices'],
-    queryFn: async () => {
-      try {
-        const response = await autoServicesService.getAvailableAutoServices();
-        // Response can be either { data: [...] } or directly an array
-        return Array.isArray(response)
-          ? response
-          : (response as { data?: typeof response })?.data || [];
-      } catch (error) {
-        console.error('Failed to fetch available auto services:', error);
-        return [];
-      }
-    },
+    queryFn: () => autoServicesService.getAvailableAutoServices(),
     enabled: !!user,
     refetchOnMount: true, // Always refetch to get latest data
   });
-
-  // Ensure availableServices is always an array
-  const availableServices = useMemo(() => {
-    return Array.isArray(availableServicesResponse) ? availableServicesResponse : [];
-  }, [availableServicesResponse]);
 
   // Get owned services from API
   const ownedServices = useMemo(() => {

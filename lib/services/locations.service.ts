@@ -6,6 +6,7 @@
 import type { Locale } from '@/i18n/routing';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapArrayResponse, unwrapResponseData } from '@/lib/utils/api-response';
 
 export interface Region {
   id: string;
@@ -28,8 +29,10 @@ export const locationsService = {
    * Get all regions (marzes) of Armenia
    */
   async getRegions(): Promise<Region[]> {
-    const response = await apiClient.get<Region[]>(API_ENDPOINTS.LOCATIONS.REGIONS);
-    return response.data;
+    const response = await apiClient.get<Region[] | { success: boolean; data: Region[] }>(
+      API_ENDPOINTS.LOCATIONS.REGIONS
+    );
+    return unwrapArrayResponse(response);
   },
 
   /**
@@ -49,8 +52,10 @@ export const locationsService = {
       ? `${API_ENDPOINTS.LOCATIONS.COMMUNITIES}?${params.toString()}`
       : API_ENDPOINTS.LOCATIONS.COMMUNITIES;
 
-    const response = await apiClient.get<Community[]>(url);
-    return response.data;
+    const response = await apiClient.get<Community[] | { success: boolean; data: Community[] }>(
+      url
+    );
+    return unwrapArrayResponse(response);
   },
 
   /**
@@ -66,13 +71,23 @@ export const locationsService = {
     addressHy: string | null;
     addressRu: string | null;
   }> {
-    const response = await apiClient.get<{
-      address: string;
-      addressHy: string | null;
-      addressRu: string | null;
-    }>(
+    const response = await apiClient.get<
+      | {
+          address: string;
+          addressHy: string | null;
+          addressRu: string | null;
+        }
+      | {
+          success: boolean;
+          data: {
+            address: string;
+            addressHy: string | null;
+            addressRu: string | null;
+          };
+        }
+    >(
       `${API_ENDPOINTS.GEOCODING.REVERSE}?latitude=${latitude}&longitude=${longitude}&locale=${locale}`
     );
-    return response.data;
+    return unwrapResponseData(response);
   },
 };

@@ -56,12 +56,12 @@ export function CreateProfileEditor() {
 
   // Load regions and communities
   const { data: regions = [] } = useQuery({
-    queryKey: ['regions'],
+    queryKey: queryKeys.regions(),
     queryFn: () => locationsService.getRegions(),
   });
 
   const { data: communities = [] } = useQuery({
-    queryKey: ['communities', selectedRegionId],
+    queryKey: queryKeys.communities(selectedRegionId),
     queryFn: () => locationsService.getCommunities(selectedRegionId),
     enabled: !!selectedRegionId,
   });

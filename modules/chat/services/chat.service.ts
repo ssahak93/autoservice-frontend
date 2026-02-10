@@ -1,7 +1,6 @@
-import type { AxiosError } from 'axios';
-
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapResponseData, extractErrorMessage, isErrorStatus } from '@/lib/utils/api-response';
 
 export interface MessageReaction {
   id: string;
@@ -107,10 +106,12 @@ export const chatService = {
     page: number = 1,
     limit: number = 50
   ): Promise<ChatMessagesResponse> {
-    const response = await apiClient.get<ChatMessagesResponse>(`/chat/visits/${visitId}/messages`, {
+    const response = await apiClient.get<
+      ChatMessagesResponse | { success: boolean; data: ChatMessagesResponse }
+    >(`/chat/visits/${visitId}/messages`, {
       params: { page, limit },
     });
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   /**
@@ -118,15 +119,13 @@ export const chatService = {
    */
   async sendMessage(visitId: string, dto: SendMessageDto): Promise<Message> {
     try {
-      const response = await apiClient.post<Message>(`/chat/visits/${visitId}/messages`, dto);
-      return response.data;
+      const response = await apiClient.post<Message | { success: boolean; data: Message }>(
+        `/chat/visits/${visitId}/messages`,
+        dto
+      );
+      return unwrapResponseData(response);
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string; error?: { message?: string } }>;
-      const errorMessage =
-        axiosError.response?.data?.message ||
-        axiosError.response?.data?.error?.message ||
-        axiosError.message ||
-        'Failed to send message';
+      const errorMessage = extractErrorMessage(error, 'Failed to send message');
       throw new Error(errorMessage);
     }
   },
@@ -142,7 +141,7 @@ export const chatService = {
     }
 
     try {
-      const response = await apiClient.post<Message>(
+      const response = await apiClient.post<Message | { success: boolean; data: Message }>(
         `/chat/visits/${visitId}/messages/image`,
         formData,
         {
@@ -152,14 +151,9 @@ export const chatService = {
         }
       );
 
-      return response.data;
+      return unwrapResponseData(response);
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string; error?: { message?: string } }>;
-      const errorMessage =
-        axiosError.response?.data?.message ||
-        axiosError.response?.data?.error?.message ||
-        axiosError.message ||
-        'Failed to send image message';
+      const errorMessage = extractErrorMessage(error, 'Failed to send image message');
       throw new Error(errorMessage);
     }
   },
@@ -173,13 +167,13 @@ export const chatService = {
    */
   async getUnreadCount(visitId: string): Promise<number> {
     try {
-      const response = await apiClient.get<{ count: number }>(
-        `/chat/visits/${visitId}/unread-count`
-      );
-      return response.data.count || 0;
+      const response = await apiClient.get<
+        { count: number } | { success: boolean; data: { count: number } }
+      >(`/chat/visits/${visitId}/unread-count`);
+      const data = unwrapResponseData(response);
+      return data.count || 0;
     } catch (error) {
-      const axiosError = error as { response?: { status?: number } };
-      if (axiosError.response?.status === 404) {
+      if (isErrorStatus(error, 404)) {
         return 0;
       }
       throw error;
@@ -193,11 +187,11 @@ export const chatService = {
     messageId: string,
     emoji: string
   ): Promise<{ success: boolean; action: 'added' | 'removed' }> {
-    const response = await apiClient.post<{ success: boolean; action: 'added' | 'removed' }>(
-      `/chat/visits/messages/${messageId}/reactions`,
-      { emoji }
-    );
-    return response.data;
+    const response = await apiClient.post<
+      | { success: boolean; action: 'added' | 'removed' }
+      | { success: boolean; data: { success: boolean; action: 'added' | 'removed' } }
+    >(`/chat/visits/messages/${messageId}/reactions`, { emoji });
+    return unwrapResponseData(response);
   },
 
   /**
@@ -209,9 +203,16 @@ export const chatService = {
     Record<string, Array<{ id: string; firstName: string | null; lastName: string | null }>>
   > {
     const response = await apiClient.get<
-      Record<string, Array<{ id: string; firstName: string | null; lastName: string | null }>>
+      | Record<string, Array<{ id: string; firstName: string | null; lastName: string | null }>>
+      | {
+          success: boolean;
+          data: Record<
+            string,
+            Array<{ id: string; firstName: string | null; lastName: string | null }>
+          >;
+        }
     >(`/chat/visits/messages/${messageId}/reactions`);
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   /**
@@ -267,7 +268,7 @@ export const chatService = {
     }>(API_ENDPOINTS.CHAT.CONVERSATIONS, {
       params: autoServiceId ? { autoServiceId } : undefined,
     });
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   // Admin conversation methods
@@ -275,20 +276,22 @@ export const chatService = {
    * Get user conversations with admin
    */
   async getAdminConversations(): Promise<{ data: AdminConversation[] }> {
-    const response = await apiClient.get<{ data: AdminConversation[] }>(
-      '/chat/admin/conversations'
-    );
-    return response.data;
+    const response = await apiClient.get<
+      { data: AdminConversation[] } | { success: boolean; data: { data: AdminConversation[] } }
+    >('/chat/admin/conversations');
+    return unwrapResponseData(response);
   },
 
   /**
    * Create a new conversation with admin
    */
   async createAdminConversation(title: string): Promise<AdminConversation> {
-    const response = await apiClient.post<AdminConversation>('/chat/admin/conversations', {
+    const response = await apiClient.post<
+      AdminConversation | { success: boolean; data: AdminConversation }
+    >('/chat/admin/conversations', {
       title,
     });
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   /**
@@ -299,13 +302,12 @@ export const chatService = {
     page: number = 1,
     limit: number = 50
   ): Promise<ChatMessagesResponse> {
-    const response = await apiClient.get<ChatMessagesResponse>(
-      `/chat/admin/conversations/${conversationId}/messages`,
-      {
-        params: { page, limit },
-      }
-    );
-    return response.data;
+    const response = await apiClient.get<
+      ChatMessagesResponse | { success: boolean; data: ChatMessagesResponse }
+    >(`/chat/admin/conversations/${conversationId}/messages`, {
+      params: { page, limit },
+    });
+    return unwrapResponseData(response);
   },
 
   /**
@@ -317,18 +319,13 @@ export const chatService = {
     imageFileId?: string
   ): Promise<Message> {
     try {
-      const response = await apiClient.post<Message>(
+      const response = await apiClient.post<Message | { success: boolean; data: Message }>(
         `/chat/admin/conversations/${conversationId}/messages`,
         { content, imageFileId, messageType: imageFileId ? 'image' : 'text' }
       );
-      return response.data;
+      return unwrapResponseData(response);
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string; error?: { message?: string } }>;
-      const errorMessage =
-        axiosError.response?.data?.message ||
-        axiosError.response?.data?.error?.message ||
-        axiosError.message ||
-        'Failed to send message';
+      const errorMessage = extractErrorMessage(error, 'Failed to send message');
       throw new Error(errorMessage);
     }
   },
@@ -352,23 +349,17 @@ export const chatService = {
       // For admin conversations: /chat/admin/upload-image
       // For visit chats: /chat/visits/upload-image
       const endpoint = isAdmin ? '/chat/admin/upload-image' : '/chat/visits/upload-image';
-      const response = await apiClient.post<{ fileId: string; fileUrl: string }>(
-        endpoint,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      return response.data;
+      const response = await apiClient.post<
+        | { fileId: string; fileUrl: string }
+        | { success: boolean; data: { fileId: string; fileUrl: string } }
+      >(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return unwrapResponseData(response);
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string; error?: { message?: string } }>;
-      const errorMessage =
-        axiosError.response?.data?.message ||
-        axiosError.response?.data?.error?.message ||
-        axiosError.message ||
-        'Failed to upload image';
+      const errorMessage = extractErrorMessage(error, 'Failed to upload image');
       throw new Error(errorMessage);
     }
   },

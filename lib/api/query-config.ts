@@ -19,6 +19,19 @@ export const queryConfig = {
   refetchOnWindowFocus: false,
   refetchOnReconnect: true,
   refetchOnMount: true,
+
+  // Common refetch intervals (in milliseconds)
+  refetchIntervals: {
+    notifications: 30000, // 30 seconds for notifications
+    stats: 30000, // 30 seconds for stats
+  },
+
+  // Common stale times for different data types (in milliseconds)
+  staleTimes: {
+    default: 5 * 60 * 1000, // 5 minutes
+    long: 30 * 60 * 1000, // 30 minutes (for rarely changing data like service types)
+    veryLong: 24 * 60 * 60 * 1000, // 24 hours (for locations)
+  },
 };
 
 /**
@@ -60,4 +73,19 @@ export const queryKeys = {
 
   // Recommendations
   recommendations: (params?: unknown) => ['recommendations', params] as const,
+
+  // Vehicles
+  vehicles: () => ['vehicles'] as const,
+  vehicle: (id: string) => ['vehicle', id] as const,
+
+  // Settings
+  settings: () => ['settings'] as const,
+
+  // Locations
+  regions: () => ['regions'] as const,
+  communities: (regionId?: string, type?: string) => ['communities', regionId, type] as const,
+
+  // Service Types
+  serviceTypes: () => ['service-types', 'all'] as const,
+  serviceTypesByCategory: (category: string) => ['service-types', 'category', category] as const,
 };

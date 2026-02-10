@@ -1,5 +1,7 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapResponseData } from '@/lib/utils/api-response';
+import { buildQueryParams } from '@/lib/utils/params';
 
 export interface Notification {
   id: string;
@@ -37,24 +39,34 @@ export const notificationsService = {
    * Get user notifications
    */
   async getNotifications(filters?: NotificationFilters) {
-    const params = new URLSearchParams();
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-    if (filters?.isRead !== undefined) params.append('isRead', filters.isRead.toString());
-    if (filters?.type) params.append('type', filters.type);
+    const queryParams = buildQueryParams(filters || {}, false);
 
-    const response = await apiClient.get<{
-      data: Notification[];
-      pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-      };
-    }>(API_ENDPOINTS.NOTIFICATIONS.LIST, {
-      params: Object.fromEntries(params),
+    const response = await apiClient.get<
+      | {
+          data: Notification[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+          };
+        }
+      | {
+          success: boolean;
+          data: {
+            data: Notification[];
+            pagination: {
+              page: number;
+              limit: number;
+              total: number;
+              totalPages: number;
+            };
+          };
+        }
+    >(API_ENDPOINTS.NOTIFICATIONS.LIST, {
+      params: queryParams,
     });
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   /**
@@ -64,8 +76,10 @@ export const notificationsService = {
    */
   async getStats(): Promise<NotificationStats> {
     try {
-      const response = await apiClient.get<NotificationStats>(API_ENDPOINTS.NOTIFICATIONS.STATS);
-      return response.data;
+      const response = await apiClient.get<
+        NotificationStats | { success: boolean; data: NotificationStats }
+      >(API_ENDPOINTS.NOTIFICATIONS.STATS);
+      return unwrapResponseData(response);
     } catch (error) {
       // If request fails (e.g., 401, 404, 500), return default stats as fallback
       // This prevents UI errors and provides graceful degradation

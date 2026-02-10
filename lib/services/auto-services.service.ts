@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapResponseData, unwrapArrayResponse } from '@/lib/utils/api-response';
 
 // Maximum number of auto services a user can own (should match backend constant)
 export const MAX_AUTO_SERVICES_PER_USER = 5;
@@ -34,8 +35,11 @@ export interface AutoService {
 
 export const autoServicesService = {
   async createAutoService(data: CreateAutoServiceRequest): Promise<AutoService> {
-    const response = await apiClient.post<AutoService>(API_ENDPOINTS.AUTO_SERVICES.CREATE, data);
-    return response.data;
+    const response = await apiClient.post<AutoService | { success: boolean; data: AutoService }>(
+      API_ENDPOINTS.AUTO_SERVICES.CREATE,
+      data
+    );
+    return unwrapResponseData(response);
   },
 
   async getAvailableAutoServices(): Promise<
@@ -86,31 +90,24 @@ export const autoServicesService = {
         }>
     >(API_ENDPOINTS.AUTO_SERVICES.AVAILABLE);
 
-    // Handle both response formats: { data: [...] } or [...]
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    if (response.data?.data && Array.isArray(response.data.data)) {
-      return response.data.data;
-    }
-    return [];
+    return unwrapArrayResponse(response);
   },
 
   async updateAutoService(
     autoServiceId: string,
     data: UpdateAutoServiceRequest
   ): Promise<AutoService> {
-    const response = await apiClient.put<AutoService>(
+    const response = await apiClient.put<AutoService | { success: boolean; data: AutoService }>(
       API_ENDPOINTS.AUTO_SERVICES.UPDATE(autoServiceId),
       data
     );
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   async deleteAutoService(autoServiceId: string): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.delete<{ success: boolean; message: string }>(
       API_ENDPOINTS.AUTO_SERVICES.DELETE(autoServiceId)
     );
-    return response.data;
+    return unwrapResponseData(response);
   },
 };

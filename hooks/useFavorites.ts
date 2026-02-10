@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { queryKeys, queryConfig } from '@/lib/api/query-config';
+import { unwrapResponseData, unwrapArrayResponse } from '@/lib/utils/api-response';
 import { useUIStore } from '@/stores/uiStore';
 import type { AutoService } from '@/types';
 
@@ -23,8 +24,10 @@ export const useFavorites = () => {
   return useQuery<Favorite[]>({
     queryKey: queryKeys.favorites(),
     queryFn: async () => {
-      const response = await apiClient.get<Favorite[]>(API_ENDPOINTS.FAVORITES.LIST);
-      return response.data;
+      const response = await apiClient.get<Favorite[] | { success: boolean; data: Favorite[] }>(
+        API_ENDPOINTS.FAVORITES.LIST
+      );
+      return unwrapArrayResponse(response);
     },
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
@@ -36,10 +39,11 @@ export const useIsFavorited = (profileId: string | null) => {
     queryKey: queryKeys.favorite(profileId || ''),
     queryFn: async () => {
       if (!profileId) return false;
-      const response = await apiClient.get<{ isFavorited: boolean }>(
-        API_ENDPOINTS.FAVORITES.CHECK(profileId)
-      );
-      return response.data.isFavorited;
+      const response = await apiClient.get<
+        { isFavorited: boolean } | { success: boolean; data: { isFavorited: boolean } }
+      >(API_ENDPOINTS.FAVORITES.CHECK(profileId));
+      const data = unwrapResponseData(response);
+      return data.isFavorited;
     },
     enabled: !!profileId,
     staleTime: queryConfig.staleTime,
@@ -53,8 +57,10 @@ export const useAddToFavorites = () => {
 
   return useMutation({
     mutationFn: async (profileId: string) => {
-      const response = await apiClient.post<Favorite>(API_ENDPOINTS.FAVORITES.ADD(profileId));
-      return response.data;
+      const response = await apiClient.post<Favorite | { success: boolean; data: Favorite }>(
+        API_ENDPOINTS.FAVORITES.ADD(profileId)
+      );
+      return unwrapResponseData(response);
     },
     onMutate: async (profileId) => {
       // Cancel outgoing refetches

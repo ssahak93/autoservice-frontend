@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { queryKeys } from '@/lib/api/query-config';
+import { unwrapArrayResponse } from '@/lib/utils/api-response';
 
 interface FeatureFlag {
   key: string;
@@ -18,18 +20,22 @@ interface FeatureFlag {
  * @param defaultValue - Default value if flag is not found (default: false)
  * @returns Object with isLoading, isEnabled, and error
  */
+// Shared query function for feature flags
+const fetchFeatureFlags = async (): Promise<FeatureFlag[]> => {
+  const response = await apiClient.get<FeatureFlag[] | { success: boolean; data: FeatureFlag[] }>(
+    API_ENDPOINTS.FEATURE_FLAGS.LIST
+  );
+  return unwrapArrayResponse(response);
+};
+
 export function useFeatureFlag(flagKey: string, defaultValue: boolean = false) {
   const {
     data: flags,
     isLoading,
     error,
   } = useQuery<FeatureFlag[]>({
-    queryKey: ['featureFlags'],
-    queryFn: async () => {
-      // Use public endpoint instead of admin endpoint
-      const response = await apiClient.get<FeatureFlag[]>(API_ENDPOINTS.FEATURE_FLAGS.LIST);
-      return response.data;
-    },
+    queryKey: queryKeys.featureFlags(),
+    queryFn: fetchFeatureFlags,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: 1,
   });
@@ -54,12 +60,8 @@ export function useFeatureFlags(flagKeys: string[]) {
     isLoading,
     error,
   } = useQuery<FeatureFlag[]>({
-    queryKey: ['featureFlags'],
-    queryFn: async () => {
-      // Use public endpoint instead of admin endpoint
-      const response = await apiClient.get<FeatureFlag[]>(API_ENDPOINTS.FEATURE_FLAGS.LIST);
-      return response.data;
-    },
+    queryKey: queryKeys.featureFlags(),
+    queryFn: fetchFeatureFlags,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });

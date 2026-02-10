@@ -1,5 +1,7 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapResponseData, unwrapPaginatedResponse } from '@/lib/utils/api-response';
+import { cleanParams } from '@/lib/utils/params';
 import type { AutoService, PaginatedResponse } from '@/types';
 
 export interface ServiceSearchParams {
@@ -28,55 +30,40 @@ export interface ServiceSearchParams {
 
 export const servicesService = {
   async search(params: ServiceSearchParams): Promise<PaginatedResponse<AutoService>> {
-    // Clean params - remove undefined values to ensure they're sent
-    const cleanParams: Record<string, unknown> = {};
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        // Handle arrays (for multiple selections)
-        if (Array.isArray(value) && value.length > 0) {
-          cleanParams[key] = value;
-        } else if (!Array.isArray(value)) {
-          cleanParams[key] = value;
-        }
-      }
-    });
+    const cleanedParams = cleanParams(params);
 
-    const response = await apiClient.get<{
-      data: AutoService[];
-      pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-      };
-    }>(API_ENDPOINTS.AUTO_SERVICES.SEARCH, {
-      params: cleanParams,
+    const response = await apiClient.get<
+      | {
+          data: AutoService[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+          };
+        }
+      | PaginatedResponse<AutoService>
+      | { success: boolean; data: PaginatedResponse<AutoService> }
+    >(API_ENDPOINTS.AUTO_SERVICES.SEARCH, {
+      params: cleanedParams,
     });
     // Backend returns { data, pagination } directly from search endpoint
-    // Add success field to match PaginatedResponse type
-    return {
-      success: true,
-      data: response.data.data,
-      pagination: response.data.pagination,
-    };
+    return unwrapPaginatedResponse(response);
   },
 
   async getById(id: string): Promise<AutoService> {
     const response = await apiClient.get<AutoService | { success: boolean; data: AutoService }>(
       API_ENDPOINTS.AUTO_SERVICES.DETAIL(id)
     );
-    // Handle both wrapped and unwrapped responses
-    const responseData = response.data;
-    if ('success' in responseData && 'data' in responseData) {
-      return responseData.data;
-    }
-    return responseData as AutoService;
+    return unwrapResponseData(response);
   },
 
   async getReviews(serviceId: string, params?: { page?: number; limit?: number; sortBy?: string }) {
-    const response = await apiClient.get(API_ENDPOINTS.AUTO_SERVICES.REVIEWS(serviceId), {
+    const response = await apiClient.get<
+      PaginatedResponse<Review> | { success: boolean; data: PaginatedResponse<Review> } | Review[]
+    >(API_ENDPOINTS.AUTO_SERVICES.REVIEWS(serviceId), {
       params,
     });
-    return response.data;
+    return unwrapPaginatedResponse(response);
   },
 };

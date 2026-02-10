@@ -13,6 +13,7 @@ import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useUpdateProfile } from '@/hooks/useProfileMutations';
 import { useProfileValidation } from '@/hooks/useProfileValidation';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
+import { queryKeys } from '@/lib/api/query-config';
 import { type AutoServiceProfile } from '@/lib/services/auto-service-profile.service';
 import { locationsService } from '@/lib/services/locations.service';
 import { formatPhoneForBackend, parsePhoneFromBackend } from '@/lib/utils/phone.util';
@@ -30,12 +31,12 @@ export function ProfileEditor({ profile }: ProfileEditorProps) {
 
   // Load regions and communities
   const { data: regions = [] } = useQuery({
-    queryKey: ['regions'],
+    queryKey: queryKeys.regions(),
     queryFn: () => locationsService.getRegions(),
   });
 
   const { data: communities = [] } = useQuery({
-    queryKey: ['communities', selectedRegionId],
+    queryKey: queryKeys.communities(selectedRegionId),
     queryFn: () => locationsService.getCommunities(selectedRegionId),
     enabled: !!selectedRegionId,
   });

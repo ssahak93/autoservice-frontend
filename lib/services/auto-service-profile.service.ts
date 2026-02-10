@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
+import { unwrapResponseData } from '@/lib/utils/api-response';
 
 export interface PhotoItem {
   id: string;
@@ -83,49 +84,49 @@ export interface UpdateProfileRequest extends Partial<CreateProfileRequest> {}
 
 export const autoServiceProfileService = {
   async getProfile(autoServiceId?: string): Promise<AutoServiceProfile> {
-    const response = await apiClient.get<AutoServiceProfile>(API_ENDPOINTS.AUTO_SERVICES.PROFILE, {
+    const response = await apiClient.get<
+      AutoServiceProfile | { success: boolean; data: AutoServiceProfile }
+    >(API_ENDPOINTS.AUTO_SERVICES.PROFILE, {
       params: autoServiceId ? { autoServiceId } : undefined,
     });
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   async createProfile(
     data: CreateProfileRequest,
     autoServiceId?: string
   ): Promise<AutoServiceProfile> {
-    const response = await apiClient.post<AutoServiceProfile>(
-      API_ENDPOINTS.AUTO_SERVICES.CREATE_PROFILE,
-      data,
-      {
-        params: autoServiceId ? { autoServiceId } : undefined,
-      }
-    );
-    return response.data;
+    const response = await apiClient.post<
+      AutoServiceProfile | { success: boolean; data: AutoServiceProfile }
+    >(API_ENDPOINTS.AUTO_SERVICES.CREATE_PROFILE, data, {
+      params: autoServiceId ? { autoServiceId } : undefined,
+    });
+    return unwrapResponseData(response);
   },
 
   async updateProfile(
     data: UpdateProfileRequest,
     autoServiceId?: string
   ): Promise<AutoServiceProfile> {
-    const response = await apiClient.put<AutoServiceProfile>(
-      API_ENDPOINTS.AUTO_SERVICES.UPDATE_PROFILE,
-      data,
-      {
-        params: autoServiceId ? { autoServiceId } : undefined,
-      }
-    );
-    return response.data;
+    const response = await apiClient.put<
+      AutoServiceProfile | { success: boolean; data: AutoServiceProfile }
+    >(API_ENDPOINTS.AUTO_SERVICES.UPDATE_PROFILE, data, {
+      params: autoServiceId ? { autoServiceId } : undefined,
+    });
+    return unwrapResponseData(response);
   },
 
   async publishProfile(isPublished: boolean, autoServiceId?: string): Promise<AutoServiceProfile> {
-    const response = await apiClient.put<AutoServiceProfile>(
+    const response = await apiClient.put<
+      AutoServiceProfile | { success: boolean; data: AutoServiceProfile }
+    >(
       API_ENDPOINTS.AUTO_SERVICES.PUBLISH_PROFILE,
       { isPublished },
       {
         params: autoServiceId ? { autoServiceId } : undefined,
       }
     );
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   async uploadPhoto(
@@ -136,16 +137,14 @@ export const autoServiceProfileService = {
     formData.append('file', file);
     formData.append('type', type);
 
-    const response = await apiClient.post<{ id: string; fileUrl: string }>(
-      API_ENDPOINTS.AUTO_SERVICES.UPLOAD_PHOTO,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    return response.data;
+    const response = await apiClient.post<
+      { id: string; fileUrl: string } | { success: boolean; data: { id: string; fileUrl: string } }
+    >(API_ENDPOINTS.AUTO_SERVICES.UPLOAD_PHOTO, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return unwrapResponseData(response);
   },
 
   async deletePhoto(
@@ -154,14 +153,16 @@ export const autoServiceProfileService = {
     autoServiceId?: string
   ): Promise<AutoServiceProfile> {
     // Use request method for DELETE with body
-    const response = await apiClient.post<AutoServiceProfile>(
+    const response = await apiClient.post<
+      AutoServiceProfile | { success: boolean; data: AutoServiceProfile }
+    >(
       API_ENDPOINTS.AUTO_SERVICES.DELETE_PHOTO,
       { fileId, type },
       {
         params: autoServiceId ? { autoServiceId } : undefined,
       }
     );
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   async reorderPhotos(
@@ -169,14 +170,16 @@ export const autoServiceProfileService = {
     type: 'profile' | 'work',
     autoServiceId?: string
   ): Promise<AutoServiceProfile> {
-    const response = await apiClient.put<AutoServiceProfile>(
+    const response = await apiClient.put<
+      AutoServiceProfile | { success: boolean; data: AutoServiceProfile }
+    >(
       API_ENDPOINTS.AUTO_SERVICES.REORDER_PHOTOS,
       { fileIds, type },
       {
         params: autoServiceId ? { autoServiceId } : undefined,
       }
     );
-    return response.data;
+    return unwrapResponseData(response);
   },
 
   async updateServiceInfo(
@@ -188,10 +191,9 @@ export const autoServiceProfileService = {
       avatarFileId?: string;
     }
   ): Promise<AutoServiceProfile> {
-    const response = await apiClient.put<AutoServiceProfile>(
-      API_ENDPOINTS.AUTO_SERVICES.UPDATE(autoServiceId),
-      data
-    );
-    return response.data;
+    const response = await apiClient.put<
+      AutoServiceProfile | { success: boolean; data: AutoServiceProfile }
+    >(API_ENDPOINTS.AUTO_SERVICES.UPDATE(autoServiceId), data);
+    return unwrapResponseData(response);
   },
 };

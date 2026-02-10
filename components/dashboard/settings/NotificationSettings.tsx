@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Mail, Smartphone } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { queryKeys } from '@/lib/api/query-config';
 import { settingsService, type UpdateSettingsData } from '@/lib/services/settings.service';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -13,7 +14,7 @@ export function NotificationSettings() {
   const queryClient = useQueryClient();
 
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['settings'],
+    queryKey: queryKeys.settings(),
     queryFn: () => settingsService.getSettings(),
   });
 
@@ -22,7 +23,7 @@ export function NotificationSettings() {
       return settingsService.updateSettings(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings() });
       showToast(
         t('updateSuccess', { defaultValue: 'Notification settings updated successfully' }),
         'success'

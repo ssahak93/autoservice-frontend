@@ -1,11 +1,10 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { availabilityService } from '@/lib/services/availability.service';
+import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
 import { useAutoServiceStore } from '@/stores/autoServiceStore';
-import { useUIStore } from '@/stores/uiStore';
 
 export interface AvailabilityException {
   id: string;
@@ -21,9 +20,6 @@ export interface AvailabilityException {
  * Follows Single Responsibility Principle - handles only availability exception operations
  */
 export function useAvailabilityExceptions(autoServiceId: string | null) {
-  const t = useTranslations('myService.availability');
-  const { showToast } = useUIStore();
-  const queryClient = useQueryClient();
   const { selectedAutoServiceId: storeSelectedId } = useAutoServiceStore();
 
   // Get selected auto service ID (use provided ID or from store)
@@ -36,6 +32,14 @@ export function useAvailabilityExceptions(autoServiceId: string | null) {
     enabled: !!selectedAutoServiceId,
   });
 
+  // Common callbacks for all mutations
+  const commonCallbacks = useMutationWithInvalidation(
+    [['availability-exceptions'], ['availability']],
+    'exceptionCreated',
+    undefined,
+    'myService.availability'
+  );
+
   // Create exception mutation
   const createMutation = useMutation({
     mutationFn: (data: {
@@ -45,21 +49,16 @@ export function useAvailabilityExceptions(autoServiceId: string | null) {
       endTime?: string;
       reason?: string;
     }) => availabilityService.createException(data, selectedAutoServiceId || undefined),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['availability-exceptions'] });
-      queryClient.invalidateQueries({ queryKey: ['availability'] });
-      showToast(
-        t('exceptionCreated', { defaultValue: 'Exception created successfully' }),
-        'success'
-      );
-    },
-    onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create exception';
-      showToast(errorMessage, 'error');
-    },
+    ...commonCallbacks,
   });
 
   // Update exception mutation
+  const updateCallbacks = useMutationWithInvalidation(
+    [['availability-exceptions'], ['availability']],
+    'exceptionUpdated',
+    undefined,
+    'myService.availability'
+  );
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<AvailabilityException> }) => {
       const cleanData = {
@@ -70,35 +69,19 @@ export function useAvailabilityExceptions(autoServiceId: string | null) {
       };
       return availabilityService.updateException(id, cleanData, selectedAutoServiceId || undefined);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['availability-exceptions'] });
-      queryClient.invalidateQueries({ queryKey: ['availability'] });
-      showToast(
-        t('exceptionUpdated', { defaultValue: 'Exception updated successfully' }),
-        'success'
-      );
-    },
-    onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update exception';
-      showToast(errorMessage, 'error');
-    },
+    ...updateCallbacks,
   });
 
   // Delete exception mutation
+  const deleteCallbacks = useMutationWithInvalidation(
+    [['availability-exceptions'], ['availability']],
+    'exceptionDeleted',
+    undefined,
+    'myService.availability'
+  );
   const deleteMutation = useMutation({
     mutationFn: (id: string) => availabilityService.deleteException(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['availability-exceptions'] });
-      queryClient.invalidateQueries({ queryKey: ['availability'] });
-      showToast(
-        t('exceptionDeleted', { defaultValue: 'Exception deleted successfully' }),
-        'success'
-      );
-    },
-    onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete exception';
-      showToast(errorMessage, 'error');
-    },
+    ...deleteCallbacks,
   });
 
   return {
