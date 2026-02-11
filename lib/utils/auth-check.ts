@@ -18,13 +18,13 @@ export function hasAccessToken(): boolean {
 }
 
 /**
- * Check if user is authenticated (has token)
+ * Check if user has a valid token (either provided or in localStorage)
  * Can be used in hooks to conditionally enable queries
  *
  * @param accessToken - Optional access token from store
  * @returns True if user has token
  */
-export function isAuthenticated(accessToken?: string | null): boolean {
+export function hasValidToken(accessToken?: string | null): boolean {
   if (accessToken) {
     return true;
   }

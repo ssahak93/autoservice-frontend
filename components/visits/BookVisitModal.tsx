@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
+import { AuthRequiredModal } from '@/components/auth/AuthRequiredModal';
 import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Select } from '@/components/ui/Select';
@@ -19,6 +20,7 @@ import { useVehicles } from '@/hooks/useVehicles';
 import { useCreateVisit, useUpdateVisit } from '@/hooks/useVisits';
 import { availabilityService } from '@/lib/services/availability.service';
 import { getAnimationVariants } from '@/lib/utils/animations';
+import { hasValidToken } from '@/lib/utils/auth-check';
 import { formatDateISO } from '@/lib/utils/date';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -84,10 +86,11 @@ export function BookVisitModal({
   const { isOpen: internalIsOpen, open, close: internalClose, closeButtonRef } = useModal();
   const variants = getAnimationVariants();
   const bookVisitSchema = createBookVisitSchema(t);
-  const { user: _user } = useAuthStore();
+  const { user: _user, accessToken } = useAuthStore();
   const { isEmailVerificationRequired, redirectToVerification } = useEmailVerification();
   const { showToast } = useUIStore();
   const { data: vehicles, isLoading: isLoadingVehicles } = useVehicles();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Use external isOpen/onClose in edit mode, internal in create mode
   const isEditMode = mode === 'edit';
@@ -131,10 +134,22 @@ export function BookVisitModal({
 
   const isOwnService = availability === 'OWN_SERVICE';
 
-  // Handle opening modal - check if own service first (only in create mode)
+  // Handle opening modal - check authentication first (only in create mode)
   const handleOpen = () => {
     if (isEditMode) {
       // In edit mode, modal is controlled externally
+      return;
+    }
+
+    // Check if user is authenticated
+    const isAuthenticated = hasValidToken(accessToken);
+    if (!isAuthenticated) {
+      // Save current URL for redirect after login/register
+      if (typeof window !== 'undefined') {
+        const currentUrl = window.location.pathname + window.location.search;
+        sessionStorage.setItem('redirectAfterLogin', currentUrl);
+      }
+      setShowAuthModal(true);
       return;
     }
 
@@ -199,6 +214,20 @@ export function BookVisitModal({
       }
     }
   }, [isEditMode, visit, setValue]);
+
+  // Auto-select vehicle if user has only one vehicle (only in create mode)
+  useEffect(() => {
+    if (
+      !isEditMode &&
+      isOpen &&
+      !isLoadingVehicles &&
+      vehicles &&
+      vehicles.length === 1 &&
+      !visit?.vehicleId // Don't override if vehicleId is already set
+    ) {
+      setValue('vehicleId', vehicles[0].id);
+    }
+  }, [isEditMode, isOpen, isLoadingVehicles, vehicles, setValue, visit?.vehicleId]);
 
   const onSubmit = (data: BookVisitFormData) => {
     // Check if email verification is required (only in create mode)
@@ -445,8 +474,8 @@ export function BookVisitModal({
                     }}
                   />
 
-                  {/* Vehicle Selector (only in create mode) */}
-                  {!isEditMode && (
+                  {/* Vehicle Selector (only in create mode and if user has vehicles) */}
+                  {!isEditMode && !isLoadingVehicles && vehicles && vehicles.length > 0 && (
                     <Controller
                       name="vehicleId"
                       control={control}
@@ -458,7 +487,7 @@ export function BookVisitModal({
                               defaultValue: 'Select vehicle (optional)',
                             }),
                           },
-                          ...(vehicles || []).map((vehicle) => {
+                          ...vehicles.map((vehicle) => {
                             const displayName = `${vehicle.make} ${vehicle.model}${vehicle.year ? ` ${vehicle.year}` : ''}${vehicle.licensePlate ? ` (${vehicle.licensePlate})` : ''}`;
                             return {
                               value: vehicle.id,
@@ -472,15 +501,6 @@ export function BookVisitModal({
                             {...field}
                             label={t('vehicle', { defaultValue: 'Vehicle' })}
                             options={vehicleOptions}
-                            disabled={isLoadingVehicles}
-                            helperText={
-                              vehicles && vehicles.length === 0
-                                ? t('noVehicles', {
-                                    defaultValue:
-                                      'No vehicles added yet. You can add one in your profile.',
-                                  })
-                                : undefined
-                            }
                           />
                         );
                       }}
@@ -532,6 +552,17 @@ export function BookVisitModal({
           </>
         )}
       </AnimatePresence>
+
+      {/* Auth Required Modal */}
+      <AuthRequiredModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        redirectUrl={
+          typeof window !== 'undefined'
+            ? window.location.pathname + window.location.search
+            : undefined
+        }
+      />
     </>
   );
 }

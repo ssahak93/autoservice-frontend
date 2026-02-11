@@ -14,6 +14,8 @@ import {
   History,
   Edit,
   Star,
+  ExternalLink,
+  Car,
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useState, useMemo } from 'react';
@@ -21,6 +23,7 @@ import { useState, useMemo } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
 import { Pagination } from '@/components/common/Pagination';
+import { VisitDetailsModal } from '@/components/dashboard/visits/VisitDetailsModal';
 import { LeaveReviewModal } from '@/components/reviews/LeaveReviewModal';
 import { Button } from '@/components/ui/Button';
 import { BookVisitModal } from '@/components/visits/BookVisitModal';
@@ -52,6 +55,7 @@ function VisitCard({
   onEdit,
   onCancel,
   onLeaveReview,
+  onViewDetails,
 }: {
   visit: Visit;
   t: ReturnType<typeof useTranslations<'visits'>>;
@@ -59,6 +63,7 @@ function VisitCard({
   onEdit?: () => void;
   onCancel?: () => void;
   onLeaveReview?: () => void;
+  onViewDetails?: () => void;
 }) {
   const StatusIcon = statusIcons[visit.status];
   const canEdit = visit.status === 'pending' || visit.status === 'confirmed';
@@ -83,7 +88,7 @@ function VisitCard({
 
           <div className="space-y-2">
             {/* Service Name with Type */}
-            <div className="mb-2">
+            <div className="mb-2 flex items-center gap-2">
               <p className="font-semibold text-neutral-900">
                 {(() => {
                   const autoService = visit.autoServiceProfile?.autoService || visit.autoService;
@@ -107,6 +112,13 @@ function VisitCard({
                   return `${serviceName} (${typeLabel})`;
                 })()}
               </p>
+              <Link
+                href={`/services/${visit.autoServiceProfileId}`}
+                className="text-primary-600 hover:text-primary-700"
+                title={t('viewService', { defaultValue: 'View Service' })}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Link>
             </div>
 
             <div className="flex items-center gap-2 text-neutral-600">
@@ -146,14 +158,14 @@ function VisitCard({
 
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-2 sm:flex-nowrap">
-            <Link
-              href={`/services/${visit.autoServiceProfileId}`}
+            <Button
+              variant="outline"
+              size="sm"
               className="flex-1 sm:flex-initial"
+              onClick={onViewDetails}
             >
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                {t('viewDetails', { defaultValue: 'View Details' })}
-              </Button>
-            </Link>
+              {t('viewDetails', { defaultValue: 'View Details' })}
+            </Button>
             <div className="flex-1 sm:flex-initial">
               <VisitChatButton
                 visitId={visit.id}
@@ -216,6 +228,7 @@ export default function VisitsPage() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
   const [page, setPage] = useState(1);
   const [reviewingVisit, setReviewingVisit] = useState<Visit | null>(null);
+  const [viewingDetailsVisit, setViewingDetailsVisit] = useState<Visit | null>(null);
 
   // Reset page when filter changes
   const handleStatusFilterChange = (status: string | undefined) => {
@@ -388,6 +401,7 @@ export default function VisitsPage() {
                         setCancelReason('');
                       }}
                       onLeaveReview={() => setReviewingVisit(visit)}
+                      onViewDetails={() => setViewingDetailsVisit(visit)}
                     />
                   ))}
                 </div>
@@ -426,6 +440,7 @@ export default function VisitsPage() {
                         setCancelReason('');
                       }}
                       onLeaveReview={() => setReviewingVisit(visit)}
+                      onViewDetails={() => setViewingDetailsVisit(visit)}
                     />
                   ))}
                 </div>
@@ -464,6 +479,7 @@ export default function VisitsPage() {
                         setCancelReason('');
                       }}
                       onLeaveReview={() => setReviewingVisit(visit)}
+                      onViewDetails={() => setViewingDetailsVisit(visit)}
                     />
                   ))}
                 </div>
@@ -542,6 +558,18 @@ export default function VisitsPage() {
               );
             }}
             isLoading={cancelVisit.isPending}
+          />
+        )}
+
+        {/* Visit Details Modal */}
+        {viewingDetailsVisit && (
+          <VisitDetailsModal
+            visit={viewingDetailsVisit}
+            isOpen={!!viewingDetailsVisit}
+            onClose={() => setViewingDetailsVisit(null)}
+            showActions={false}
+            showCustomerInfo={false}
+            showServiceLink={true}
           />
         )}
       </div>

@@ -1,10 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Car } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
 import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
 import { getAnimationVariants, getTransition } from '@/lib/utils/animations';
+import { getAvatarUrl } from '@/lib/utils/file';
+import { useAutoServiceStore } from '@/stores/autoServiceStore';
 
 import { DashboardStats } from './DashboardStats';
 import { RecentVisits } from './RecentVisits';
@@ -13,6 +17,24 @@ export function DashboardContent() {
   const t = useTranslations('dashboard');
   const variants = getAnimationVariants();
   const transition = getTransition(0.3);
+  const { getSelectedAutoService } = useAutoServiceStore();
+
+  // Get service name and avatar
+  const selectedService = getSelectedAutoService();
+
+  const getServiceName = () => {
+    if (!selectedService) return null;
+    if (selectedService.serviceType === 'company' && selectedService.companyName) {
+      return selectedService.companyName;
+    }
+    if (selectedService.firstName || selectedService.lastName) {
+      return `${selectedService.firstName || ''} ${selectedService.lastName || ''}`.trim();
+    }
+    return selectedService.name || null;
+  };
+
+  const serviceName = getServiceName();
+  const serviceAvatar = selectedService ? getAvatarUrl(selectedService) : null;
 
   return (
     <motion.div
@@ -42,12 +64,36 @@ export function DashboardContent() {
         transition={{ ...transition, delay: 0.1 }}
         className="mb-6 sm:mb-8"
       >
-        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl dark:text-white">
-          {t('title', { defaultValue: 'Dashboard' })}
-        </h1>
-        <p className="mt-2 text-sm text-gray-600 sm:text-base dark:text-gray-400">
-          {t('subtitle', { defaultValue: 'Overview of your auto service' })}
-        </p>
+        <div className="flex items-center gap-4">
+          {/* Service Avatar */}
+          {serviceAvatar ? (
+            <Image
+              src={serviceAvatar}
+              alt={serviceName || 'Service'}
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover"
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+              <Car className="h-7 w-7" />
+            </div>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl dark:text-white">
+              {t('title', { defaultValue: 'Dashboard' })}
+            </h1>
+            {serviceName && (
+              <p className="mt-1 text-lg font-semibold text-primary-600 dark:text-primary-400">
+                {serviceName}
+              </p>
+            )}
+            <p className="mt-2 text-sm text-gray-600 sm:text-base dark:text-gray-400">
+              {t('subtitle', { defaultValue: 'Overview of your auto service' })}
+            </p>
+          </div>
+        </div>
       </motion.div>
 
       <motion.div

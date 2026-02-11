@@ -5,7 +5,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -30,6 +30,7 @@ import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useCreateProfile } from '@/hooks/useProfileMutations';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
+import { queryKeys } from '@/lib/api/query-config';
 import { FILE_CATEGORIES } from '@/lib/constants/file-categories.constants';
 import { type UploadedFile } from '@/lib/services/files.service';
 import { locationsService } from '@/lib/services/locations.service';
@@ -40,17 +41,18 @@ import { useUIStore } from '@/stores/uiStore';
 
 import { LocationPicker } from './LocationPicker';
 
-export function CreateProfileEditor() {
+interface CreateProfileEditorProps {
+  autoServiceId?: string;
+}
+
+export function CreateProfileEditor({ autoServiceId }: CreateProfileEditorProps = {}) {
   const t = useTranslations('myService.profile');
   const queryClient = useQueryClient();
   const { showToast } = useUIStore();
   const locale = getCurrentLocale();
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.1811, 44.5136]); // Yerevan default
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(true);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
-
-  // Generate unique map key that persists across re-renders (prevents double initialization in Strict Mode)
-  const mapKeyRef = useRef(`map-${Date.now()}-${Math.random()}`);
   const [selectedRegionId, setSelectedRegionId] = useState<string>('');
   const [_selectedCommunityId, _setSelectedCommunityId] = useState<string>('');
 
@@ -75,7 +77,7 @@ export function CreateProfileEditor() {
   // Geolocation hook
   const { state: geolocationState, enable: enableGeolocation } = useGeolocation();
 
-  // Fix for default marker icons (must be done on client side only)
+  // Fix for default marker icons and prevent double initialization (React Strict Mode)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Dynamically import Leaflet only on client side
@@ -89,12 +91,30 @@ export function CreateProfileEditor() {
           shadowUrl:
             'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         });
+
+        // Patch to prevent "Map container is already initialized" error in React Strict Mode
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const MapProto = L.default.Map.prototype as any;
+        if (MapProto._initContainer && !MapProto._initContainer._patched) {
+          const original = MapProto._initContainer;
+          MapProto._initContainer = function () {
+            // Check if container already has a map instance
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if ((this as any)._container && (this as any)._container._leaflet_id) {
+              // Reuse existing ID instead of throwing error
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (this as any)._containerId = (this as any)._container._leaflet_id;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (this as any)._leaflet_id = (this as any)._containerId;
+              return;
+            }
+            // Normal initialization
+            return original.call(this);
+          };
+          MapProto._initContainer._patched = true;
+        }
       });
     }
-  }, []);
-
-  useEffect(() => {
-    setMounted(true);
   }, []);
 
   // Load service types
@@ -314,13 +334,9 @@ export function CreateProfileEditor() {
 
         {/* Map Picker - Always Visible */}
         {mounted && (
-          <div
-            id={`map-container-${mapKeyRef.current}`}
-            key={`map-container-${mapKeyRef.current}`}
-            className="h-96 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
-          >
+          <div className="h-96 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
             <MapContainer
-              key={mapKeyRef.current}
+              key={autoServiceId || 'new'}
               center={
                 watchedLatitude && watchedLongitude
                   ? [watchedLatitude, watchedLongitude]

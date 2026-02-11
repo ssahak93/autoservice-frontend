@@ -137,7 +137,7 @@ export function MultipleServicesView() {
               >
                 <AutoServiceEditor autoServiceId={currentServiceId} />
                 <div className="mt-8 border-t border-gray-200 pt-8 dark:border-gray-700">
-                  <CreateProfileEditor />
+                  <CreateProfileEditor autoServiceId={selectedAutoServiceId || undefined} />
                 </div>
               </motion.div>
             )}
@@ -264,7 +264,7 @@ export function MultipleServicesView() {
                   {getAvatarUrl(autoService) ? (
                     <div className="relative h-24 w-24 overflow-hidden rounded-2xl shadow-xl ring-4 ring-white dark:ring-gray-800">
                       <Image
-                        src={getAvatarUrl(autoService)!}
+                        src={getAvatarUrl(autoService) ?? ''}
                         alt={
                           autoService.companyName ||
                           `${autoService.firstName} ${autoService.lastName}`

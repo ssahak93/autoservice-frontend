@@ -2,9 +2,11 @@
 
 import dynamic from 'next/dynamic';
 
+import { LazyWrapper } from '@/components/common/LazyWrapper';
 import { SkeletonLoading } from '@/lib/utils/lazy-loading';
 
 // Client-side only components (require user auth state)
+// Respects lazy_loading feature flag
 const RecentSearches = dynamic(
   () => import('@/components/home/RecentSearches').then((mod) => ({ default: mod.RecentSearches })),
   {
@@ -24,12 +26,12 @@ const RecentViews = dynamic(
 export function ClientOnlySections() {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-      <div>
+      <LazyWrapper checkLazyLoading={true}>
         <RecentSearches />
-      </div>
-      <div>
+      </LazyWrapper>
+      <LazyWrapper checkLazyLoading={true}>
         <RecentViews />
-      </div>
+      </LazyWrapper>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from '@/i18n/routing';
 import { authService } from '@/lib/services/auth.service';
+import { hasValidToken } from '@/lib/utils/auth-check';
 import { unwrapAuthResponse } from '@/lib/utils/auth-response';
 import { extractErrorMessage } from '@/lib/utils/errorHandler';
 import { getAndClearRedirectUrl } from '@/lib/utils/navigation';
@@ -16,12 +17,18 @@ import type { LoginRequest, RegisterRequest, User } from '@/types';
 export const useAuth = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user, isAuthenticated, accessToken, setUser, setTokens } = useAuthStore();
+  const {
+    user,
+    isAuthenticated: isAuthStoreAuthenticated,
+    accessToken,
+    setUser,
+    setTokens,
+  } = useAuthStore();
   const { showToast } = useUIStore();
   const t = useTranslations('auth');
 
   // Check if token exists in localStorage (for validating token on page reload)
-  const hasToken = isAuthenticated();
+  const hasToken = hasValidToken(accessToken);
 
   // Get current user - only fetch if we have a token (to validate it)
   // But don't fetch if user is already loaded (to avoid unnecessary requests)
@@ -74,11 +81,9 @@ export const useAuth = () => {
         // Update React Query cache with the user data
         queryClient.setQueryData(['auth', 'me'], authData.user);
         showToast(t('loginSuccess', { defaultValue: 'Login successful' }), 'success');
-        // Small delay to ensure state is updated before redirect
-        setTimeout(() => {
-          const redirectUrl = getAndClearRedirectUrl();
-          router.push(redirectUrl || '/services');
-        }, 100);
+        // Redirect immediately - state is already updated
+        const redirectUrl = getAndClearRedirectUrl();
+        router.push(redirectUrl || '/services');
       } else {
         showToast(t('loginFailed', { defaultValue: 'Login failed. Please try again.' }), 'error');
       }
@@ -115,11 +120,9 @@ export const useAuth = () => {
         // Update React Query cache with the user data
         queryClient.setQueryData(['auth', 'me'], authData.user);
         showToast(t('registrationSuccess', { defaultValue: 'Registration successful' }), 'success');
-        // Small delay to ensure state is updated before redirect
-        setTimeout(() => {
-          const redirectUrl = getAndClearRedirectUrl();
-          router.push(redirectUrl || '/services');
-        }, 100);
+        // Redirect immediately - state is already updated
+        const redirectUrl = getAndClearRedirectUrl();
+        router.push(redirectUrl || '/services');
       } else {
         showToast(
           t('registrationFailed', { defaultValue: 'Registration failed. Please try again.' }),
@@ -170,13 +173,13 @@ export const useAuth = () => {
   }, []);
 
   // Check if we have a valid token (either in store or localStorage)
-  const hasValidToken = mounted && isAuthenticated(accessToken);
+  const hasValidTokenValue = mounted && hasValidToken(accessToken);
 
   return {
     user: (currentUser || user) as User | null,
     // On server, always return false to prevent hydration mismatch
     // On client, after mount, return actual value only if we have both authentication state AND token
-    isAuthenticated: mounted ? isAuthenticated && hasValidToken : false,
+    isAuthenticated: mounted ? isAuthStoreAuthenticated && hasValidTokenValue : false,
     isLoading: isLoadingUser || loginMutation.isPending || registerMutation.isPending,
     login: loginMutation.mutate,
     register: registerMutation.mutate,

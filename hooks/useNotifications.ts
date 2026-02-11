@@ -7,7 +7,7 @@ import {
   notificationsService,
   type NotificationFilters,
 } from '@/lib/services/notifications.service';
-import { isAuthenticated } from '@/lib/utils/auth-check';
+import { hasValidToken } from '@/lib/utils/auth-check';
 import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -16,12 +16,12 @@ import { useAuthStore } from '@/stores/authStore';
  * Only fetches if user is authenticated
  */
 export function useNotifications(filters?: NotificationFilters) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated: isAuthFromStore } = useAuthStore();
 
   return useQuery({
     queryKey: queryKeys.notifications(filters),
     queryFn: () => notificationsService.getNotifications(filters),
-    enabled: isAuthenticated, // Only fetch if user is authenticated
+    enabled: isAuthFromStore, // Only fetch if user is authenticated
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
     refetchInterval: queryConfig.refetchIntervals.notifications,
@@ -40,7 +40,7 @@ export function useNotificationStats() {
   return useQuery({
     queryKey: queryKeys.notificationStats(),
     queryFn: () => notificationsService.getStats(),
-    enabled: isAuthFromStore && isAuthenticated(accessToken), // Only fetch if user is authenticated and has token
+    enabled: isAuthFromStore && hasValidToken(accessToken), // Only fetch if user is authenticated and has token
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
     refetchInterval: queryConfig.refetchIntervals.stats,

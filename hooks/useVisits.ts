@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { queryKeys, queryConfig } from '@/lib/api/query-config';
 import { visitsService } from '@/lib/services/visits.service';
-import { isAuthenticated } from '@/lib/utils/auth-check';
+import { hasValidToken } from '@/lib/utils/auth-check';
 import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
 import { useUIStore } from '@/stores/uiStore';
 import type { CreateVisitRequest, Visit } from '@/types';
@@ -14,10 +14,14 @@ export const useVisits = (
   params?: { status?: string; page?: number; limit?: number },
   options?: { enabled?: boolean }
 ) => {
+  // Check if we're on the client side before checking token
+  const isClient = typeof window !== 'undefined';
+  const hasToken = isClient && hasValidToken();
+
   return useQuery({
     queryKey: queryKeys.visits(params),
     queryFn: () => visitsService.getList(params),
-    enabled: options?.enabled !== false && isAuthenticated(), // Only fetch if user is authenticated
+    enabled: options?.enabled !== false && hasToken, // Only fetch if user is authenticated and on client
     staleTime: queryConfig.staleTime,
     gcTime: queryConfig.gcTime,
     placeholderData: (previousData) => previousData,

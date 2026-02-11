@@ -100,18 +100,21 @@ export function TeamMemberList({
               <div className="flex items-center gap-4">
                 {/* Avatar */}
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
-                  {getAvatarUrl({ avatarUrl: member.avatarUrl }) ? (
-                    <Image
-                      src={getAvatarUrl({ avatarUrl: member.avatarUrl })!}
-                      alt={formatUserName(member.firstName, member.lastName, 'Team Member')}
-                      width={48}
-                      height={48}
-                      className="h-12 w-12 rounded-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <User className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-                  )}
+                  {(() => {
+                    const avatarUrl = getAvatarUrl({ avatarUrl: member.avatarUrl });
+                    return avatarUrl ? (
+                      <Image
+                        src={avatarUrl}
+                        alt={formatUserName(member.firstName, member.lastName, 'Team Member')}
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 rounded-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <User className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                    );
+                  })()}
                 </div>
 
                 {/* Member Info */}

@@ -1,13 +1,16 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Calendar, User, FileText, Car } from 'lucide-react';
+import { X, Calendar, User, FileText, Car, ExternalLink } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 
 import { Button } from '@/components/ui/Button';
+import { Link } from '@/i18n/routing';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { formatDate } from '@/lib/utils/date';
+import { getAvatarUrl } from '@/lib/utils/file';
 import { formatCustomerName } from '@/lib/utils/user';
 import type { Visit } from '@/types';
 
@@ -23,11 +26,22 @@ interface VisitDetailsModalProps {
   visit: Visit;
   isOpen: boolean;
   onClose: () => void;
-  onAction: (visit: Visit, action: 'accept' | 'complete' | 'cancel' | 'reschedule') => void;
+  onAction?: (visit: Visit, action: 'accept' | 'complete' | 'cancel' | 'reschedule') => void;
+  showActions?: boolean; // If false, hide action buttons (for user view)
+  showCustomerInfo?: boolean; // If false, hide customer info (for user view)
+  showServiceLink?: boolean; // If true, show link to service page (for user view)
 }
 
-export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDetailsModalProps) {
-  const t = useTranslations('dashboard.visits');
+export function VisitDetailsModal({
+  visit,
+  isOpen,
+  onClose,
+  onAction,
+  showActions = true,
+  showCustomerInfo = true,
+  showServiceLink = false,
+}: VisitDetailsModalProps) {
+  const t = useTranslations(showActions ? 'dashboard.visits' : 'visits');
   const locale = useLocale();
   const variants = getAnimationVariants();
 
@@ -109,18 +123,103 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
 
               {/* Content */}
               <div className="space-y-6">
-                {/* Customer Info */}
-                <div className="flex items-center gap-3">
-                  <User className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{customerName}</p>
-                    {visit.user?.phoneNumber && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {visit.user.phoneNumber}
-                      </p>
+                {/* Customer Info - only show for service owners */}
+                {showCustomerInfo && (
+                  <div className="flex items-center gap-3">
+                    {getAvatarUrl(visit.user) ? (
+                      <Image
+                        src={getAvatarUrl(visit.user) ?? ''}
+                        alt={customerName}
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 rounded-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                        <User className="h-5 w-5" />
+                      </div>
                     )}
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">{customerName}</p>
+                      {visit.user?.phoneNumber && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {visit.user.phoneNumber}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Service Info - only show for users */}
+                {showServiceLink && (
+                  <div>
+                    <h3 className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                      {t('details.service', { defaultValue: 'Service' })}
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const autoService =
+                          visit.autoServiceProfile?.autoService || visit.autoService;
+                        const serviceAvatar = getAvatarUrl(autoService);
+                        return serviceAvatar ? (
+                          <Image
+                            src={serviceAvatar}
+                            alt={
+                              autoService?.serviceType === 'company'
+                                ? autoService?.companyName || 'Service'
+                                : `${autoService?.firstName || ''} ${autoService?.lastName || ''}`.trim() ||
+                                  'Service'
+                            }
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 rounded-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                            <Car className="h-5 w-5" />
+                          </div>
+                        );
+                      })()}
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {(() => {
+                            const autoService =
+                              visit.autoServiceProfile?.autoService || visit.autoService;
+                            const serviceType = autoService?.serviceType;
+                            const isCompany = serviceType === 'company';
+
+                            let serviceName = '';
+                            if (isCompany && autoService?.companyName) {
+                              serviceName = autoService.companyName;
+                            } else if (
+                              !isCompany &&
+                              (autoService?.firstName || autoService?.lastName)
+                            ) {
+                              serviceName =
+                                `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim();
+                            } else {
+                              serviceName = t('service', { defaultValue: 'Service' });
+                            }
+
+                            const typeLabel = isCompany
+                              ? t('company', { defaultValue: 'Company' })
+                              : t('individual', { defaultValue: 'Individual' });
+
+                            return `${serviceName} (${typeLabel})`;
+                          })()}
+                        </p>
+                      </div>
+                      <Link href={`/services/${visit.autoServiceProfileId}`}>
+                        <Button variant="outline" size="sm" className="flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          {t('viewService', { defaultValue: 'View Service' })}
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
 
                 {/* Date & Time */}
                 <div className="space-y-3">
@@ -128,11 +227,18 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
                     <Calendar className="h-5 w-5 text-gray-400" />
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {formatDate(visit.scheduledDate, locale)}
+                        {formatDate(visit.scheduledDate || visit.preferredDate, locale)}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {t('details.time', { defaultValue: 'Time' })}: {visit.scheduledTime}
+                        {t('details.time', { defaultValue: 'Time' })}:{' '}
+                        {visit.scheduledTime || visit.preferredTime}
                       </p>
+                      {visit.confirmedDate && (
+                        <p className="mt-1 text-sm text-success-600 dark:text-success-400">
+                          {t('confirmedLabel', { defaultValue: 'Confirmed' })}:{' '}
+                          {formatDate(visit.confirmedDate, locale)} {t('at')} {visit.confirmedTime}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -183,7 +289,7 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
                 )}
 
                 {/* Problem Description */}
-                {visit.problemDescription && (
+                {(visit.problemDescription || visit.description) && (
                   <div>
                     <div className="mb-2 flex items-center gap-2">
                       <FileText className="h-5 w-5 text-gray-400" />
@@ -192,7 +298,7 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
                       </h3>
                     </div>
                     <p className="rounded-lg bg-gray-50 p-4 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                      {visit.problemDescription}
+                      {visit.problemDescription || visit.description}
                     </p>
                   </div>
                 )}
@@ -202,19 +308,21 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     {t('details.status', { defaultValue: 'Status' })}:
                   </span>
-                  <span className="ml-2 capitalize text-gray-900 dark:text-white">
-                    {visit.status}
+                  <span className="ml-2 font-semibold capitalize text-gray-900 dark:text-white">
+                    {t(`status.${visit.status}`, {
+                      defaultValue: visit.status.charAt(0).toUpperCase() + visit.status.slice(1),
+                    })}
                   </span>
                 </div>
 
                 {/* Visit History */}
                 <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
-                  <VisitHistory visitId={visit.id} />
+                  <VisitHistory visitId={visit.id} visit={visit} />
                 </div>
               </div>
 
-              {/* Actions */}
-              {actions.length > 0 && (
+              {/* Actions - only show for service owners */}
+              {showActions && actions.length > 0 && onAction && (
                 <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-200 pt-6 dark:border-gray-700">
                   {actions.map((action) => (
                     <Button
@@ -228,6 +336,15 @@ export function VisitDetailsModal({ visit, isOpen, onClose, onAction }: VisitDet
                       {action.label}
                     </Button>
                   ))}
+                </div>
+              )}
+
+              {/* Footer - only show for users */}
+              {!showActions && (
+                <div className="mt-6 flex justify-end border-t border-gray-200 pt-6 dark:border-gray-700">
+                  <Button variant="outline" onClick={onClose}>
+                    {t('close', { defaultValue: 'Close' })}
+                  </Button>
                 </div>
               )}
             </motion.div>

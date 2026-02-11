@@ -18,9 +18,11 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 import { useAutoServiceProfile } from '@/hooks/useAutoServiceProfile';
 import { getAnimationVariants } from '@/lib/utils/animations';
 import { getAvatarUrl } from '@/lib/utils/file';
+import { useAutoServiceStore } from '@/stores/autoServiceStore';
 
 import { ApprovalStatusBanner } from './ApprovalStatusBanner';
 import { AutoServiceEditor } from './AutoServiceEditor';
@@ -47,8 +49,13 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
 
   const { profile, isLoading, isProfileNotFound, publishMutation } =
     useAutoServiceProfile(autoServiceId);
+  const { getSelectedAutoService } = useAutoServiceStore();
+  const { user } = useAuth();
 
   const variants = getAnimationVariants();
+
+  // Get service from user.autoServices (available immediately after reload)
+  const userService = user?.autoServices?.find((s) => s.id === autoServiceId);
 
   // Loading state
   if (isLoading) {
@@ -117,7 +124,7 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
             >
               <AutoServiceEditor autoServiceId={autoServiceId} />
               <div className="mt-8 border-t border-gray-200 pt-8 dark:border-gray-700">
-                <CreateProfileEditor />
+                <CreateProfileEditor autoServiceId={autoServiceId} />
               </div>
             </motion.div>
           </div>
@@ -146,6 +153,65 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
     isBlocked?: boolean;
     blockedReason?: string | null;
   };
+
+  // Get service name - use multiple sources with priority:
+  // 1. user.autoServices (available immediately after reload)
+  // 2. profile data (available after profile loads)
+  // 3. store data (fallback)
+  const selectedService = getSelectedAutoService();
+
+  const getServiceName = () => {
+    // First try user.autoServices (available immediately after reload)
+    if (userService) {
+      const service = userService as {
+        companyName?: string | null;
+        firstName?: string | null;
+        lastName?: string | null;
+        serviceType?: string;
+      };
+      if (service.serviceType === 'company' && service.companyName) {
+        return service.companyName;
+      }
+      if (service.firstName || service.lastName) {
+        return `${service.firstName || ''} ${service.lastName || ''}`.trim();
+      }
+    }
+
+    // Second try profile data (available after profile loads)
+    if (autoService) {
+      if (autoService.serviceType === 'company' && autoService.companyName) {
+        return autoService.companyName;
+      }
+      if (autoService.firstName || autoService.lastName) {
+        return `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim();
+      }
+    }
+
+    // Fallback to store data
+    if (selectedService) {
+      if (selectedService.serviceType === 'company' && selectedService.companyName) {
+        return selectedService.companyName;
+      }
+      if (selectedService.firstName || selectedService.lastName) {
+        return `${selectedService.firstName || ''} ${selectedService.lastName || ''}`.trim();
+      }
+      if (selectedService.name) {
+        return selectedService.name;
+      }
+    }
+
+    return null;
+  };
+
+  const serviceName = getServiceName();
+
+  // Use service avatar - prefer user data, then profile, then store
+  const serviceAvatar =
+    (userService
+      ? getAvatarUrl(userService as { avatarFile?: { fileUrl: string } | null })
+      : null) ||
+    getAvatarUrl(autoService) ||
+    (selectedService ? getAvatarUrl(selectedService) : null);
 
   const tabs = [
     {
@@ -204,14 +270,11 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
               <div className="flex items-start gap-6">
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
-                  {getAvatarUrl(autoService) ? (
+                  {serviceAvatar ? (
                     <div className="relative h-24 w-24 overflow-hidden rounded-2xl shadow-xl ring-4 ring-white dark:ring-gray-800">
                       <Image
-                        src={getAvatarUrl(autoService)!}
-                        alt={
-                          autoService.companyName ||
-                          `${autoService.firstName} ${autoService.lastName}`
-                        }
+                        src={serviceAvatar}
+                        alt={serviceName || 'Service'}
                         fill
                         className="object-cover"
                         loading="eager"
@@ -221,7 +284,7 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
                     </div>
                   ) : (
                     <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 shadow-xl">
-                      {autoService.serviceType === 'company' ? (
+                      {(selectedService?.serviceType || autoService.serviceType) === 'company' ? (
                         <Building2 className="h-12 w-12 text-white" />
                       ) : (
                         <User className="h-12 w-12 text-white" />
@@ -237,11 +300,14 @@ export function ServiceDashboard({ autoServiceId }: ServiceDashboardProps) {
 
                 {/* Details */}
                 <div className="flex-1">
-                  <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-                    {autoService.companyName ||
-                      `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim() ||
-                      t('title', { defaultValue: 'My Service Profile' })}
+                  <h1 className="mb-1 text-3xl font-bold text-gray-900 dark:text-white">
+                    {t('title', { defaultValue: 'My Service Profile' })}
                   </h1>
+                  {serviceName && (
+                    <p className="mb-2 text-xl font-semibold text-primary-600 dark:text-primary-400">
+                      {serviceName}
+                    </p>
+                  )}
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <span className="flex items-center gap-1.5">
                       {autoService.serviceType === 'company' ? (

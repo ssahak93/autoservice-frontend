@@ -64,35 +64,126 @@ export function MobileMenu({
                 {t('dashboard')}
               </Link>
             )}
-            <Link
-              href="/visits"
-              className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
-              onClick={handleLinkClick}
-            >
-              {t('myVisits')}
-            </Link>
-            <Link
-              href="/profile"
-              className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
-              onClick={handleLinkClick}
-            >
-              {t('profile')}
-            </Link>
-            <Link
-              href="/support"
-              className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
-              onClick={handleLinkClick}
-            >
-              {t('support', { defaultValue: 'Support' })}
-            </Link>
-            <div className="mt-2 border-t border-neutral-200 pt-2">
-              {userName && <div className="px-4 py-2 text-sm text-neutral-600">{userName}</div>}
+            {/* My Account */}
+            <div className="border-t border-neutral-200 pt-2">
+              <div className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                {t('myAccount', { defaultValue: 'My Account' })}
+              </div>
+              {userName && (
+                <div className="px-4 py-2 text-sm font-medium text-neutral-900">{userName}</div>
+              )}
+              <Link
+                href="/visits"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('myVisits')}
+              </Link>
+              <Link
+                href="/profile/vehicles"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('myVehicles', { defaultValue: 'My Vehicles' })}
+              </Link>
+              <Link
+                href="/notifications"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('notifications', { defaultValue: 'Notifications' })}
+              </Link>
+              <Link
+                href="/profile"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('profile')}
+              </Link>
               <button
                 onClick={handleLogout}
                 className="w-full rounded-lg px-4 py-2 text-left text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
               >
                 {t('logout')}
               </button>
+            </div>
+            {/* Support & Info */}
+            <div className="border-t border-neutral-200 pt-2">
+              <div className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                {t('support', { defaultValue: 'Support' })}
+              </div>
+              <Link
+                href="/support"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('support', { defaultValue: 'Support' })}
+              </Link>
+              <Link
+                href="/help"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('help', { defaultValue: 'Help & FAQ' })}
+              </Link>
+              <Link
+                href="/about"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('about')}
+              </Link>
+              <Link
+                href="/contact"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('contact')}
+              </Link>
+            </div>
+          </>
+        )}
+        {!isAuthenticated && (
+          <>
+            {/* Support & Info for non-authenticated */}
+            <div className="mt-2 border-t border-neutral-200 pt-2">
+              <Link
+                href="/help"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('help', { defaultValue: 'Help & FAQ' })}
+              </Link>
+              <Link
+                href="/about"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('about')}
+              </Link>
+              <Link
+                href="/contact"
+                className="block rounded-lg px-4 py-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-primary-600"
+                onClick={handleLinkClick}
+              >
+                {t('contact')}
+              </Link>
+            </div>
+            <div className="mt-2 space-y-2 border-t border-neutral-200 pt-2">
+              <Link
+                href="/auth/login"
+                className="block rounded-lg px-4 py-2 text-center text-neutral-700 transition-colors hover:bg-neutral-100"
+                onClick={handleLinkClick}
+              >
+                {t('login')}
+              </Link>
+              <Link
+                href="/auth/register"
+                className="block rounded-lg bg-primary-600 px-4 py-2 text-center text-white transition-colors hover:bg-primary-700"
+                onClick={handleLinkClick}
+              >
+                {t('signUp')}
+              </Link>
             </div>
           </>
         )}

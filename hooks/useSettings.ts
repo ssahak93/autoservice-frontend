@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import { queryKeys } from '@/lib/api/query-config';
+import { queryKeys, queryConfig } from '@/lib/api/query-config';
 import { settingsService, type UpdateSettingsData } from '@/lib/services/settings.service';
 import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
 

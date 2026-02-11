@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { ServiceBreadcrumbs } from '@/components/common/ServiceBreadcrumbs';
 import { ReviewList } from '@/components/reviews/ReviewList';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
@@ -207,13 +206,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             </div>
 
             <div className="hidden lg:block">
-              <ProtectedRoute redirect={false}>
-                <ServiceDetailClient
-                  serviceId={id}
-                  profileId={id}
-                  bookVisitModalProps={{ serviceId: id, serviceName: name }}
-                />
-              </ProtectedRoute>
+              <ServiceDetailClient
+                serviceId={id}
+                profileId={id}
+                bookVisitModalProps={{ serviceId: id, serviceName: name }}
+              />
             </div>
           </div>
         </div>
@@ -296,15 +293,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
             {/* Book Visit Button (for mobile) */}
             <div className="lg:hidden">
-              <ProtectedRoute redirect={false}>
-                <div className="glass-light rounded-xl p-4 md:rounded-2xl">
-                  <ServiceDetailClient
-                    serviceId={id}
-                    profileId={id}
-                    bookVisitModalProps={{ serviceId: id, serviceName: name }}
-                  />
-                </div>
-              </ProtectedRoute>
+              <div className="glass-light rounded-xl p-4 md:rounded-2xl">
+                <ServiceDetailClient
+                  serviceId={id}
+                  profileId={id}
+                  bookVisitModalProps={{ serviceId: id, serviceName: name }}
+                />
+              </div>
             </div>
           </div>
         </div>

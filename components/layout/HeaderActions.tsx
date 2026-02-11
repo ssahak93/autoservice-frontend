@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { UserMenu } from '@/components/layout/UserMenu';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { Button } from '@/components/ui/Button';
 import { Link } from '@/i18n/routing';
@@ -27,12 +28,7 @@ export function HeaderActions({ isAuthenticated, userName, onLogout }: HeaderAct
       {isAuthenticated && <NotificationBell />}
       <LanguageSwitcher />
       {isAuthenticated ? (
-        <div className="flex items-center gap-4">
-          {userName && <span className="text-sm text-neutral-600">{userName}</span>}
-          <Button variant="outline" size="sm" onClick={onLogout}>
-            {t('logout')}
-          </Button>
-        </div>
+        <UserMenu userName={userName} onLogout={onLogout} />
       ) : (
         <div className="flex items-center gap-2">
           <Link href="/auth/login">

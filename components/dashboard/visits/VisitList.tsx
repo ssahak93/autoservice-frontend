@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Calendar, User, Car } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCallback } from 'react';
 
@@ -10,6 +11,7 @@ import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge
 import { Button } from '@/components/ui/Button';
 import { getTransition } from '@/lib/utils/animations';
 import { formatDateFull } from '@/lib/utils/date';
+import { getAvatarUrl } from '@/lib/utils/file';
 import { formatCustomerName } from '@/lib/utils/user';
 import type { Visit, PaginatedResponse } from '@/types';
 
@@ -128,7 +130,20 @@ export function VisitList({
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <User className="h-4 w-4" />
+                    {getAvatarUrl(visit.user) ? (
+                      <Image
+                        src={getAvatarUrl(visit.user) ?? ''}
+                        alt={customerName}
+                        width={20}
+                        height={20}
+                        className="h-5 w-5 rounded-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                        <User className="h-3 w-3" />
+                      </div>
+                    )}
                     <span className="font-medium">{customerName}</span>
                   </div>
 

@@ -1,9 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -11,14 +9,12 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { useAuth } from '@/hooks/useAuth';
-import { Link, useRouter } from '@/i18n/routing';
+import { Link } from '@/i18n/routing';
 import { commonValidations } from '@/lib/utils/validation';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
   const { login, isLoggingIn, isAuthenticated } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   const loginSchema = z.object({
     email: commonValidations.email(
@@ -39,33 +35,8 @@ export default function LoginPage() {
     mode: 'onBlur',
   });
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      // Check for redirect parameter from URL (set by middleware)
-      const redirectParam = searchParams.get('redirect');
-
-      // Check if there's a saved redirect URL in sessionStorage
-      const redirectUrl =
-        typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
-
-      // Priority: URL parameter > sessionStorage > default
-      const targetUrl = redirectParam || redirectUrl;
-
-      if (targetUrl) {
-        // Remove the saved URL and redirect there
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('redirectAfterLogin');
-        }
-        // Strip locale prefix if present (for backward compatibility)
-        const normalizedUrl = targetUrl.replace(/^\/(hy|en|ru)(\/|$)/, '/');
-        router.push(normalizedUrl);
-      } else {
-        // Default redirect to services
-        router.push('/services');
-      }
-    }
-  }, [isAuthenticated, router, searchParams]);
+  // Note: Redirect after successful login is handled in useAuth hook's onSuccess callback
+  // We don't need useEffect here to avoid conflicts and multiple redirects
 
   const onSubmit = (data: LoginFormData) => {
     login(data);
@@ -108,15 +79,7 @@ export default function LoginPage() {
             {...register('password')}
           />
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                disabled={isLoggingIn || isSubmitting}
-              />
-              <span className="text-neutral-700">{t('rememberMe')}</span>
-            </label>
+          <div className="flex justify-end">
             <Link
               href="/auth/forgot-password"
               className="text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 hover:underline"

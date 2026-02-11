@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -11,7 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { useAuth } from '@/hooks/useAuth';
-import { Link, useRouter } from '@/i18n/routing';
+import { Link } from '@/i18n/routing';
 import { formatPhoneForBackend } from '@/lib/utils/phone.util';
 import { commonValidations, createPasswordConfirmationRefinement } from '@/lib/utils/validation';
 import type { RegisterRequest } from '@/types';
@@ -19,7 +18,6 @@ import type { RegisterRequest } from '@/types';
 export default function RegisterPage() {
   const t = useTranslations('auth');
   const { register: registerUser, isRegistering, isAuthenticated } = useAuth();
-  const router = useRouter();
 
   const registerSchema = createPasswordConfirmationRefinement(
     'password',
@@ -68,25 +66,8 @@ export default function RegisterPage() {
     mode: 'onBlur',
   });
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      // Check if there's a saved redirect URL
-      const redirectUrl =
-        typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
-
-      if (redirectUrl) {
-        // Remove the saved URL and redirect there
-        sessionStorage.removeItem('redirectAfterLogin');
-        // Strip locale prefix if present (for backward compatibility)
-        const normalizedUrl = redirectUrl.replace(/^\/(hy|en|ru)(\/|$)/, '/');
-        router.push(normalizedUrl);
-      } else {
-        // Default redirect to services
-        router.push('/services');
-      }
-    }
-  }, [isAuthenticated, router]);
+  // Note: Redirect after successful registration is handled in useAuth hook's onSuccess callback
+  // We don't need useEffect here to avoid conflicts and multiple redirects
 
   const onSubmit = (data: RegisterFormData) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

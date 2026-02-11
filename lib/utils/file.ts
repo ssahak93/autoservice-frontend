@@ -14,7 +14,7 @@
 export function getAvatarUrl(
   entity?: {
     avatarFile?: { fileUrl: string } | null;
-    avatarUrl?: string | null;
+    avatarUrl?: string | null | Record<string, unknown>;
   } | null
 ): string | null {
   if (!entity) return null;
@@ -25,7 +25,8 @@ export function getAvatarUrl(
   }
 
   // Priority 2: avatarUrl (backward compatibility)
-  if (entity.avatarUrl) {
+  // Check if avatarUrl is a non-empty string (not object, not empty string)
+  if (entity.avatarUrl && typeof entity.avatarUrl === 'string' && entity.avatarUrl.trim() !== '') {
     return entity.avatarUrl;
   }
 

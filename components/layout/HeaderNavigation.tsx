@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
+import { SupportInfoMenu } from '@/components/layout/SupportInfoMenu';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from '@/i18n/routing';
 
@@ -32,40 +33,16 @@ export function HeaderNavigation({ isAuthenticated, onLinkClick }: HeaderNavigat
       >
         {t('services')}
       </Link>
-      {isAuthenticated && (
-        <>
-          {isServiceOwner && (
-            <Link
-              href="/dashboard"
-              className="text-neutral-700 transition-colors hover:text-primary-600"
-              onClick={onLinkClick}
-            >
-              {t('dashboard')}
-            </Link>
-          )}
-          <Link
-            href="/visits"
-            className="text-neutral-700 transition-colors hover:text-primary-600"
-            onClick={onLinkClick}
-          >
-            {t('myVisits')}
-          </Link>
-          <Link
-            href="/profile"
-            className="text-neutral-700 transition-colors hover:text-primary-600"
-            onClick={onLinkClick}
-          >
-            {t('profile')}
-          </Link>
-          <Link
-            href="/support"
-            className="text-neutral-700 transition-colors hover:text-primary-600"
-            onClick={onLinkClick}
-          >
-            {t('support', { defaultValue: 'Support' })}
-          </Link>
-        </>
+      {isAuthenticated && isServiceOwner && (
+        <Link
+          href="/dashboard"
+          className="text-neutral-700 transition-colors hover:text-primary-600"
+          onClick={onLinkClick}
+        >
+          {t('dashboard')}
+        </Link>
       )}
+      <SupportInfoMenu />
     </nav>
   );
 }

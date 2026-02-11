@@ -1,14 +1,18 @@
 'use client';
 
-import { Calendar, Clock, FileText, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, FileText, XCircle, AlertCircle, User, Car } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 
 import { useVisitHistory } from '@/hooks/useVisits';
 import type { VisitHistoryEntry } from '@/lib/services/visits.service';
 import { formatDate, formatDateFull } from '@/lib/utils/date';
+import { getAvatarUrl } from '@/lib/utils/file';
+import type { Visit } from '@/types';
 
 interface VisitHistoryProps {
   visitId: string;
+  visit?: Visit;
 }
 
 const changeTypeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -31,7 +35,7 @@ const changeTypeColors: Record<string, string> = {
 
 // Status labels are now translated by backend, so we don't need hardcoded labels
 
-export function VisitHistory({ visitId }: VisitHistoryProps) {
+export function VisitHistory({ visitId, visit }: VisitHistoryProps) {
   const t = useTranslations('visits');
   const locale = useLocale();
   const { data: history, isLoading } = useVisitHistory(visitId);
@@ -108,15 +112,68 @@ export function VisitHistory({ visitId }: VisitHistoryProps) {
             >
               {/* Timeline line */}
               {index < history.length - 1 && (
-                <div className="absolute left-6 top-12 h-full w-0.5 bg-neutral-200" />
+                <div className="absolute left-4 top-10 h-full w-0.5 bg-neutral-200" />
               )}
 
               <div className="flex items-start gap-4">
-                {/* Icon */}
-                <div className={`flex-shrink-0 ${colorClass}`}>
-                  <div className="relative z-10 rounded-full bg-neutral-50 p-1.5">
-                    <Icon className="h-3.5 w-3.5" />
-                  </div>
+                {/* Avatar or Icon */}
+                <div className="flex-shrink-0">
+                  {(() => {
+                    // Show avatar for user or service changes, icon for system
+                    if (entry.changedByType === 'user' && visit?.user) {
+                      const userAvatar = getAvatarUrl(visit.user);
+                      return userAvatar ? (
+                        <div className="relative z-10">
+                          <Image
+                            src={userAvatar}
+                            alt={visit.user.firstName || 'User'}
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-full object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                          <User className="h-4 w-4" />
+                        </div>
+                      );
+                    } else if (entry.changedByType === 'service' && visit) {
+                      const autoService =
+                        visit.autoServiceProfile?.autoService || visit.autoService;
+                      const serviceAvatar = getAvatarUrl(autoService);
+                      return serviceAvatar ? (
+                        <div className="relative z-10">
+                          <Image
+                            src={serviceAvatar}
+                            alt={
+                              autoService?.serviceType === 'company'
+                                ? autoService?.companyName || 'Service'
+                                : `${autoService?.firstName || ''} ${autoService?.lastName || ''}`.trim() ||
+                                  'Service'
+                            }
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-full object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                          <Car className="h-4 w-4" />
+                        </div>
+                      );
+                    } else {
+                      // System or no visit data - show icon
+                      return (
+                        <div
+                          className={`relative z-10 rounded-full bg-neutral-50 p-1.5 ${colorClass}`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
 
                 {/* Content */}

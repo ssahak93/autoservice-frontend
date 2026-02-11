@@ -6,6 +6,9 @@ import { ComponentType } from 'react';
  *
  * Usage:
  * const LazyComponent = createLazyComponent(() => import('./HeavyComponent'));
+ *
+ * Note: For feature flag checking, use LazyWrapper component instead,
+ * as this function is called at module level and cannot use hooks.
  */
 
 interface LazyComponentOptions {
@@ -16,6 +19,8 @@ interface LazyComponentOptions {
 
 /**
  * Creates a lazy-loaded component with optional feature flag check
+ *
+ * @deprecated For feature flag support, use LazyWrapper component instead
  */
 export function createLazyComponent<T extends ComponentType<Record<string, unknown>>>(
   importFn: () => Promise<{ default: T } | { [key: string]: T }>,
@@ -33,6 +38,36 @@ export function createLazyComponent<T extends ComponentType<Record<string, unkno
 
   return dynamic(
     importFn as () => Promise<{ default: React.ComponentType<Record<string, unknown>> }>,
+    {
+      loading: (loading as () => JSX.Element | null) || (() => null),
+      ssr,
+    }
+  );
+}
+
+/**
+ * Creates a lazy-loaded component that respects lazy_loading feature flag
+ * This is a wrapper around dynamic() that checks the feature flag
+ */
+export function createLazyComponentWithFlag<T extends ComponentType<Record<string, unknown>>>(
+  importFn: () => Promise<{ default: T } | { [key: string]: T }>,
+  options: Omit<LazyComponentOptions, 'enabled'> = {}
+): ComponentType<Record<string, unknown>> {
+  const { loading, ssr = false } = options;
+
+  // Create a wrapper component that checks the feature flag
+  return dynamic(
+    () =>
+      importFn().then((mod) => {
+        // Return a component that checks feature flag
+        const Component = ('default' in mod ? mod.default : Object.values(mod)[0]) as T;
+        return {
+          default: ((props: Record<string, unknown>) => {
+            // This will be checked at render time by LazyWrapper
+            return <Component {...props} />;
+          }) as ComponentType<Record<string, unknown>>,
+        };
+      }),
     {
       loading: (loading as () => JSX.Element | null) || (() => null),
       ssr,

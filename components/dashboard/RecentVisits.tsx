@@ -1,13 +1,15 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Car } from 'lucide-react';
+import { Car, User } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 
 import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge';
 import { ErrorDisplay } from '@/components/common/ErrorDisplay';
 import { useAutoServiceVisits } from '@/hooks/useDashboard';
 import { formatDateShort } from '@/lib/utils/date';
+import { getAvatarUrl } from '@/lib/utils/file';
 import { formatUserName } from '@/lib/utils/user';
 
 export function RecentVisits() {
@@ -106,8 +108,24 @@ export function RecentVisits() {
                 className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
               >
                 <td className="px-4 py-3">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {formatUserName(visit.user?.firstName, visit.user?.lastName, 'Unknown')}
+                  <div className="flex items-center gap-2">
+                    {getAvatarUrl(visit.user) ? (
+                      <Image
+                        src={getAvatarUrl(visit.user) ?? ''}
+                        alt={formatUserName(visit.user?.firstName, visit.user?.lastName, 'Unknown')}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                        <User className="h-4 w-4" />
+                      </div>
+                    )}
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {formatUserName(visit.user?.firstName, visit.user?.lastName, 'Unknown')}
+                    </span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
