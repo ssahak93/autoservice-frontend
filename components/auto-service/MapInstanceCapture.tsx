@@ -1,21 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useMap } from 'react-leaflet';
-
-interface MapInstanceCaptureProps {
-  onMapCreated: (map: L.Map) => void;
-  isInitialized: boolean;
-}
-
-export function MapInstanceCapture({ onMapCreated, isInitialized }: MapInstanceCaptureProps) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (map && !isInitialized) {
-      onMapCreated(map);
-    }
-  }, [map, onMapCreated, isInitialized]);
-
+/**
+ * MapInstanceCapture component is no longer needed as a separate component.
+ * Map instance can be accessed via instanceRef prop on YMap component.
+ * This file is kept for backward compatibility but can be removed.
+ */
+export function MapInstanceCapture() {
   return null;
 }

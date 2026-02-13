@@ -1,21 +1,10 @@
 'use client';
 
-import { useMapEvents } from 'react-leaflet';
-
-interface LocationPickerProps {
-  onLocationSelect: (lat: number, lng: number) => void;
-}
-
 /**
- * Component that handles map click events to select location
- * Similar to admin project's LocationPicker
+ * LocationPicker component is no longer needed as a separate component.
+ * Click events are now handled directly on the YMap component via onClick prop.
+ * This file is kept for backward compatibility but can be removed.
  */
-export function LocationPicker({ onLocationSelect }: LocationPickerProps) {
-  useMapEvents({
-    click(e) {
-      const { lat, lng } = e.latlng;
-      onLocationSelect(lat, lng);
-    },
-  });
+export function LocationPicker() {
   return null;
 }

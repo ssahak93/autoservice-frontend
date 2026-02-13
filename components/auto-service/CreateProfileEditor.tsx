@@ -9,17 +9,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
-// Dynamically import MapContainer to avoid SSR issues
-const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), {
+// Dynamically import Yandex Maps to avoid SSR issues
+const YMaps = dynamic(() => import('@pbe/react-yandex-maps').then((mod) => mod.YMaps), {
   ssr: false,
 });
-const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), {
+const YMap = dynamic(() => import('@pbe/react-yandex-maps').then((mod) => mod.Map), {
   ssr: false,
 });
-const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), {
-  ssr: false,
-});
-const ZoomControl = dynamic(() => import('react-leaflet').then((mod) => mod.ZoomControl), {
+const Placemark = dynamic(() => import('@pbe/react-yandex-maps').then((mod) => mod.Placemark), {
   ssr: false,
 });
 
@@ -39,13 +36,13 @@ import { formatPhoneForBackend } from '@/lib/utils/phone.util';
 import { commonValidations } from '@/lib/utils/validation';
 import { useUIStore } from '@/stores/uiStore';
 
-import { LocationPicker } from './LocationPicker';
-
 interface CreateProfileEditorProps {
   autoServiceId?: string;
 }
 
-export function CreateProfileEditor({ autoServiceId }: CreateProfileEditorProps = {}) {
+export function CreateProfileEditor({
+  autoServiceId: _autoServiceId,
+}: CreateProfileEditorProps = {}) {
   const t = useTranslations('myService.profile');
   const queryClient = useQueryClient();
   const { showToast } = useUIStore();
@@ -77,45 +74,8 @@ export function CreateProfileEditor({ autoServiceId }: CreateProfileEditorProps 
   // Geolocation hook
   const { state: geolocationState, enable: enableGeolocation } = useGeolocation();
 
-  // Fix for default marker icons and prevent double initialization (React Strict Mode)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Dynamically import Leaflet only on client side
-      import('leaflet').then((L) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (L.default.Icon.Default.prototype as any)._getIconUrl;
-        L.default.Icon.Default.mergeOptions({
-          iconRetinaUrl:
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl:
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        });
-
-        // Patch to prevent "Map container is already initialized" error in React Strict Mode
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const MapProto = L.default.Map.prototype as any;
-        if (MapProto._initContainer && !MapProto._initContainer._patched) {
-          const original = MapProto._initContainer;
-          MapProto._initContainer = function () {
-            // Check if container already has a map instance
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if ((this as any)._container && (this as any)._container._leaflet_id) {
-              // Reuse existing ID instead of throwing error
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (this as any)._containerId = (this as any)._container._leaflet_id;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (this as any)._leaflet_id = (this as any)._containerId;
-              return;
-            }
-            // Normal initialization
-            return original.call(this);
-          };
-          MapProto._initContainer._patched = true;
-        }
-      });
-    }
-  }, []);
+  // Yandex Maps API Key
+  const YANDEX_MAPS_API_KEY = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || '';
 
   // Load service types
   const { data: serviceTypes = [] } = useServiceTypes();
@@ -333,37 +293,61 @@ export function CreateProfileEditor({ autoServiceId }: CreateProfileEditorProps 
         </p>
 
         {/* Map Picker - Always Visible */}
-        {mounted && (
+        {mounted && YANDEX_MAPS_API_KEY && (
           <div className="h-96 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-            <MapContainer
-              key={autoServiceId || 'new'}
-              center={
-                watchedLatitude && watchedLongitude
-                  ? [watchedLatitude, watchedLongitude]
-                  : mapCenter
-              }
-              zoom={13}
-              style={{ height: '100%', width: '100%' }}
-              scrollWheelZoom={true}
+            <YMaps
+              query={{
+                apikey: YANDEX_MAPS_API_KEY,
+                lang: locale === 'hy' ? 'hy_AM' : locale === 'ru' ? 'ru_RU' : 'en_US',
+              }}
             >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <ZoomControl position="bottomright" />
-              <LocationPicker
-                onLocationSelect={(lat, lng) => {
-                  setValue('latitude', lat, { shouldValidate: true });
-                  setValue('longitude', lng, { shouldValidate: true });
-                  setMapCenter([lat, lng]);
-                  // Automatically reverse geocode to fill address and detect location
-                  handleReverseGeocode(lat, lng);
+              <YMap
+                defaultState={{
+                  center:
+                    watchedLatitude && watchedLongitude
+                      ? [watchedLatitude, watchedLongitude]
+                      : mapCenter,
+                  zoom: 13,
                 }}
-              />
-              {watchedLatitude && watchedLongitude && (
-                <Marker position={[watchedLatitude, watchedLongitude]} />
-              )}
-            </MapContainer>
+                width="100%"
+                height="100%"
+                modules={['control.ZoomControl']}
+                options={{
+                  suppressMapOpenBlock: true,
+                }}
+                onClick={(e: ymaps.IEvent) => {
+                  const coords = e.get('coords');
+                  if (coords && Array.isArray(coords) && coords.length >= 2) {
+                    const [lat, lng] = coords;
+                    setValue('latitude', lat, { shouldValidate: true });
+                    setValue('longitude', lng, { shouldValidate: true });
+                    setMapCenter([lat, lng]);
+                    // Automatically reverse geocode to fill address and detect location
+                    handleReverseGeocode(lat, lng);
+                  }
+                }}
+              >
+                {watchedLatitude && watchedLongitude && (
+                  <Placemark
+                    geometry={[watchedLatitude, watchedLongitude]}
+                    options={{
+                      preset: 'islands#blueIcon',
+                      iconColor: '#3b82f6',
+                    }}
+                  />
+                )}
+              </YMap>
+            </YMaps>
+          </div>
+        )}
+        {mounted && !YANDEX_MAPS_API_KEY && (
+          <div className="flex h-96 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+            <div className="p-4 text-center">
+              <MapPin className="mx-auto mb-2 h-12 w-12 text-gray-400" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {t('mapApiKeyRequired', { defaultValue: 'Yandex Maps API key is required' })}
+              </p>
+            </div>
           </div>
         )}
 

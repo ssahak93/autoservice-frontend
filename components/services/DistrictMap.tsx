@@ -3,7 +3,7 @@
 import { MapPin } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 import { locationsService } from '@/lib/services/locations.service';
 
@@ -17,20 +17,14 @@ type DistrictWithBounds = {
   centerLng?: number;
 };
 
-// Dynamically import Leaflet components to avoid SSR issues
-const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), {
+// Dynamically import Yandex Maps components to avoid SSR issues
+const YMaps = dynamic(() => import('@pbe/react-yandex-maps').then((mod) => mod.YMaps), {
   ssr: false,
 });
-const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), {
+const YMap = dynamic(() => import('@pbe/react-yandex-maps').then((mod) => mod.Map), {
   ssr: false,
 });
-const GeoJSON = dynamic(() => import('react-leaflet').then((mod) => mod.GeoJSON), {
-  ssr: false,
-});
-const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), {
-  ssr: false,
-});
-const ZoomControl = dynamic(() => import('react-leaflet').then((mod) => mod.ZoomControl), {
+const Placemark = dynamic(() => import('@pbe/react-yandex-maps').then((mod) => mod.Placemark), {
   ssr: false,
 });
 
@@ -54,6 +48,7 @@ interface DistrictMapProps {
  * Interactive map showing Yerevan districts with boundaries
  * Allows district selection by clicking on polygons
  * Visualizes services as markers
+ * Uses Yandex Maps instead of Leaflet
  */
 export function DistrictMap({
   cityCode = 'yerevan',
@@ -70,28 +65,14 @@ export function DistrictMap({
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(
     selectedDistrictCode || null
   );
+  const mapRef = useRef<ymaps.Map | undefined>(undefined);
+  const geoObjectsRef = useRef<ymaps.GeoObjectCollection | null>(null);
+
+  // Yandex Maps API Key
+  const YANDEX_MAPS_API_KEY = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || '';
 
   // Generate unique map key that persists across re-renders (prevents double initialization in Strict Mode)
   const mapKeyRef = useRef(`district-map-${Date.now()}-${Math.random()}`);
-
-  // Fix for default marker icons (must be done on client side only)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Dynamically import Leaflet only on client side
-      import('leaflet').then((L) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (L.default.Icon.Default.prototype as any)._getIconUrl;
-
-        L.default.Icon.Default.mergeOptions({
-          iconRetinaUrl:
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl:
-            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        });
-      });
-    }
-  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -120,58 +101,128 @@ export function DistrictMap({
   }, [mounted, cityCode]);
 
   // Handle district polygon click
-  const handleDistrictClick = (district: DistrictWithBounds) => {
-    setSelectedDistrict(district.code);
-    if (onDistrictSelect) {
-      onDistrictSelect(district.code, district.name);
-    }
-  };
+  const handleDistrictClick = useCallback(
+    (district: DistrictWithBounds) => {
+      setSelectedDistrict(district.code);
+      if (onDistrictSelect) {
+        onDistrictSelect(district.code, district.name);
+      }
+    },
+    [onDistrictSelect]
+  );
 
-  // Style for district polygons
-  const getDistrictStyle = (district: DistrictWithBounds) => {
-    const isSelected = selectedDistrict === district.code;
-    return {
-      fillColor: isSelected ? '#3b82f6' : '#60a5fa',
-      fillOpacity: isSelected ? 0.4 : 0.2,
-      color: isSelected ? '#2563eb' : '#3b82f6',
-      weight: isSelected ? 3 : 2,
-      opacity: isSelected ? 0.8 : 0.5,
-    };
-  };
+  // Render districts on map
+  useEffect(() => {
+    if (
+      !mapRef.current ||
+      !districts.length ||
+      !YANDEX_MAPS_API_KEY ||
+      typeof window === 'undefined'
+    )
+      return;
 
-  // Event handlers for GeoJSON
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onEachDistrict = (district: DistrictWithBounds, layer: any) => {
-    layer.on({
-      click: () => handleDistrictClick(district),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mouseover: (e: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const target = e.target as any;
-        target.setStyle({
-          fillOpacity: 0.5,
-          weight: 3,
+    // Wait for YMaps to be ready
+    const initGeoObjects = () => {
+      if (!mapRef.current || !window.ymaps) return;
+
+      try {
+        // Remove existing geo objects
+        if (geoObjectsRef.current) {
+          mapRef.current.geoObjects.remove(geoObjectsRef.current);
+        }
+
+        // Create new collection
+        const collection = new window.ymaps.GeoObjectCollection();
+
+        districts.forEach((district) => {
+          if (!district.bounds) return;
+
+          try {
+            // Convert GeoJSON to Yandex Maps format
+            const geoJsonBounds = district.bounds as GeoJSON.Polygon;
+            const coordinates = geoJsonBounds.coordinates[0].map((coord: number[]) => [
+              coord[1],
+              coord[0],
+            ]); // Swap lat/lng
+
+            // Create polygon
+            const geoObject = new window.ymaps.GeoObject(
+              {
+                geometry: {
+                  type: 'Polygon',
+                  coordinates: [coordinates],
+                },
+                properties: {
+                  hintContent: district.name,
+                  balloonContent: district.name,
+                  districtCode: district.code,
+                  districtName: district.name,
+                },
+              },
+              {
+                fillColor: selectedDistrict === district.code ? '#3b82f6' : '#60a5fa',
+                fillOpacity: selectedDistrict === district.code ? 0.4 : 0.2,
+                strokeColor: selectedDistrict === district.code ? '#2563eb' : '#3b82f6',
+                strokeWidth: selectedDistrict === district.code ? 3 : 2,
+                strokeOpacity: selectedDistrict === district.code ? 0.8 : 0.5,
+              }
+            );
+
+            // Add click handler
+            geoObject.events.add('click', () => handleDistrictClick(district));
+
+            // Add hover handlers
+            geoObject.events.add('mouseenter', () => {
+              geoObject.options.set({
+                fillOpacity: 0.5,
+                strokeWidth: 3,
+              });
+            });
+
+            geoObject.events.add('mouseleave', () => {
+              geoObject.options.set({
+                fillOpacity: selectedDistrict === district.code ? 0.4 : 0.2,
+                strokeWidth: selectedDistrict === district.code ? 3 : 2,
+              });
+            });
+
+            collection.add(geoObject);
+          } catch (err) {
+            console.warn(`Failed to create geo object for district ${district.code}:`, err);
+          }
         });
-        target.bindPopup(district.name).openPopup();
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mouseout: (e: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const target = e.target as any;
-        const style = getDistrictStyle(district);
-        target.setStyle(style);
-        target.closePopup();
-      },
-    });
-  };
 
-  // Calculate map bounds to fit all districts
-  const getMapBounds = (): [number, number] => {
+        mapRef.current.geoObjects.add(collection);
+        geoObjectsRef.current = collection;
+
+        // Fit bounds to show all districts
+        if (collection.getLength() > 0) {
+          const bounds = collection.getBounds();
+          if (bounds) {
+            mapRef.current.setBounds(bounds, { duration: 300, checkZoomRange: true });
+          }
+        }
+      } catch (err) {
+        console.error('Error initializing geo objects:', err);
+      }
+    };
+
+    // Wait for YMaps to be loaded
+    if (window.ymaps && window.ymaps.ready) {
+      window.ymaps.ready(initGeoObjects);
+    } else {
+      // Wait a bit for map to be fully ready
+      const timer = setTimeout(initGeoObjects, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [districts, selectedDistrict, YANDEX_MAPS_API_KEY, handleDistrictClick]);
+
+  // Calculate map center
+  const getMapCenter = (): [number, number] => {
     if (districts.length === 0) {
       return [40.1811, 44.5136]; // Yerevan center
     }
 
-    // Default center for Yerevan if no districts with coordinates
     const districtsWithCoords = districts.filter((d) => d.centerLat && d.centerLng);
     if (districtsWithCoords.length === 0) {
       return [40.1811, 44.5136]; // Yerevan default
@@ -222,6 +273,22 @@ export function DistrictMap({
     );
   }
 
+  if (!YANDEX_MAPS_API_KEY) {
+    return (
+      <div
+        className="flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50"
+        style={{ height }}
+      >
+        <div className="p-4 text-center">
+          <MapPin className="mx-auto mb-2 h-12 w-12 text-neutral-400" />
+          <p className="text-sm text-neutral-600">
+            {t('mapApiKeyRequired', { defaultValue: 'Yandex Maps API key is required' })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -233,40 +300,38 @@ export function DistrictMap({
 
       <div className="overflow-hidden rounded-lg border-2 border-neutral-200" style={{ height }}>
         {mounted && (
-          <MapContainer
-            key={mapKeyRef.current}
-            center={getMapBounds()}
-            zoom={12}
-            style={{ height: '100%', width: '100%' }}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <ZoomControl position="bottomright" />
-
-            {/* Render district polygons */}
-            {districts.map((district) => {
-              if (!district.bounds) return null;
-
-              return (
-                <GeoJSON
-                  key={district.id}
-                  data={district.bounds as unknown as GeoJSON.GeoJsonObject}
-                  style={() => getDistrictStyle(district)}
-                  onEachFeature={(feature, layer) => onEachDistrict(district, layer)}
+          <YMaps query={{ apikey: YANDEX_MAPS_API_KEY, lang: 'en_US' }}>
+            <YMap
+              key={mapKeyRef.current}
+              defaultState={{
+                center: getMapCenter(),
+                zoom: 12,
+              }}
+              width="100%"
+              height="100%"
+              instanceRef={mapRef}
+              modules={['control.ZoomControl', 'geoObject.addon.balloon']}
+              options={{
+                suppressMapOpenBlock: true,
+              }}
+            >
+              {/* Render service markers */}
+              {services.map((service) => (
+                <Placemark
+                  key={service.id}
+                  geometry={[service.latitude, service.longitude]}
+                  properties={{
+                    hintContent: service.name,
+                    balloonContent: service.name,
+                  }}
+                  options={{
+                    preset: 'islands#blueIcon',
+                    iconColor: '#3b82f6',
+                  }}
                 />
-              );
-            })}
-
-            {/* Render service markers */}
-            {services.map((service) => (
-              <Marker key={service.id} position={[service.latitude, service.longitude]}>
-                {/* You can add a custom popup here */}
-              </Marker>
-            ))}
-          </MapContainer>
+              ))}
+            </YMap>
+          </YMaps>
         )}
       </div>
 
