@@ -18,16 +18,7 @@ interface ServiceFiltersProps {
   onFiltersChange: (filters: ServiceSearchParams) => void;
 }
 
-const BUSINESS_TYPES = [
-  { value: 'auto_service', labelKey: 'businessTypes.auto_service', defaultLabel: 'Auto Service' },
-  { value: 'auto_shop', labelKey: 'businessTypes.auto_shop', defaultLabel: 'Auto Shop' },
-  { value: 'car_wash', labelKey: 'businessTypes.car_wash', defaultLabel: 'Car Wash' },
-  { value: 'cleaning', labelKey: 'businessTypes.cleaning', defaultLabel: 'Cleaning' },
-  { value: 'tire_service', labelKey: 'businessTypes.tire_service', defaultLabel: 'Tire Service' },
-  { value: 'towing', labelKey: 'businessTypes.towing', defaultLabel: 'Towing' },
-  { value: 'tinting', labelKey: 'businessTypes.tinting', defaultLabel: 'Tinting' },
-  { value: 'other', labelKey: 'businessTypes.other', defaultLabel: 'Other' },
-] as const;
+// PROVIDER_TYPES removed - ProviderType model has been removed
 
 /**
  * ServiceFilters Component
@@ -47,7 +38,6 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
   // Collapsible sections state
   const [expandedSections, setExpandedSections] = useState({
     location: true,
-    businessType: true,
     serviceType: true,
     rating: true,
     sort: true,
@@ -61,10 +51,6 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
   const { data: communities } = useCommunities(filters.regionId || localFilters.regionId);
 
   // Get current selected values (arrays for multiple selection)
-  const selectedBusinessTypes = useMemo(
-    () => localFilters.businessTypes || [],
-    [localFilters.businessTypes]
-  );
   const selectedServiceTypes = useMemo(
     () => localFilters.serviceTypes || [],
     [localFilters.serviceTypes]
@@ -79,16 +65,13 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
     }
     if (!isInternalUpdateRef.current) {
       // Only sync if filters actually changed and localFilters is different
-      // Compare arrays properly for businessTypes and serviceTypes
-      const currentBusinessTypes = JSON.stringify(localFilters.businessTypes || []);
-      const newBusinessTypes = JSON.stringify(filters.businessTypes || []);
+      // Compare arrays properly for serviceTypes
       const currentServiceTypes = JSON.stringify(localFilters.serviceTypes || []);
       const newServiceTypes = JSON.stringify(filters.serviceTypes || []);
 
       const hasChanges =
         localFilters.regionId !== filters.regionId ||
         localFilters.communityId !== filters.communityId ||
-        currentBusinessTypes !== newBusinessTypes ||
         currentServiceTypes !== newServiceTypes ||
         localFilters.minRating !== filters.minRating ||
         localFilters.sortBy !== filters.sortBy ||
@@ -115,7 +98,6 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
       const filtersChanged =
         debouncedFilters.regionId !== filters.regionId ||
         debouncedFilters.communityId !== filters.communityId ||
-        JSON.stringify(debouncedFilters.businessTypes) !== JSON.stringify(filters.businessTypes) ||
         JSON.stringify(debouncedFilters.serviceTypes) !== JSON.stringify(filters.serviceTypes) ||
         debouncedFilters.minRating !== filters.minRating ||
         debouncedFilters.sortBy !== filters.sortBy ||
@@ -178,31 +160,6 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
       });
     }
   }, [geolocation.state.isEnabled, geolocation.state.latitude, geolocation.state.longitude]);
-
-  const handleBusinessTypeToggle = useCallback(
-    (businessType: (typeof BUSINESS_TYPES)[number]['value']) => {
-      isInternalUpdateRef.current = true;
-      // Use functional update to ensure we have the latest state
-      setLocalFilters((prev) => {
-        const currentTypes = prev.businessTypes || [];
-        const newTypes = currentTypes.includes(businessType)
-          ? currentTypes.filter((bt) => bt !== businessType)
-          : [...currentTypes, businessType];
-
-        return {
-          ...prev,
-          businessTypes: newTypes.length > 0 ? newTypes : undefined,
-          page: 1,
-        };
-      });
-      // Keep isInternalUpdateRef true longer to prevent sync from overwriting changes
-      // Reset after debounce completes (500ms) + URL update time (100ms) + buffer
-      setTimeout(() => {
-        isInternalUpdateRef.current = false;
-      }, 800);
-    },
-    []
-  );
 
   const handleServiceTypeToggle = useCallback((serviceTypeId: string) => {
     isInternalUpdateRef.current = true;
@@ -271,7 +228,6 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
   ];
 
   const hasActiveFilters =
-    selectedBusinessTypes.length > 0 ||
     selectedServiceTypes.length > 0 ||
     localFilters.regionId ||
     localFilters.communityId ||
@@ -433,65 +389,6 @@ export function ServiceFilters({ filters, onFiltersChange }: ServiceFiltersProps
                       </div>
                     )}
                   </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Business Type Section - Collapsible with Checkboxes */}
-        <div className="rounded-lg border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800">
-          <button
-            onClick={() => toggleSection('businessType')}
-            className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700/50"
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-              <SlidersHorizontal className="h-4 w-4 text-primary-600" />
-              {t('businessType', { defaultValue: 'Business Type' })}
-              {selectedBusinessTypes.length > 0 && (
-                <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
-                  {selectedBusinessTypes.length}
-                </span>
-              )}
-            </span>
-            {expandedSections.businessType ? (
-              <ChevronUp className="h-4 w-4 text-neutral-500" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-neutral-500" />
-            )}
-          </button>
-          <AnimatePresence>
-            {expandedSections.businessType && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="space-y-1 border-t border-neutral-200 p-3 dark:border-neutral-700">
-                  {BUSINESS_TYPES.map((type) => {
-                    const isSelected = selectedBusinessTypes.includes(type.value);
-                    return (
-                      <label
-                        key={type.value}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg p-2 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700/30"
-                      >
-                        <div className="relative flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handleBusinessTypeToggle(type.value)}
-                            className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0"
-                          />
-                          {isSelected && <Check className="absolute left-0.5 h-3 w-3 text-white" />}
-                        </div>
-                        <span className="text-sm text-neutral-700 dark:text-neutral-300">
-                          {t(type.labelKey, { defaultValue: type.defaultLabel })}
-                        </span>
-                      </label>
-                    );
-                  })}
                 </div>
               </motion.div>
             )}

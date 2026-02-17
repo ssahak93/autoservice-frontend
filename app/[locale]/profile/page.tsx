@@ -10,11 +10,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import { ChangePasswordModal } from '@/components/profile/ChangePasswordModal';
 import { SettingsSection } from '@/components/profile/SettingsSection';
+import { CreateServiceBanner } from '@/components/provider/CreateServiceBanner';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PhoneInput } from '@/components/ui/PhoneInput';

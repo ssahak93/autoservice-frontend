@@ -52,12 +52,12 @@ export const visitsService = {
     return visit;
   },
 
-  async updateStatus(id: string, status: Visit['status'], autoServiceId?: string): Promise<Visit> {
+  async updateStatus(id: string, status: Visit['status'], providerId?: string): Promise<Visit> {
     const response = await apiClient.put<{ success: boolean; data: Visit }>(
       API_ENDPOINTS.VISITS.UPDATE_STATUS(id),
       { status },
       {
-        params: autoServiceId ? { autoServiceId } : undefined,
+        params: providerId ? { providerId } : undefined,
       }
     );
     return unwrapResponseData(response);
@@ -89,26 +89,26 @@ export const visitsService = {
     return unwrapResponseData(response);
   },
 
-  // Auto service methods
-  async getAutoServiceList(params?: {
+  // Provider methods
+  async getProviderList(params?: {
     status?: string;
     date?: string;
     page?: number;
     limit?: number;
-    autoServiceId?: string;
+    providerId?: string;
   }): Promise<PaginatedResponse<Visit>> {
     const response = await apiClient.get<
       PaginatedResponse<Visit> | { success: boolean; data: PaginatedResponse<Visit> } | Visit[]
-    >(API_ENDPOINTS.VISITS.AUTO_SERVICE_LIST, {
-      params,
+    >(API_ENDPOINTS.VISITS.PROVIDER_LIST, {
+      params: params ? { ...params, providerId: params.providerId } : undefined,
     });
     return unwrapPaginatedResponse(response);
   },
 
-  async getAutoServiceStatistics(params?: {
+  async getProviderStatistics(params?: {
     startDate?: string;
     endDate?: string;
-    autoServiceId?: string;
+    providerId?: string;
   }): Promise<{
     total: number;
     pending: number;
@@ -137,7 +137,7 @@ export const visitsService = {
             today: number;
           };
         }
-    >(API_ENDPOINTS.VISITS.AUTO_SERVICE_STATISTICS, {
+    >(API_ENDPOINTS.VISITS.PROVIDER_STATISTICS, {
       params,
     });
     return unwrapResponseData(response);
@@ -151,7 +151,7 @@ export const visitsService = {
       confirmedTime?: string;
       notes?: string;
     },
-    autoServiceId?: string
+    providerId?: string
   ): Promise<Visit> {
     try {
       const payload: {
@@ -177,7 +177,7 @@ export const visitsService = {
         API_ENDPOINTS.VISITS.UPDATE_STATUS(id),
         payload,
         {
-          params: autoServiceId ? { autoServiceId } : undefined,
+          params: providerId ? { providerId } : undefined,
         }
       );
       return unwrapResponseData(response);
@@ -189,12 +189,12 @@ export const visitsService = {
     }
   },
 
-  async completeVisit(id: string, notes?: string, autoServiceId?: string): Promise<Visit> {
+  async completeVisit(id: string, notes?: string, providerId?: string): Promise<Visit> {
     const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
       API_ENDPOINTS.VISITS.COMPLETE(id),
       notes ? { notes } : {},
       {
-        params: autoServiceId ? { autoServiceId } : undefined,
+        params: providerId ? { providerId } : undefined,
       }
     );
     return unwrapResponseData(response);
@@ -206,14 +206,14 @@ export const visitsService = {
       scheduledDate: string;
       scheduledTime: string;
     },
-    autoServiceId?: string
+    providerId?: string
   ): Promise<Visit> {
     try {
       const response = await apiClient.put<{ success: boolean; data: Visit } | Visit>(
         API_ENDPOINTS.VISITS.RESCHEDULE(id),
         data,
         {
-          params: autoServiceId ? { autoServiceId } : undefined,
+          params: providerId ? { providerId } : undefined,
         }
       );
       return unwrapResponseData(response);

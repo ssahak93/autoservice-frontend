@@ -48,29 +48,29 @@ export const authService = {
     const response = await apiClient.get<User | { success: boolean; data: User }>(
       API_ENDPOINTS.AUTH.ME
     );
-    return unwrapResponseData(response);
+    return unwrapResponseData(response) as User;
   },
 
   /**
    * Login with email and password
    */
   async login(data: LoginRequest): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse | { success: boolean; data: AuthResponse }>(
-      API_ENDPOINTS.AUTH.LOGIN,
-      data
-    );
-    return unwrapResponseData(response);
+    const response = await apiClient.post<
+      | { accessToken: string; refreshToken: string; user: User }
+      | { success: boolean; data: { accessToken: string; refreshToken: string; user: User } }
+    >(API_ENDPOINTS.AUTH.LOGIN, data);
+    return unwrapResponseData(response) as AuthResponse;
   },
 
   /**
    * Register new user
    */
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse | { success: boolean; data: AuthResponse }>(
-      API_ENDPOINTS.AUTH.REGISTER,
-      data
-    );
-    return unwrapResponseData(response);
+    const response = await apiClient.post<
+      | { accessToken: string; refreshToken: string; user: User }
+      | { success: boolean; data: { accessToken: string; refreshToken: string; user: User } }
+    >(API_ENDPOINTS.AUTH.REGISTER, data);
+    return unwrapResponseData(response) as AuthResponse;
   },
 
   /**
@@ -99,7 +99,7 @@ export const authService = {
     const response = await apiClient.post<
       { message: string } | { success: boolean; data: { message: string } }
     >(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, data);
-    return unwrapResponseData(response);
+    return unwrapResponseData(response) as { message: string };
   },
 
   /**
@@ -110,7 +110,7 @@ export const authService = {
       API_ENDPOINTS.AUTH.RESET_PASSWORD,
       data
     );
-    return unwrapResponseData(response);
+    return unwrapResponseData(response) as { success: boolean; message: string };
   },
 
   /**
@@ -121,7 +121,7 @@ export const authService = {
       API_ENDPOINTS.AUTH.VERIFY_EMAIL,
       { params: { token } }
     );
-    return unwrapResponseData(response);
+    return unwrapResponseData(response) as { success: boolean; message: string };
   },
 
   /**
@@ -132,7 +132,7 @@ export const authService = {
     const response = await apiClient.post<
       { message: string } | { success: boolean; data: { message: string } }
     >(API_ENDPOINTS.AUTH.RESEND_VERIFICATION, { email, locale: currentLocale });
-    return unwrapResponseData(response);
+    return unwrapResponseData(response) as { message: string };
   },
 
   /**
@@ -143,7 +143,7 @@ export const authService = {
       API_ENDPOINTS.AUTH.UPDATE_PROFILE,
       data
     );
-    return unwrapResponseData(response);
+    return unwrapResponseData(response) as User;
   },
 
   /**
@@ -156,6 +156,6 @@ export const authService = {
       API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
       data
     );
-    return unwrapResponseData(response);
+    return unwrapResponseData(response) as { success: boolean; message: string };
   },
 };

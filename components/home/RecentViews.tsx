@@ -53,17 +53,17 @@ export function RecentViews() {
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {views.map((view) => {
-          const service = view.autoServiceProfile?.autoService;
-          if (!service) return null;
+          const provider = view.providerBranch?.provider;
+          if (!provider) return null;
 
           const name =
-            service.companyName || `${service.firstName} ${service.lastName}` || 'Service';
-          const avatarUrl = getAvatarUrl(service);
+            provider.companyName || `${provider.firstName} ${provider.lastName}` || 'Provider';
+          const avatarUrl = getAvatarUrl(provider);
 
           return (
             <Link
               key={view.id}
-              href={`/services/${service.id}`}
+              href={`/services/${provider.id}`}
               className="group flex flex-col items-center gap-2 rounded-lg p-3 transition-colors hover:bg-neutral-100"
             >
               <div className="relative h-16 w-16 overflow-hidden rounded-full">

@@ -45,7 +45,7 @@ export function useVehicle(vehicleId: string | undefined) {
  */
 export function useCreateVehicle() {
   const callbacks = useMutationWithInvalidation(
-    [queryKeys.vehicles()],
+    [...queryKeys.vehicles()] as string[],
     'vehicleCreated',
     'vehicleCreateError',
     'profile'
@@ -62,7 +62,7 @@ export function useCreateVehicle() {
  */
 export function useUpdateVehicle() {
   const callbacks = useMutationWithInvalidation(
-    [queryKeys.vehicles()],
+    [...queryKeys.vehicles()] as string[],
     'vehicleUpdated',
     'vehicleUpdateError',
     'profile'
@@ -80,7 +80,7 @@ export function useUpdateVehicle() {
  */
 export function useDeleteVehicle() {
   const callbacks = useMutationWithInvalidation(
-    [queryKeys.vehicles()],
+    [...queryKeys.vehicles()] as string[],
     'vehicleDeleted',
     'vehicleDeleteError',
     'profile'

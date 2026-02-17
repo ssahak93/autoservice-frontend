@@ -5,9 +5,9 @@ import { Car, User } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 
-import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge';
 import { ErrorDisplay } from '@/components/common/ErrorDisplay';
-import { useAutoServiceVisits } from '@/hooks/useDashboard';
+import { ServiceStatusBadge } from '@/components/provider/ServiceStatusBadge';
+import { useProviderVisits } from '@/hooks/useDashboard';
 import { formatDateShort } from '@/lib/utils/date';
 import { getAvatarUrl } from '@/lib/utils/file';
 import { formatUserName } from '@/lib/utils/user';
@@ -15,7 +15,7 @@ import { formatUserName } from '@/lib/utils/user';
 export function RecentVisits() {
   const t = useTranslations('dashboard');
   const locale = useLocale();
-  const { data, isLoading, error } = useAutoServiceVisits({
+  const { data, isLoading, error } = useProviderVisits({
     page: 1,
     limit: 10,
   });

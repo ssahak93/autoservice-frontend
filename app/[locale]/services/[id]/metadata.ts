@@ -1,15 +1,15 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
-import type { AutoService } from '@/types';
+import type { Provider } from '@/types';
 
 const baseUrl =
   process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : 'https://autoserviceconnect.am';
+    : `https://${process.env.NEXT_PUBLIC_DOMAIN_NAME || 'autoserviceconnect.am'}`;
 
 export async function generateServiceMetadata(
-  service: AutoService,
+  service: Provider,
   locale: string
 ): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: 'services.metadata' });
@@ -71,7 +71,7 @@ export async function generateServiceMetadata(
       title: t('title', { name }),
       description: description.substring(0, 160),
       images: [imageUrl],
-      creator: '@autoserviceconnect',
+      creator: `@${process.env.NEXT_PUBLIC_TWITTER_HANDLE || 'autoserviceconnect'}`,
     },
     alternates: {
       canonical: `${baseUrl}/${locale}/services/${service.id}`,

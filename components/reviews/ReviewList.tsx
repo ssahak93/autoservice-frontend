@@ -41,11 +41,7 @@ export function ReviewList({ serviceId }: ReviewListProps) {
   const hasAvailableVisits =
     user &&
     visitsData?.data?.some((visit) => {
-      if (
-        visit.autoServiceProfileId !== serviceId ||
-        visit.status !== 'completed' ||
-        visit.review
-      ) {
+      if (visit.providerBranchId !== serviceId || visit.status !== 'completed' || visit.review) {
         return false;
       }
       // Check if scheduled date has passed

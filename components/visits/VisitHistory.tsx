@@ -139,18 +139,20 @@ export function VisitHistory({ visitId, visit }: VisitHistoryProps) {
                         </div>
                       );
                     } else if (entry.changedByType === 'service' && visit) {
-                      const autoService =
-                        visit.autoServiceProfile?.autoService || visit.autoService;
-                      const serviceAvatar = getAvatarUrl(autoService);
-                      return serviceAvatar ? (
+                      const provider = visit.providerBranch?.provider || visit.provider;
+                      // Only providerBranch.provider has avatarFile, visit.provider doesn't
+                      const providerAvatar = getAvatarUrl(
+                        visit.providerBranch?.provider || undefined
+                      );
+                      return providerAvatar ? (
                         <div className="relative z-10">
                           <Image
-                            src={serviceAvatar}
+                            src={providerAvatar}
                             alt={
-                              autoService?.serviceType === 'company'
-                                ? autoService?.companyName || 'Service'
-                                : `${autoService?.firstName || ''} ${autoService?.lastName || ''}`.trim() ||
-                                  'Service'
+                              provider?.serviceType === 'company'
+                                ? provider?.companyName || 'Provider'
+                                : `${provider?.firstName || ''} ${provider?.lastName || ''}`.trim() ||
+                                  'Provider'
                             }
                             width={32}
                             height={32}

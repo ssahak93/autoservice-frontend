@@ -2,10 +2,10 @@
 
 import { getImageUrl } from '@/lib/utils/file';
 import { formatServiceName } from '@/lib/utils/user';
-import type { AutoService } from '@/types';
+import type { Provider } from '@/types';
 
 interface ServiceSchemaProps {
-  service: AutoService;
+  service: Provider;
 }
 
 export function ServiceSchema({ service }: ServiceSchemaProps) {
@@ -14,7 +14,7 @@ export function ServiceSchema({ service }: ServiceSchemaProps) {
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
-      : 'https://autoserviceconnect.am');
+      : `https://${process.env.NEXT_PUBLIC_DOMAIN_NAME || 'autoserviceconnect.am'}`);
 
   const schema = {
     '@context': 'https://schema.org',

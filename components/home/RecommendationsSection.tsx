@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 
-import { ServiceCardSkeleton } from '@/components/auto-service';
+import { ServiceCardSkeleton } from '@/components/provider';
 import { ServiceCard } from '@/components/services/ServiceCard';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { Link } from '@/i18n/routing';
@@ -74,8 +74,8 @@ export function RecommendationsSection({ locale: _locale }: RecommendationsSecti
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {recommendations.slice(0, 6).map((service, index) => (
-          <ServiceCard key={service.id} service={service} index={index} />
+        {recommendations.slice(0, 6).map((provider, index) => (
+          <ServiceCard key={provider.id} service={provider} index={index} />
         ))}
       </div>
 

@@ -147,18 +147,6 @@
     "filterBy": "Фильтр по",
     "city": "Город",
     "region": "Регион",
-    "businessType": "Тип бизнеса",
-    "allBusinessTypes": "Все типы бизнеса",
-    "businessTypes": {
-      "auto_service": "Автосервис",
-      "auto_shop": "Автомагазин",
-      "car_wash": "Автомойка",
-      "cleaning": "Клининг",
-      "tire_service": "Шиномонтаж",
-      "towing": "Эвакуатор",
-      "tinting": "Тонировка",
-      "other": "Другое"
-    },
     "serviceType": "Тип услуги",
     "minRating": "Минимальный рейтинг",
     "noServices": "Услуги не найдены",
@@ -272,8 +260,10 @@
     "past": "Прошедшие",
     "pending": "Ожидает",
     "confirmed": "Подтверждено",
-    "cancelled": "Отменено",
+    "in_progress": "В процессе",
     "completed": "Завершено",
+    "cancelled": "Отменено",
+    "no_show": "Не явился",
     "leaveReview": "Оставить отзыв",
     "noVisits": "У вас пока нет визитов",
     "bookNew": "Забронировать новый визит",
@@ -526,6 +516,7 @@
   },
   "navigation": {
     "home": "Главная",
+    "categories": "Категории",
     "services": "Услуги",
     "dashboard": "Панель управления",
     "myVisits": "Мои визиты",
@@ -596,7 +587,8 @@
       "message": "Вам нужно владеть автосервисом для доступа к панели управления.",
       "browseServices": "Просмотреть услуги"
     },
-    "selectAutoService": "Выбрать автосервис",
+    "selectProvider": "Выбрать поставщика",
+    "selectProvider": "Выбрать поставщика",
     "selectedService": "В настоящее время управляете: {name}",
     "role": {
       "owner": "Владелец",
@@ -1491,8 +1483,7 @@
     "info": {
       "title": "Свяжитесь с нами",
       "email": {
-        "title": "Email",
-        "value": "support@autoserviceconnect.com"
+        "title": "Email"
       },
       "phone": {
         "title": "Телефон",
@@ -1524,6 +1515,19 @@
         "description": "Для партнерств или деловых возможностей свяжитесь с нами по email."
       }
     }
+  },
+  "serviceCategories": {
+    "title": "Категории услуг",
+    "subtitle": "Просматривайте услуги по категориям, чтобы найти то, что вам нужно",
+    "description": "Просмотрите услуги в этой категории",
+    "categoryDescription": "Просмотрите услуги в этой категории",
+    "noCategories": "Категории недоступны",
+    "noServices": "В этой категории нет услуг",
+    "serviceTypesCount": "{count} типов услуг",
+    "findProviders": "Найти поставщиков",
+    "browseAllServices": "Просмотреть все услуги в этой категории",
+    "home": "Главная",
+    "categories": "Категории"
   },
   "help": {
     "title": "Помощь и FAQ",

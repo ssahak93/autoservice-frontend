@@ -109,9 +109,9 @@
     "logoutSuccess": "Logged out successfully"
   },
   "home": {
-    "searchPlaceholder": "Search for auto services, shops, car washes...",
+    "searchPlaceholder": "Search for providers, shops, car washes...",
     "search": "Search",
-    "searchHint": "Find the best auto services near you",
+    "searchHint": "Find the best service providers near you",
     "recommendationsTitle": "Best Services for You",
     "recommendationsSubtitle": "Top-rated services in your area",
     "viewAllServices": "View All Services",
@@ -119,7 +119,7 @@
     "recentViews": "Recently Viewed",
     "clear": "Clear",
     "title": "Auto Service Connect",
-    "subtitle": "Find and book the best auto services in Armenia",
+    "subtitle": "Find and book the best service providers in Armenia",
     "getStarted": "Get Started",
     "browseServices": "Browse Services",
     "features": {
@@ -139,26 +139,14 @@
     }
   },
   "services": {
-    "title": "Auto Services",
-    "subtitle": "Find the best auto services in Armenia",
+    "title": "Service Providers",
+    "subtitle": "Find the best service providers in Armenia",
     "loading": "Loading...",
     "searchPlaceholder": "Search services...",
     "quickFilters": "Quick Filters",
     "filterBy": "Filter by",
     "city": "City",
     "region": "Region",
-    "businessType": "Business Type",
-    "allBusinessTypes": "All Business Types",
-    "businessTypes": {
-      "auto_service": "Auto Service",
-      "auto_shop": "Auto Shop",
-      "car_wash": "Car Wash",
-      "cleaning": "Cleaning",
-      "tire_service": "Tire Service",
-      "towing": "Towing",
-      "tinting": "Tinting",
-      "other": "Other"
-    },
     "serviceType": "Service Type",
     "minRating": "Minimum Rating",
     "noServices": "No services found",
@@ -245,9 +233,9 @@
     "any": "Any",
     "metadata": {
       "title": "{name} - Auto Service Connect",
-      "description": "Professional auto service in {community}, {region}. Book your appointment online. Verified service provider{rating}.",
+      "description": "Professional service provider in {community}, {region}. Book your appointment online. Verified service provider{rating}.",
       "descriptionWithRating": " with {rating} rating",
-      "keywords": "auto service, car repair, {community}, {region}, Armenia, verified service, {specialization}",
+      "keywords": "service provider, car repair, {community}, {region}, Armenia, verified provider, {specialization}",
       "siteName": "Auto Service Connect"
     },
     "stars": "stars",
@@ -272,8 +260,10 @@
     "past": "Past",
     "pending": "Pending",
     "confirmed": "Confirmed",
-    "cancelled": "Cancelled",
+    "in_progress": "In Progress",
     "completed": "Completed",
+    "cancelled": "Cancelled",
+    "no_show": "No Show",
     "leaveReview": "Leave Review",
     "noVisits": "You don't have any visits yet",
     "bookNew": "Book a new visit",
@@ -526,6 +516,7 @@
   },
   "navigation": {
     "home": "Home",
+    "categories": "Categories",
     "services": "Services",
     "dashboard": "Dashboard",
     "myVisits": "My Visits",
@@ -557,7 +548,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "Overview of your auto service",
+    "subtitle": "Overview of your provider",
     "description": "Manage and track all your service visits",
     "nav": {
       "dashboard": "Dashboard",
@@ -592,11 +583,12 @@
       "status": "Status"
     },
     "notServiceOwner": {
-      "title": "Auto Service Required",
-      "message": "You need to own an auto service to access the dashboard.",
+      "title": "Provider Required",
+      "message": "You need to own a provider to access the dashboard.",
       "browseServices": "Browse Services"
     },
-    "selectAutoService": "Select Auto Service",
+    "selectProvider": "Select Provider",
+    "selectProvider": "Select Provider",
     "selectedService": "Currently managing: {name}",
     "role": {
       "owner": "Owner",
@@ -1050,7 +1042,7 @@
   },
   "myService": {
     "title": "My Service Profile",
-    "description": "Manage your auto service profile and settings",
+    "description": "Manage your provider profile and settings",
     "loading": "Loading your services...",
     "completeness": "Profile Completeness",
     "publish": "Publish Profile",
@@ -1060,48 +1052,48 @@
     "publishError": "Failed to update publish status",
     "loadError": "Failed to load profile. Please try again.",
     "notServiceOwner": {
-      "title": "Auto Service Required",
-      "message": "You need to own an auto service to manage your profile."
+      "title": "Provider Required",
+      "message": "You need to own a provider to manage your profile."
     },
     "noProfile": {
       "title": "Profile Not Created Yet",
-      "description": "You have created an auto service, but the profile is not yet set up. Complete your profile to start accepting bookings from customers.",
-      "hint": "Please fill out the profile information in the \"Profile\" tab to complete your auto service setup.",
-      "fillForm": "Please use the \"Profile\" tab above to create your auto service profile."
+      "description": "You have created a provider, but the profile is not yet set up. Complete your profile to start accepting bookings from customers.",
+      "hint": "Please fill out the profile information in the \"Profile\" tab to complete your provider setup.",
+      "fillForm": "Please use the \"Profile\" tab above to create your provider profile."
     },
     "incompleteProfile": {
-      "title": "Complete Your Auto Service Profile",
+      "title": "Complete Your Provider Profile",
       "description": "Your profile is {completeness}% complete. Complete your profile to attract more customers and improve your visibility.",
       "progress": "Profile Completion",
       "completeButton": "Complete Profile",
       "dismiss": "Dismiss"
     },
     "approval": {
-      "approvedTitle": "Auto Service Approved",
-      "approvedMessage": "Your auto service has been approved and is now visible in search results.",
-      "rejectedTitle": "Auto Service Rejected",
-      "rejectedMessage": "Your auto service has been rejected. Please review the reason below and update your profile.",
+      "approvedTitle": "Provider Approved",
+      "approvedMessage": "Your provider has been approved and is now visible in search results.",
+      "rejectedTitle": "Provider Rejected",
+      "rejectedMessage": "Your provider has been rejected. Please review the reason below and update your profile.",
       "rejectionReason": "Rejection Reason",
       "pendingTitle": "Pending Approval",
-      "pendingMessage": "Your auto service profile is pending admin approval. It will be visible in search results once approved.",
+      "pendingMessage": "Your provider profile is pending admin approval. It will be visible in search results once approved.",
       "dismiss": "Dismiss"
     },
     "blocking": {
-      "title": "Auto Service Blocked",
-      "message": "Your auto service has been blocked by an administrator. You will not be able to access your auto service features until the block is removed.",
+      "title": "Provider Blocked",
+      "message": "Your provider has been blocked by an administrator. You will not be able to access your provider features until the block is removed.",
       "reasonLabel": "Reason for blocking",
       "contactSupport": "If you believe this is an error, please contact our support team.",
       "dismiss": "Dismiss"
     },
     "create": {
-      "title": "Create Your Auto Service",
-      "description": "Get started by creating your auto service profile",
+      "title": "Create Your Provider",
+      "description": "Get started by creating your provider profile",
       "serviceType": "Service Type",
       "serviceTypeRequired": "Service type is required",
       "individual": "Individual",
-      "individualDescription": "Personal auto service",
+      "individualDescription": "Personal provider",
       "company": "Company",
-      "companyDescription": "Business auto service",
+      "companyDescription": "Business provider",
       "companyName": "Company Name",
       "companyNameRequired": "Company name is required",
       "companyNamePlaceholder": "Enter your company name",
@@ -1111,25 +1103,25 @@
       "lastName": "Last Name",
       "lastNameRequired": "Last name is required",
       "lastNamePlaceholder": "Enter your last name",
-      "create": "Create Auto Service",
-      "success": "Auto service created successfully",
-      "error": "Failed to create auto service",
+      "create": "Create Provider",
+      "success": "Provider created successfully",
+      "error": "Failed to create provider",
       "validationError": "Please fill in all required fields",
-      "servicesCount": "You have {count} of {max} auto services",
+      "servicesCount": "You have {count} of {max} providers",
       "avatar": "Avatar",
       "uploadAvatar": "Upload Avatar",
       "changeAvatar": "Change Avatar",
-      "avatarHint": "Upload a profile picture for your auto service (optional)",
+      "avatarHint": "Upload a profile picture for your provider (optional)",
       "maxReached": {
-        "title": "Maximum Auto Services Reached",
-        "message": "You have reached the maximum limit of {count} auto services.",
-        "hint": "Please delete an existing service to create a new one.",
-        "yourServices": "Your Auto Services",
+        "title": "Maximum Providers Reached",
+        "message": "You have reached the maximum limit of {count} providers.",
+        "hint": "Please delete an existing provider to create a new one.",
+        "yourServices": "Your Providers",
         "manage": "Manage"
       },
       "banner": {
-        "title": "Start Your Auto Service Journey",
-        "description": "Create your auto service profile and start accepting bookings from customers.",
+        "title": "Start Your Provider Journey",
+        "description": "Create your provider profile and start accepting bookings from customers.",
         "benefit1": "Manage bookings and visits",
         "benefit2": "Build your service profile",
         "benefit3": "Connect with customers",
@@ -1138,8 +1130,8 @@
       }
     },
     "servicesList": {
-      "title": "My Auto Services",
-      "subtitle": "Manage all your auto services and their profiles",
+      "title": "My Providers",
+      "subtitle": "Manage all your providers and their profiles",
       "incomplete": "Incomplete Services",
       "complete": "Complete Services",
       "profileMissing": "Profile not created",
@@ -1149,14 +1141,14 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "pendingApproval": "Pending Approval",
-      "delete": "Delete Auto Service",
-      "deleteSuccess": "Auto service deleted successfully",
-      "deleteError": "Failed to delete auto service",
-      "deleteConfirmPermanent": "Are you sure you want to permanently delete this auto service? This action cannot be undone.",
-      "deleteConfirmSoft": "Are you sure you want to delete this auto service? This action can be undone by contacting support.",
-      "summary": "You have {total} auto service(s): {complete} complete, {incomplete} incomplete",
+      "delete": "Delete Provider",
+      "deleteSuccess": "Provider deleted successfully",
+      "deleteError": "Failed to delete provider",
+      "deleteConfirmPermanent": "Are you sure you want to permanently delete this provider? This action cannot be undone.",
+      "deleteConfirmSoft": "Are you sure you want to delete this provider? This action can be undone by contacting support.",
+      "summary": "You have {total} provider(s): {complete} complete, {incomplete} incomplete",
       "createAnother": "Create Another",
-      "createAnotherDescription": "You can create multiple auto services to manage different locations or service types.",
+      "createAnotherDescription": "You can create multiple providers to manage different locations or service types.",
       "backToList": "Back to Services List",
       "blocked": "This service is blocked",
       "viewPublic": "View Public Profile"
@@ -1168,7 +1160,7 @@
       "availability": "Availability",
       "photos": "Photos"
     },
-    "selectService": "Select Auto Service",
+    "selectService": "Select Provider",
     "overview": {
       "title": "Service Overview",
       "status": "Status",
@@ -1454,14 +1446,14 @@
   "about": {
     "title": "About Us",
     "description": "Learn more about Auto Service Connect",
-    "subtitle": "Connecting drivers with trusted auto service providers",
+    "subtitle": "Connecting drivers with trusted service providers",
     "mission": {
       "title": "Our Mission",
-      "description": "Our mission is to simplify the process of finding and booking auto services. We connect drivers with trusted service providers, making car maintenance and repairs more accessible and convenient."
+      "description": "Our mission is to simplify the process of finding and booking service providers. We connect drivers with trusted providers, making car maintenance and repairs more accessible and convenient."
     },
     "vision": {
       "title": "Our Vision",
-      "description": "We envision a future where finding quality auto services is as easy as ordering food online. Every driver should have access to reliable, professional auto service providers at their fingertips."
+      "description": "We envision a future where finding quality service providers is as easy as ordering food online. Every driver should have access to reliable, professional providers at their fingertips."
     },
     "values": {
       "title": "Our Values",
@@ -1484,7 +1476,7 @@
     },
     "team": {
       "title": "Why Choose Us",
-      "feature1": "Verified and trusted auto service providers",
+      "feature1": "Verified and trusted service providers",
       "feature2": "Easy online booking and scheduling",
       "feature3": "Real-time communication with service providers",
       "feature4": "Transparent reviews and ratings system"
@@ -1497,8 +1489,7 @@
     "info": {
       "title": "Get in Touch",
       "email": {
-        "title": "Email",
-        "value": "support@autoserviceconnect.com"
+        "title": "Email"
       },
       "phone": {
         "title": "Phone",
@@ -1531,6 +1522,19 @@
       }
     }
   },
+  "serviceCategories": {
+    "title": "Service Categories",
+    "subtitle": "Browse services by category to find what you need",
+    "description": "Browse services in this category",
+    "categoryDescription": "Browse services in this category",
+    "noCategories": "No categories available",
+    "noServices": "No services available in this category",
+    "serviceTypesCount": "{count} service types",
+    "findProviders": "Find providers",
+    "browseAllServices": "Browse all services in this category",
+    "home": "Home",
+    "categories": "Categories"
+  },
   "help": {
     "title": "Help & FAQ",
     "description": "Frequently asked questions and help center",
@@ -1540,8 +1544,8 @@
         "title": "Getting Started",
         "q1": "How do I create an account?",
         "a1": "Click on \"Sign Up\" in the header, fill in your information, and verify your email address.",
-        "q2": "How do I find an auto service?",
-        "a2": "Use the search bar on the homepage to search by location, service type, or keywords. You can also browse all services.",
+        "q2": "How do I find a service provider?",
+        "a2": "Use the search bar on the homepage to search by location, service type, or keywords. You can also browse all providers.",
         "q3": "How do I book a visit?",
         "a3": "Click on a service, select \"Book Visit\", choose a date and time, add your vehicle information, and confirm the booking."
       },
@@ -1565,8 +1569,8 @@
       },
       "serviceProviders": {
         "title": "For Service Providers",
-        "q1": "How do I register my auto service?",
-        "a1": "Create an account, then go to \"My Service\" to create your service profile. Fill in all required information and submit for approval.",
+        "q1": "How do I register my provider?",
+        "a1": "Create an account, then go to \"My Service\" to create your provider profile. Fill in all required information and submit for approval.",
         "q2": "How do I manage my bookings?",
         "a2": "Use the Dashboard to view, accept, complete, or cancel visits. You can also manage your schedule and availability.",
         "q3": "How do I update my service information?",

@@ -11,24 +11,21 @@ import { teamService, type PendingInvitation } from '@/lib/services/team.service
 import { formatDateFull } from '@/lib/utils/date';
 import { handleMutationError, handleMutationSuccess } from '@/lib/utils/toast';
 import { formatUserName } from '@/lib/utils/user';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 import { useUIStore } from '@/stores/uiStore';
 
 interface PendingInvitationsListProps {
   invitations: PendingInvitation[];
-  autoServiceId?: string;
+  providerId?: string;
 }
 
-export function PendingInvitationsList({
-  invitations,
-  autoServiceId,
-}: PendingInvitationsListProps) {
+export function PendingInvitationsList({ invitations, providerId }: PendingInvitationsListProps) {
   const t = useTranslations('dashboard.team.invitations');
   const tInvite = useTranslations('dashboard.team.invite'); // Use existing translations for QR code section
   const tCommon = useTranslations('common');
   const locale = useLocale();
   const { showToast } = useUIStore();
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
   const queryClient = useQueryClient();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; invitationId: string }>({
@@ -45,10 +42,7 @@ export function PendingInvitationsList({
 
   const cancelMutation = useMutation({
     mutationFn: (invitationId: string) =>
-      teamService.cancelInvitation(
-        invitationId,
-        autoServiceId || selectedAutoServiceId || undefined
-      ),
+      teamService.cancelInvitation(invitationId, providerId || selectedProviderId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teamInvitations'] });
       queryClient.invalidateQueries({ queryKey: ['team'] });

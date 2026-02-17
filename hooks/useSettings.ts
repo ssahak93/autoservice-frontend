@@ -23,7 +23,7 @@ export function useSettings() {
  */
 export function useUpdateSettings() {
   const callbacks = useMutationWithInvalidation(
-    [queryKeys.settings()],
+    [...queryKeys.settings()] as string[],
     'updated',
     'updateError',
     'profile.settings'
@@ -40,7 +40,7 @@ export function useUpdateSettings() {
  */
 export function useUpdateSetting() {
   const callbacks = useMutationWithInvalidation(
-    [queryKeys.settings()],
+    [...queryKeys.settings()] as string[],
     'updated',
     'updateError',
     'profile.settings'

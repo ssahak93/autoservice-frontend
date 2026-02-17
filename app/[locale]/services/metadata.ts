@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://autoserviceconnect.am';
+const baseUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  `https://${process.env.NEXT_PUBLIC_DOMAIN_NAME || 'autoserviceconnect.am'}`;
 
 export function generateServicesMetadata(locale: string): Metadata {
   const titles = {
@@ -18,21 +20,22 @@ export function generateServicesMetadata(locale: string): Metadata {
   return {
     title: titles[locale as keyof typeof titles] || titles.en,
     description: descriptions[locale as keyof typeof descriptions] || descriptions.en,
-    keywords: 'auto service, car repair, Armenia, Yerevan, verified service, car maintenance, diagnostics',
-    authors: [{ name: 'Auto Service Connect' }],
-    creator: 'Auto Service Connect',
-    publisher: 'Auto Service Connect',
+    keywords:
+      'auto service, car repair, Armenia, Yerevan, verified service, car maintenance, diagnostics',
+    authors: [{ name: process.env.NEXT_PUBLIC_BRAND_NAME || 'Auto Service Connect' }],
+    creator: process.env.NEXT_PUBLIC_BRAND_NAME || 'Auto Service Connect',
+    publisher: process.env.NEXT_PUBLIC_BRAND_NAME || 'Auto Service Connect',
     openGraph: {
       title: titles[locale as keyof typeof titles] || titles.en,
       description: descriptions[locale as keyof typeof descriptions] || descriptions.en,
       url: `${baseUrl}/${locale}/services`,
-      siteName: 'Auto Service Connect',
+      siteName: process.env.NEXT_PUBLIC_BRAND_NAME || 'Auto Service Connect',
       images: [
         {
           url: `${baseUrl}/og-image.jpg`,
           width: 1200,
           height: 630,
-          alt: 'Auto Service Connect',
+          alt: process.env.NEXT_PUBLIC_BRAND_NAME || 'Auto Service Connect',
         },
       ],
       locale: locale === 'hy' ? 'hy_AM' : locale === 'ru' ? 'ru_RU' : 'en_US',
@@ -43,7 +46,7 @@ export function generateServicesMetadata(locale: string): Metadata {
       title: titles[locale as keyof typeof titles] || titles.en,
       description: descriptions[locale as keyof typeof descriptions] || descriptions.en,
       images: [`${baseUrl}/og-image.jpg`],
-      creator: '@autoserviceconnect',
+      creator: `@${process.env.NEXT_PUBLIC_TWITTER_HANDLE || 'autoserviceconnect'}`,
     },
     alternates: {
       canonical: `${baseUrl}/${locale}/services`,
@@ -56,4 +59,3 @@ export function generateServicesMetadata(locale: string): Metadata {
     },
   };
 }
-

@@ -7,14 +7,14 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
+import { CreateServiceBanner } from '@/components/provider/CreateServiceBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from '@/i18n/routing';
 import { visitsService } from '@/lib/services/visits.service';
 import { cn } from '@/lib/utils/cn';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 
-import { AutoServiceSelector } from './AutoServiceSelector';
+import { ProviderSelector } from './ProviderSelector';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,37 +26,37 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
 
-  // Check if user owns an auto service
-  const isServiceOwner = user?.autoServices && user.autoServices.length > 0;
+  // Check if user owns a provider
+  const isServiceOwner = user?.providers && user.providers.length > 0;
 
   // Prefetch dashboard data on mount
   useEffect(() => {
-    if (isServiceOwner && selectedAutoServiceId) {
+    if (isServiceOwner && selectedProviderId) {
       // Prefetch statistics
       queryClient.prefetchQuery({
-        queryKey: ['dashboard', 'statistics', undefined, selectedAutoServiceId],
+        queryKey: ['dashboard', 'statistics', undefined, selectedProviderId],
         queryFn: () =>
-          visitsService.getAutoServiceStatistics({
-            autoServiceId: selectedAutoServiceId,
+          visitsService.getProviderStatistics({
+            providerId: selectedProviderId,
           }),
         staleTime: 10 * 60 * 1000,
       });
 
       // Prefetch recent visits
       queryClient.prefetchQuery({
-        queryKey: ['dashboard', 'visits', { page: 1, limit: 10 }, selectedAutoServiceId],
+        queryKey: ['dashboard', 'visits', { page: 1, limit: 10 }, selectedProviderId],
         queryFn: () =>
-          visitsService.getAutoServiceList({
+          visitsService.getProviderList({
             page: 1,
             limit: 10,
-            autoServiceId: selectedAutoServiceId,
+            providerId: selectedProviderId,
           }),
         staleTime: 2 * 60 * 1000,
       });
     }
-  }, [isServiceOwner, selectedAutoServiceId, queryClient]);
+  }, [isServiceOwner, selectedProviderId, queryClient]);
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -161,7 +161,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </div>
                   <div className="overflow-y-auto px-4 pb-4">
                     <div className="py-4">
-                      <AutoServiceSelector />
+                      <ProviderSelector />
                     </div>
                     <nav
                       className="space-y-2"
@@ -177,17 +177,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             onClick={() => setIsMobileMenuOpen(false)}
                             onMouseEnter={() => {
                               // Prefetch data on hover for better UX
-                              if (item.href === '/dashboard' && selectedAutoServiceId) {
+                              if (item.href === '/dashboard' && selectedProviderId) {
                                 queryClient.prefetchQuery({
                                   queryKey: [
                                     'dashboard',
                                     'statistics',
                                     undefined,
-                                    selectedAutoServiceId,
+                                    selectedProviderId,
                                   ],
                                   queryFn: () =>
-                                    visitsService.getAutoServiceStatistics({
-                                      autoServiceId: selectedAutoServiceId,
+                                    visitsService.getProviderStatistics({
+                                      providerId: selectedProviderId,
                                     }),
                                 });
                               }
@@ -225,7 +225,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </h2>
             </div>
             <div className="px-4 pb-4">
-              <AutoServiceSelector />
+              <ProviderSelector />
             </div>
             <nav
               className="space-y-2 px-4"
@@ -239,12 +239,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     href={item.href}
                     onMouseEnter={() => {
                       // Prefetch data on hover for better UX
-                      if (item.href === '/dashboard' && selectedAutoServiceId) {
+                      if (item.href === '/dashboard' && selectedProviderId) {
                         queryClient.prefetchQuery({
-                          queryKey: ['dashboard', 'statistics', undefined, selectedAutoServiceId],
+                          queryKey: ['dashboard', 'statistics', undefined, selectedProviderId],
                           queryFn: () =>
-                            visitsService.getAutoServiceStatistics({
-                              autoServiceId: selectedAutoServiceId,
+                            visitsService.getProviderStatistics({
+                              providerId: selectedProviderId,
                             }),
                         });
                       }

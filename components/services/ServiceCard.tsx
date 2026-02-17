@@ -9,10 +9,10 @@ import { Link } from '@/i18n/routing';
 import { getAvatarUrl } from '@/lib/utils/file';
 import { formatServiceName } from '@/lib/utils/user';
 import { isCurrentlyOpen, type WorkingHours as WorkingHoursUtil } from '@/lib/utils/workingHours';
-import type { AutoService } from '@/types';
+import type { Provider } from '@/types';
 
 interface ServiceCardProps {
-  service: AutoService;
+  service: Provider;
   index?: number;
   distance?: number; // Distance in km
 }
@@ -48,23 +48,26 @@ export function ServiceCard({ service, index = 0, distance }: ServiceCardProps) 
     >
       <Link href={`/services/${service.id}`} aria-label={`View details for ${name}`}>
         <div className="relative h-48 w-full overflow-hidden">
-          {getAvatarUrl(service) ? (
-            <Image
-              src={getAvatarUrl(service)!}
-              alt={name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              loading="lazy"
-              unoptimized
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary-400 to-secondary-400">
-              <span className="text-4xl font-bold text-white" aria-hidden="true">
-                {name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
+          {(() => {
+            const avatarUrl = getAvatarUrl(service);
+            return avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt={name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                loading="lazy"
+                unoptimized
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary-400 to-secondary-400">
+                <span className="text-4xl font-bold text-white" aria-hidden="true">
+                  {name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            );
+          })()}
           {service.isApproved && (
             <div
               className="absolute right-2 top-2 rounded-full bg-success-500 p-1"

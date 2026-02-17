@@ -5,10 +5,10 @@ import { Car } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
-import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
+import { CreateServiceBanner } from '@/components/provider/CreateServiceBanner';
 import { getAnimationVariants, getTransition } from '@/lib/utils/animations';
 import { getAvatarUrl } from '@/lib/utils/file';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 
 import { DashboardStats } from './DashboardStats';
 import { RecentVisits } from './RecentVisits';
@@ -17,24 +17,24 @@ export function DashboardContent() {
   const t = useTranslations('dashboard');
   const variants = getAnimationVariants();
   const transition = getTransition(0.3);
-  const { getSelectedAutoService } = useAutoServiceStore();
+  const { getSelectedProvider } = useProviderStore();
 
-  // Get service name and avatar
-  const selectedService = getSelectedAutoService();
+  // Get provider name and avatar
+  const selectedProvider = getSelectedProvider();
 
-  const getServiceName = () => {
-    if (!selectedService) return null;
-    if (selectedService.serviceType === 'company' && selectedService.companyName) {
-      return selectedService.companyName;
+  const getProviderName = () => {
+    if (!selectedProvider) return null;
+    if (selectedProvider.serviceType === 'company' && selectedProvider.companyName) {
+      return selectedProvider.companyName;
     }
-    if (selectedService.firstName || selectedService.lastName) {
-      return `${selectedService.firstName || ''} ${selectedService.lastName || ''}`.trim();
+    if (selectedProvider.firstName || selectedProvider.lastName) {
+      return `${selectedProvider.firstName || ''} ${selectedProvider.lastName || ''}`.trim();
     }
-    return selectedService.name || null;
+    return selectedProvider.name || null;
   };
 
-  const serviceName = getServiceName();
-  const serviceAvatar = selectedService ? getAvatarUrl(selectedService) : null;
+  const providerName = getProviderName();
+  const providerAvatar = selectedProvider ? getAvatarUrl(selectedProvider) : null;
 
   return (
     <motion.div
@@ -65,11 +65,11 @@ export function DashboardContent() {
         className="mb-6 sm:mb-8"
       >
         <div className="flex items-center gap-4">
-          {/* Service Avatar */}
-          {serviceAvatar ? (
+          {/* Provider Avatar */}
+          {providerAvatar ? (
             <Image
-              src={serviceAvatar}
-              alt={serviceName || 'Service'}
+              src={providerAvatar}
+              alt={providerName || 'Provider'}
               width={56}
               height={56}
               className="h-14 w-14 rounded-full object-cover"
@@ -84,13 +84,13 @@ export function DashboardContent() {
             <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl dark:text-white">
               {t('title', { defaultValue: 'Dashboard' })}
             </h1>
-            {serviceName && (
+            {providerName && (
               <p className="mt-1 text-lg font-semibold text-primary-600 dark:text-primary-400">
-                {serviceName}
+                {providerName}
               </p>
             )}
             <p className="mt-2 text-sm text-gray-600 sm:text-base dark:text-gray-400">
-              {t('subtitle', { defaultValue: 'Overview of your auto service' })}
+              {t('subtitle', { defaultValue: 'Overview of your provider' })}
             </p>
           </div>
         </div>

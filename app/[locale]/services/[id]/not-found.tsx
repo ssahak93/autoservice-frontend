@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: ServiceNotFoundProps): Promis
   await getLocaleFromParams(params);
   const t = await getTranslations('services');
   return {
-    title: `${t('notFound', { defaultValue: 'Service Not Found' })} - Auto Service Connect`,
+    title: `${t('notFound', { defaultValue: 'Provider Not Found' })} - Auto Service Connect`,
   };
 }
 
@@ -53,11 +53,11 @@ export default async function ServiceNotFound({ params }: ServiceNotFoundProps) 
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
       <div className="text-center">
         <h1 className="mb-4 font-display text-4xl font-bold text-neutral-900 sm:text-5xl">
-          {t('notFound', { defaultValue: 'Service Not Found' })}
+          {t('notFound', { defaultValue: 'Provider Not Found' })}
         </h1>
         <p className="mb-8 text-lg text-neutral-600">
           {t('notFoundDescription', {
-            defaultValue: 'The service you are looking for does not exist or has been removed.',
+            defaultValue: 'The provider you are looking for does not exist or has been removed.',
           })}
         </p>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">

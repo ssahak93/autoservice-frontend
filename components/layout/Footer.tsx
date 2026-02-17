@@ -10,8 +10,8 @@ export function Footer() {
   const tFooter = useTranslations('footer');
   const { isAuthenticated, user } = useAuth();
 
-  // Check if user owns an auto service
-  const isServiceOwner = user?.autoServices && user.autoServices.length > 0;
+  // Check if user owns a provider
+  const isServiceOwner = user?.providers && user.providers.length > 0;
 
   return (
     <footer className="border-t border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">

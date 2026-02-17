@@ -13,11 +13,10 @@ export interface User {
   };
   isActive?: boolean;
   isBlocked?: boolean;
-  // For backward compatibility - first auto service
-  autoService?: {
+  // For backward compatibility - first provider
+  provider?: {
     id: string;
     serviceType: 'individual' | 'company';
-    businessType?: BusinessType;
     firstName: string | null;
     lastName: string | null;
     companyName: string | null;
@@ -30,11 +29,10 @@ export interface User {
     } | null;
     avatarUrl?: string | null;
   } | null;
-  // All auto services owned by user
-  autoServices?: Array<{
+  // All providers owned by user
+  providers?: Array<{
     id: string;
     serviceType: 'individual' | 'company';
-    businessType?: BusinessType;
     firstName: string | null;
     lastName: string | null;
     companyName: string | null;
@@ -49,7 +47,7 @@ export interface User {
   }>;
   teamMemberships?: Array<{
     id: string;
-    autoServiceId: string;
+    providerId: string;
     role: string;
     isActive: boolean;
   }>;
@@ -80,22 +78,10 @@ export interface AuthResponse {
   };
 }
 
-// Business Type
-export type BusinessType =
-  | 'auto_service'
-  | 'auto_shop'
-  | 'car_wash'
-  | 'cleaning'
-  | 'tire_service'
-  | 'towing'
-  | 'tinting'
-  | 'other';
-
-// Auto Service types
-export interface AutoService {
+// Provider types
+export interface Provider {
   id: string;
   serviceType: 'individual' | 'company';
-  businessType?: BusinessType; // Тип бизнеса
   companyName?: string;
   firstName?: string;
   lastName?: string;
@@ -212,13 +198,13 @@ export interface UpdateVehicleRequest {
 export interface Visit {
   id: string;
   userId: string;
-  autoServiceId: string;
-  autoServiceProfileId: string;
+  providerId: string;
+  providerBranchId: string;
   assignedEmployeeId?: string;
   vehicleId?: string;
   scheduledDate: string; // ISO date string (YYYY-MM-DD or full ISO)
   scheduledTime: string; // HH:mm format
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
   problemDescription?: string;
   customerNotes?: string;
   confirmedDate?: string; // ISO date string
@@ -238,19 +224,19 @@ export interface Visit {
     lpgType?: LpgType;
     horsepower?: number;
   };
-  autoService?: {
+  provider?: {
     id: string;
     serviceType?: 'individual' | 'company';
     companyName?: string;
     firstName?: string;
     lastName?: string;
-    profile?: {
+    branch?: {
       id: string;
     };
   };
-  autoServiceProfile?: {
+  providerBranch?: {
     id: string;
-    autoService?: {
+    provider?: {
       serviceType?: 'individual' | 'company';
       companyName?: string;
       firstName?: string;
@@ -283,7 +269,7 @@ export interface Visit {
 }
 
 export interface CreateVisitRequest {
-  autoServiceId: string;
+  providerId: string;
   scheduledDate: string; // ISO 8601 date string (YYYY-MM-DD)
   scheduledTime: string; // HH:mm format
   problemDescription?: string;
@@ -302,7 +288,7 @@ export interface Review {
   isVerified?: boolean;
   userId?: string; // User ID who created the review
   reportedByCurrentUser?: boolean; // Whether current user has reported this review
-  autoServiceProfileId?: string;
+  providerBranchId?: string;
   visitId?: string;
   driver?: {
     firstName: string;
@@ -314,7 +300,7 @@ export interface Review {
 }
 
 export interface CreateReviewRequest {
-  autoServiceProfileId: string;
+  providerBranchId: string;
   visitId?: string;
   rating: number;
   comment?: string;

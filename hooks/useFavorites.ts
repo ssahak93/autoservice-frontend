@@ -8,15 +8,15 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { queryKeys, queryConfig } from '@/lib/api/query-config';
 import { unwrapResponseData, unwrapArrayResponse } from '@/lib/utils/api-response';
 import { useUIStore } from '@/stores/uiStore';
-import type { AutoService } from '@/types';
+import type { Provider } from '@/types';
 
 interface Favorite {
   id: string;
   userId: string;
-  autoServiceProfileId: string;
+  providerBranchId: string;
   createdAt: string;
-  autoServiceProfile?: {
-    autoService: AutoService;
+  providerBranch?: {
+    provider: Provider;
   };
 }
 
@@ -78,7 +78,7 @@ export const useAddToFavorites = () => {
         const tempFavorite: Favorite = {
           id: `temp-${Date.now()}`,
           userId: '',
-          autoServiceProfileId: profileId,
+          providerBranchId: profileId,
           createdAt: new Date().toISOString(),
         };
         return [...old, tempFavorite];
@@ -93,7 +93,7 @@ export const useAddToFavorites = () => {
       queryClient.setQueryData<Favorite[]>(queryKeys.favorites(), (old) => {
         if (!old) return old;
         return old.map((fav) =>
-          fav.id.startsWith('temp-') && fav.autoServiceProfileId === profileId ? data : fav
+          fav.id.startsWith('temp-') && fav.providerBranchId === profileId ? data : fav
         );
       });
       showToast(t('addedToFavorites', { defaultValue: 'Added to favorites' }), 'success');
@@ -134,7 +134,7 @@ export const useRemoveFromFavorites = () => {
       // Optimistically update
       queryClient.setQueryData<Favorite[]>(queryKeys.favorites(), (old) => {
         if (!old) return old;
-        return old.filter((fav) => fav.autoServiceProfileId !== profileId);
+        return old.filter((fav) => fav.providerBranchId !== profileId);
       });
 
       queryClient.setQueryData<boolean>(queryKeys.favorite(profileId), () => false);

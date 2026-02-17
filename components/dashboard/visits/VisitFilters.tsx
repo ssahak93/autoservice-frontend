@@ -27,8 +27,10 @@ const statusOptions = [
   { value: '', label: 'all' },
   { value: 'pending', label: 'pending' },
   { value: 'confirmed', label: 'confirmed' },
+  { value: 'in_progress', label: 'in_progress' },
   { value: 'completed', label: 'completed' },
   { value: 'cancelled', label: 'cancelled' },
+  { value: 'no_show', label: 'no_show' },
 ] as const;
 
 export function VisitFilters({ filters, onFilterChange }: VisitFiltersProps) {

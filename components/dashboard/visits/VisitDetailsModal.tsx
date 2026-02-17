@@ -159,17 +159,20 @@ export function VisitDetailsModal({
                     </h3>
                     <div className="flex items-center gap-3">
                       {(() => {
-                        const autoService =
-                          visit.autoServiceProfile?.autoService || visit.autoService;
-                        const serviceAvatar = getAvatarUrl(autoService);
-                        return serviceAvatar ? (
+                        const provider = visit.providerBranch?.provider || visit.provider;
+                        // Only providerBranch.provider has avatarFile, visit.provider doesn't
+                        const providerWithAvatar = visit.providerBranch?.provider;
+                        const providerAvatar = providerWithAvatar
+                          ? getAvatarUrl(providerWithAvatar)
+                          : null;
+                        return providerAvatar ? (
                           <Image
-                            src={serviceAvatar}
+                            src={providerAvatar}
                             alt={
-                              autoService?.serviceType === 'company'
-                                ? autoService?.companyName || 'Service'
-                                : `${autoService?.firstName || ''} ${autoService?.lastName || ''}`.trim() ||
-                                  'Service'
+                              provider?.serviceType === 'company'
+                                ? provider?.companyName || 'Provider'
+                                : `${provider?.firstName || ''} ${provider?.lastName || ''}`.trim() ||
+                                  'Provider'
                             }
                             width={40}
                             height={40}
@@ -185,33 +188,29 @@ export function VisitDetailsModal({
                       <div className="flex-1">
                         <p className="font-semibold text-gray-900 dark:text-white">
                           {(() => {
-                            const autoService =
-                              visit.autoServiceProfile?.autoService || visit.autoService;
-                            const serviceType = autoService?.serviceType;
+                            const provider = visit.providerBranch?.provider || visit.provider;
+                            const serviceType = provider?.serviceType;
                             const isCompany = serviceType === 'company';
 
-                            let serviceName = '';
-                            if (isCompany && autoService?.companyName) {
-                              serviceName = autoService.companyName;
-                            } else if (
-                              !isCompany &&
-                              (autoService?.firstName || autoService?.lastName)
-                            ) {
-                              serviceName =
-                                `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim();
+                            let providerName = '';
+                            if (isCompany && provider?.companyName) {
+                              providerName = provider.companyName;
+                            } else if (!isCompany && (provider?.firstName || provider?.lastName)) {
+                              providerName =
+                                `${provider.firstName || ''} ${provider.lastName || ''}`.trim();
                             } else {
-                              serviceName = t('service', { defaultValue: 'Service' });
+                              providerName = t('service', { defaultValue: 'Provider' });
                             }
 
                             const typeLabel = isCompany
                               ? t('company', { defaultValue: 'Company' })
                               : t('individual', { defaultValue: 'Individual' });
 
-                            return `${serviceName} (${typeLabel})`;
+                            return `${providerName} (${typeLabel})`;
                           })()}
                         </p>
                       </div>
-                      <Link href={`/services/${visit.autoServiceProfileId}`}>
+                      <Link href={`/services/${visit.providerBranchId}`}>
                         <Button variant="outline" size="sm" className="flex items-center gap-1">
                           <ExternalLink className="h-3 w-3" />
                           {t('viewService', { defaultValue: 'View Service' })}

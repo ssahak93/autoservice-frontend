@@ -1,24 +1,14 @@
 /**
- * Server-side services for auto services
+ * Server-side services for providers
  * Used in Next.js App Router server components
  */
 
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { serverApiClient } from '@/lib/api/server-client';
 import { cleanParams } from '@/lib/utils/params';
-import type { AutoService, PaginatedResponse } from '@/types';
+import type { Provider, PaginatedResponse } from '@/types';
 
 export interface ServiceSearchParams {
-  businessTypes?: Array<
-    | 'auto_service'
-    | 'auto_shop'
-    | 'car_wash'
-    | 'cleaning'
-    | 'tire_service'
-    | 'towing'
-    | 'tinting'
-    | 'other'
-  >;
   regionId?: string;
   communityId?: string;
   serviceTypes?: string[];
@@ -40,9 +30,8 @@ interface BackendSearchResponse {
     id: string;
     name: string;
     serviceType: string;
-    businessType?: string;
     description: string;
-    address: string;
+    address?: string;
     addressHy?: string;
     addressRu?: string;
     community?: string;
@@ -54,10 +43,10 @@ interface BackendSearchResponse {
     services: Array<{
       id: string;
       name: string;
-      category: string;
+      category?: string; // Category is optional now
     }>;
     avatarUrl: string | null;
-    isApproved: boolean; // Approval status from AutoService (primary table)
+    isApproved: boolean; // Approval status from Provider (primary table)
     isBlocked?: boolean; // Blocked services should not be shown in public
     blockedReason?: string | null;
   }>;
@@ -76,15 +65,6 @@ interface BackendDetailResponse {
   id: string;
   name: string;
   serviceType: 'individual' | 'company';
-  businessType?:
-    | 'auto_service'
-    | 'auto_shop'
-    | 'car_wash'
-    | 'cleaning'
-    | 'tire_service'
-    | 'towing'
-    | 'tinting'
-    | 'other';
   description: string | null;
   specialization: string | null;
   yearsOfExperience: number | null;
@@ -101,7 +81,7 @@ interface BackendDetailResponse {
   services: Array<{
     id: string;
     name: string;
-    category: string;
+    category?: string; // Category is optional now
   }>;
   profilePhotoFileIds: string[]; // Backend returns URLs, not IDs
   workPhotoFileIds: string[]; // Backend returns URLs, not IDs
@@ -115,9 +95,9 @@ interface BackendDetailResponse {
 }
 
 /**
- * Transform backend search response to frontend AutoService format
+ * Transform backend search response to frontend Provider format
  */
-function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoService {
+function transformSearchResult(result: BackendSearchResponse['data'][0]): Provider {
   // Safely split name, handling empty or single-word names
   const nameParts = (result.name || '').trim().split(/\s+/).filter(Boolean);
   const firstName = nameParts[0] || '';
@@ -126,16 +106,6 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoSe
   return {
     id: result.id,
     serviceType: result.serviceType as 'individual' | 'company',
-    businessType: result.businessType as
-      | 'auto_service'
-      | 'auto_shop'
-      | 'car_wash'
-      | 'cleaning'
-      | 'tire_service'
-      | 'towing'
-      | 'tinting'
-      | 'other'
-      | undefined,
     companyName: result.serviceType === 'company' ? result.name || undefined : undefined,
     firstName: result.serviceType === 'individual' ? firstName || undefined : undefined,
     lastName: result.serviceType === 'individual' ? lastName || undefined : undefined,
@@ -159,13 +129,19 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): AutoSe
         }
       : undefined,
     specialization: result.services?.[0]?.name || undefined,
+    // Transform services array, preserving category (optional)
+    services: result.services?.map((service) => ({
+      id: service.id,
+      name: service.name,
+      category: service.category, // Category is optional now
+    })),
   };
 }
 
 /**
- * Transform backend detail response to frontend AutoService format
+ * Transform backend detail response to frontend Provider format
  */
-function transformDetailResponse(response: BackendDetailResponse): AutoService {
+function transformDetailResponse(response: BackendDetailResponse): Provider {
   // Safely split name, handling empty or single-word names
   const nameParts = (response.name || '').trim().split(/\s+/).filter(Boolean);
   const firstName = nameParts[0] || '';
@@ -178,7 +154,6 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
   return {
     id: response.id,
     serviceType: response.serviceType,
-    businessType: response.businessType,
     companyName: response.serviceType === 'company' ? response.name || undefined : undefined,
     firstName: response.serviceType === 'individual' ? firstName || undefined : undefined,
     lastName: response.serviceType === 'individual' ? lastName || undefined : undefined,
@@ -204,7 +179,12 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
           fileUrl: response.avatarUrl,
         }
       : undefined,
-    services: response.services,
+    // Transform services array, preserving category (optional)
+    services: response.services?.map((service) => ({
+      id: service.id,
+      name: service.name,
+      category: service.category, // Category is optional now
+    })),
     profilePhotoFileIds: profilePhotoUrls,
     workPhotoFileIds: workPhotoUrls,
     yearsOfExperience: response.yearsOfExperience || undefined,
@@ -213,16 +193,16 @@ function transformDetailResponse(response: BackendDetailResponse): AutoService {
 
 export const servicesServerService = {
   /**
-   * Search auto services (server-side)
+   * Search providers (server-side)
    */
   async search(
     params: ServiceSearchParams,
     locale: string = 'hy'
-  ): Promise<PaginatedResponse<AutoService>> {
+  ): Promise<PaginatedResponse<Provider>> {
     const cleanedParams = cleanParams(params);
 
     const response = await serverApiClient.get<BackendSearchResponse>(
-      API_ENDPOINTS.AUTO_SERVICES.SEARCH,
+      API_ENDPOINTS.PROVIDERS.SEARCH,
       {
         params: cleanedParams,
         headers: {
@@ -239,12 +219,12 @@ export const servicesServerService = {
   },
 
   /**
-   * Get service by ID (server-side)
+   * Get provider by ID (server-side)
    */
-  async getById(id: string, locale: string = 'hy'): Promise<AutoService | null> {
+  async getById(id: string, locale: string = 'hy'): Promise<Provider | null> {
     try {
       const response = await serverApiClient.get<BackendDetailResponse>(
-        API_ENDPOINTS.AUTO_SERVICES.DETAIL(id),
+        API_ENDPOINTS.PROVIDERS.DETAIL(id),
         {
           headers: {
             'Accept-Language': locale,

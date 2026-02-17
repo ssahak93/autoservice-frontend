@@ -39,7 +39,7 @@ export const notificationsService = {
    * Get user notifications
    */
   async getNotifications(filters?: NotificationFilters) {
-    const queryParams = buildQueryParams(filters || {}, false);
+    const queryParams = buildQueryParams((filters || {}) as Record<string, unknown>, false);
 
     const response = await apiClient.get<
       | {

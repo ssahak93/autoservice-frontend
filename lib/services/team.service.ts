@@ -2,12 +2,12 @@ import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { unwrapResponseData, unwrapArrayResponse } from '@/lib/utils/api-response';
 
-export type AutoServiceRole = 'owner' | 'manager' | 'employee';
+export type ProviderRole = 'owner' | 'manager' | 'employee';
 
 export interface TeamMember {
   id: string;
   userId: string | null;
-  role: AutoServiceRole;
+  role: ProviderRole;
   firstName: string;
   lastName: string;
   avatarFileId: string | null;
@@ -21,7 +21,7 @@ export interface TeamMember {
 }
 
 export interface InviteTeamMemberRequest {
-  role: AutoServiceRole;
+  role: ProviderRole;
   specialization?: string;
   bio?: string;
   yearsOfExperience?: number;
@@ -34,7 +34,7 @@ export interface UpdateTeamMemberRequest {
   avatarFileId?: string;
   specialization?: string;
   bio?: string;
-  role?: AutoServiceRole;
+  role?: ProviderRole;
   isActive?: boolean;
   yearsOfExperience?: number;
   workPhotoFileIds?: string[];
@@ -52,7 +52,7 @@ export interface QRInvitationResponse {
 
 export interface PendingInvitation {
   id: string;
-  role: AutoServiceRole;
+  role: ProviderRole;
   firstName: string;
   lastName: string;
   specialization: string | null;
@@ -66,8 +66,8 @@ export interface PendingInvitation {
 }
 
 export const teamService = {
-  async getTeam(autoServiceId?: string): Promise<TeamMember[]> {
-    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+  async getTeam(providerId?: string): Promise<TeamMember[]> {
+    const config = providerId ? { params: { providerId } } : undefined;
     const response = await apiClient.get<TeamMember[] | { success: boolean; data: TeamMember[] }>(
       API_ENDPOINTS.TEAM.LIST,
       config
@@ -77,9 +77,9 @@ export const teamService = {
 
   async generateInvitationQR(
     data: InviteTeamMemberRequest,
-    autoServiceId?: string
+    providerId?: string
   ): Promise<QRInvitationResponse> {
-    const params = autoServiceId ? { autoServiceId } : {};
+    const params = providerId ? { providerId } : {};
     const response = await apiClient.post<
       QRInvitationResponse | { success: boolean; data: QRInvitationResponse }
     >(API_ENDPOINTS.TEAM.GENERATE_QR, data, { params });
@@ -89,9 +89,9 @@ export const teamService = {
   async updateTeamMember(
     memberId: string,
     data: UpdateTeamMemberRequest,
-    autoServiceId?: string
+    providerId?: string
   ): Promise<TeamMember> {
-    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+    const config = providerId ? { params: { providerId } } : undefined;
     const response = await apiClient.put<TeamMember | { success: boolean; data: TeamMember }>(
       API_ENDPOINTS.TEAM.UPDATE(memberId),
       data,
@@ -102,9 +102,9 @@ export const teamService = {
 
   async removeTeamMember(
     memberId: string,
-    autoServiceId?: string
+    providerId?: string
   ): Promise<{ success: boolean; message: string }> {
-    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+    const config = providerId ? { params: { providerId } } : undefined;
     const response = await apiClient.delete<{ success: boolean; message: string }>(
       API_ENDPOINTS.TEAM.REMOVE(memberId),
       config
@@ -112,8 +112,8 @@ export const teamService = {
     return unwrapResponseData(response);
   },
 
-  async getPendingInvitations(autoServiceId?: string): Promise<PendingInvitation[]> {
-    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+  async getPendingInvitations(providerId?: string): Promise<PendingInvitation[]> {
+    const config = providerId ? { params: { providerId } } : undefined;
     const response = await apiClient.get<
       PendingInvitation[] | { success: boolean; data: PendingInvitation[] }
     >(API_ENDPOINTS.TEAM.PENDING_INVITATIONS, config);
@@ -122,9 +122,9 @@ export const teamService = {
 
   async cancelInvitation(
     invitationId: string,
-    autoServiceId?: string
+    providerId?: string
   ): Promise<{ success: boolean; message: string }> {
-    const config = autoServiceId ? { params: { autoServiceId } } : undefined;
+    const config = providerId ? { params: { providerId } } : undefined;
     const response = await apiClient.delete<{ success: boolean; message: string }>(
       API_ENDPOINTS.TEAM.CANCEL_INVITATION(invitationId),
       config

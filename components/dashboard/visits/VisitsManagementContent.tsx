@@ -5,9 +5,9 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import { useAutoServiceVisits } from '@/hooks/useDashboard';
+import { useProviderVisits } from '@/hooks/useDashboard';
 import { visitsService } from '@/lib/services/visits.service';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 import { useUIStore } from '@/stores/uiStore';
 import type { Visit } from '@/types';
 
@@ -52,7 +52,7 @@ export function VisitsManagementContent() {
   const t = useTranslations('dashboard.visits');
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
 
   const [filters, setFilters] = useState<{
     status?: string;
@@ -67,7 +67,7 @@ export function VisitsManagementContent() {
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
   const [action, setAction] = useState<VisitAction>(null);
 
-  const { data: visitsData, isLoading } = useAutoServiceVisits(filters);
+  const { data: visitsData, isLoading } = useProviderVisits(filters);
 
   const handleFilterChange = (newFilters: typeof filters) => {
     setFilters({ ...filters, ...newFilters, page: 1 });
@@ -107,7 +107,7 @@ export function VisitsManagementContent() {
           confirmedTime: data.confirmedTime,
           notes: data.notes,
         },
-        selectedAutoServiceId || undefined
+        selectedProviderId || undefined
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'visits'] });
@@ -126,7 +126,7 @@ export function VisitsManagementContent() {
   // Complete visit mutation
   const completeMutation = useMutation({
     mutationFn: (data: { id: string; notes?: string }) =>
-      visitsService.completeVisit(data.id, data.notes, selectedAutoServiceId || undefined),
+      visitsService.completeVisit(data.id, data.notes, selectedProviderId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'visits'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'statistics'] });
@@ -168,7 +168,7 @@ export function VisitsManagementContent() {
           scheduledDate: data.scheduledDate,
           scheduledTime: data.scheduledTime,
         },
-        selectedAutoServiceId || undefined
+        selectedProviderId || undefined
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'visits'] });

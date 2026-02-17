@@ -65,14 +65,15 @@ export function NotificationItem({ notification, compact = false }: Notification
   // Determine navigation link based on notification type
   const getNotificationLink = () => {
     if (visitId) {
-      // For visit-related notifications, determine if user is service owner or customer
-      const isServiceOwner = visit?.autoService?.userId === user?.id;
+      // For visit-related notifications, determine if user is customer or provider
+      // If visit.userId === user.id, user is the customer; otherwise they're provider/team member
+      const isCustomer = visit?.userId === user?.id;
 
-      // If user is service owner, link to dashboard visits; otherwise to user visits
-      if (isServiceOwner) {
-        return `/${locale}/dashboard/visits`;
+      // If user is customer, link to user visits; otherwise to dashboard visits
+      if (isCustomer) {
+        return `/${locale}/visits`;
       }
-      return `/${locale}/visits`;
+      return `/${locale}/dashboard/visits`;
     }
     if (messageId || notification.type === 'new_message') {
       return `/${locale}/dashboard/messages`;

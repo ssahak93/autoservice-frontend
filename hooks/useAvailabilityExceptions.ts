@@ -4,7 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { availabilityService } from '@/lib/services/availability.service';
 import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 
 export interface AvailabilityException {
   id: string;
@@ -19,17 +19,17 @@ export interface AvailabilityException {
  * Hook for availability exceptions
  * Follows Single Responsibility Principle - handles only availability exception operations
  */
-export function useAvailabilityExceptions(autoServiceId: string | null) {
-  const { selectedAutoServiceId: storeSelectedId } = useAutoServiceStore();
+export function useAvailabilityExceptions(providerId: string | null) {
+  const { selectedProviderId: storeSelectedId } = useProviderStore();
 
-  // Get selected auto service ID (use provided ID or from store)
-  const selectedAutoServiceId = autoServiceId || storeSelectedId;
+  // Get selected provider ID (use provided ID or from store)
+  const selectedProviderId = providerId || storeSelectedId;
 
   // Fetch exceptions
   const { data: exceptions = [], isLoading } = useQuery({
-    queryKey: ['availability-exceptions', selectedAutoServiceId],
-    queryFn: () => availabilityService.getExceptions(selectedAutoServiceId || undefined),
-    enabled: !!selectedAutoServiceId,
+    queryKey: ['availability-exceptions', selectedProviderId],
+    queryFn: () => availabilityService.getExceptions(selectedProviderId || undefined),
+    enabled: !!selectedProviderId,
   });
 
   // Common callbacks for all mutations
@@ -48,7 +48,7 @@ export function useAvailabilityExceptions(autoServiceId: string | null) {
       startTime?: string;
       endTime?: string;
       reason?: string;
-    }) => availabilityService.createException(data, selectedAutoServiceId || undefined),
+    }) => availabilityService.createException(data, selectedProviderId || undefined),
     ...commonCallbacks,
   });
 
@@ -67,7 +67,7 @@ export function useAvailabilityExceptions(autoServiceId: string | null) {
         endTime: data.endTime ?? undefined,
         reason: data.reason ?? undefined,
       };
-      return availabilityService.updateException(id, cleanData, selectedAutoServiceId || undefined);
+      return availabilityService.updateException(id, cleanData, selectedProviderId || undefined);
     },
     ...updateCallbacks,
   });

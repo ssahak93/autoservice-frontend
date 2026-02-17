@@ -6,8 +6,8 @@ import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCallback } from 'react';
 
-import { ServiceCardSkeleton } from '@/components/auto-service/ServiceCardSkeleton';
-import { ServiceStatusBadge } from '@/components/auto-service/ServiceStatusBadge';
+import { ServiceCardSkeleton } from '@/components/provider/ServiceCardSkeleton';
+import { ServiceStatusBadge } from '@/components/provider/ServiceStatusBadge';
 import { Button } from '@/components/ui/Button';
 import { getTransition } from '@/lib/utils/animations';
 import { formatDateFull } from '@/lib/utils/date';

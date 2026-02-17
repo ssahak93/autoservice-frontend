@@ -18,7 +18,7 @@ export interface Message {
   visitId?: string | null;
   conversationId?: string | null;
   senderId: string;
-  autoServiceId?: string | null;
+  providerId?: string | null;
   teamMemberId?: string | null;
   content: string;
   messageType: 'text' | 'image' | 'sticker';
@@ -39,7 +39,7 @@ export interface Message {
       fileUrl: string;
     } | null;
   };
-  autoService?: {
+  provider?: {
     id: string;
     serviceType: string;
     companyName: string | null;
@@ -218,7 +218,7 @@ export const chatService = {
   /**
    * Get all conversations for auto service
    */
-  async getConversations(autoServiceId?: string): Promise<{
+  async getConversations(providerId?: string): Promise<{
     data: Array<{
       visitId: string;
       visit: {
@@ -242,33 +242,109 @@ export const chatService = {
       unreadCount: number;
     }>;
   }> {
-    const response = await apiClient.get<{
-      data: Array<{
-        visitId: string;
-        visit: {
-          id: string;
-          scheduledDate: string;
-          scheduledTime: string;
-          status: string;
-        };
-        customer: {
-          id: string;
-          firstName: string;
-          lastName: string;
-          avatarUrl: string | null;
-        };
-        lastMessage: {
-          id: string;
-          content: string;
-          createdAt: string;
-          senderId: string;
-        } | null;
-        unreadCount: number;
-      }>;
-    }>(API_ENDPOINTS.CHAT.CONVERSATIONS, {
-      params: autoServiceId ? { autoServiceId } : undefined,
+    const response = await apiClient.get<
+      | {
+          data: Array<{
+            visitId: string;
+            visit: {
+              id: string;
+              scheduledDate: string;
+              scheduledTime: string;
+              status: string;
+            };
+            customer: {
+              id: string;
+              firstName: string;
+              lastName: string;
+              avatarUrl: string | null;
+            };
+            lastMessage: {
+              id: string;
+              content: string;
+              createdAt: string;
+              senderId: string;
+            } | null;
+            unreadCount: number;
+          }>;
+        }
+      | {
+          success: boolean;
+          data: Array<{
+            visitId: string;
+            visit: {
+              id: string;
+              scheduledDate: string;
+              scheduledTime: string;
+              status: string;
+            };
+            customer: {
+              id: string;
+              firstName: string;
+              lastName: string;
+              avatarUrl: string | null;
+            };
+            lastMessage: {
+              id: string;
+              content: string;
+              createdAt: string;
+              senderId: string;
+            } | null;
+            unreadCount: number;
+          }>;
+        }
+    >(API_ENDPOINTS.CHAT.CONVERSATIONS, {
+      params: providerId ? { providerId } : undefined,
     });
-    return unwrapResponseData(response);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = unwrapResponseData(response as any) as
+      | {
+          data: Array<{
+            visitId: string;
+            visit: {
+              id: string;
+              scheduledDate: string;
+              scheduledTime: string;
+              status: string;
+            };
+            customer: {
+              id: string;
+              firstName: string;
+              lastName: string;
+              avatarUrl: string | null;
+            };
+            lastMessage: {
+              id: string;
+              content: string;
+              createdAt: string;
+              senderId: string;
+            } | null;
+            unreadCount: number;
+          }>;
+        }
+      | Array<{
+          visitId: string;
+          visit: {
+            id: string;
+            scheduledDate: string;
+            scheduledTime: string;
+            status: string;
+          };
+          customer: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            avatarUrl: string | null;
+          };
+          lastMessage: {
+            id: string;
+            content: string;
+            createdAt: string;
+            senderId: string;
+          } | null;
+          unreadCount: number;
+        }>;
+    // Handle both array and { data: array } formats
+    return Array.isArray(data) ? { data } : data;
   },
 
   // Admin conversation methods
@@ -277,9 +353,15 @@ export const chatService = {
    */
   async getAdminConversations(): Promise<{ data: AdminConversation[] }> {
     const response = await apiClient.get<
-      { data: AdminConversation[] } | { success: boolean; data: { data: AdminConversation[] } }
+      | { data: AdminConversation[] }
+      | { success: boolean; data: { data: AdminConversation[] } }
+      | AdminConversation[]
     >('/chat/admin/conversations');
-    return unwrapResponseData(response);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = unwrapResponseData(response as any) as
+      | { data: AdminConversation[] }
+      | AdminConversation[];
+    return Array.isArray(data) ? { data } : data;
   },
 
   /**

@@ -1,10 +1,7 @@
 'use client';
 
-import { Car, Droplets, ShoppingBag, Sparkles, Wrench } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback } from 'react';
 
-import { Button } from '@/components/ui/Button';
 import type { ServiceSearchParams } from '@/lib/services/services.service';
 
 interface QuickFiltersProps {
@@ -12,94 +9,23 @@ interface QuickFiltersProps {
   onFiltersChange: (filters: ServiceSearchParams) => void;
 }
 
-const QUICK_FILTERS = [
-  {
-    key: 'auto_service',
-    icon: Wrench,
-    labelKey: 'businessTypes.auto_service',
-  },
-  {
-    key: 'car_wash',
-    icon: Droplets,
-    labelKey: 'businessTypes.car_wash',
-  },
-  {
-    key: 'auto_shop',
-    icon: ShoppingBag,
-    labelKey: 'businessTypes.auto_shop',
-  },
-  {
-    key: 'cleaning',
-    icon: Sparkles,
-    labelKey: 'businessTypes.cleaning',
-  },
-  {
-    key: 'tire_service',
-    icon: Car,
-    labelKey: 'businessTypes.tire_service',
-  },
-] as const;
-
 /**
  * QuickFilters Component
  *
  * Provides quick access to common business type filters
  */
-export function QuickFilters({ filters, onFiltersChange }: QuickFiltersProps) {
+export function QuickFilters(_props: QuickFiltersProps) {
   const t = useTranslations('services');
 
-  const handleQuickFilterClick = useCallback(
-    (businessType: string) => {
-      const currentTypes = filters.businessTypes || [];
-      const isSelected = currentTypes.includes(
-        businessType as NonNullable<ServiceSearchParams['businessTypes']>[number]
-      );
-
-      const newTypes = isSelected
-        ? currentTypes.filter((bt) => bt !== businessType)
-        : [
-            ...currentTypes,
-            businessType as NonNullable<ServiceSearchParams['businessTypes']>[number],
-          ];
-
-      onFiltersChange({
-        ...filters,
-        businessTypes: newTypes.length > 0 ? newTypes : undefined,
-        page: 1,
-      });
-    },
-    [filters, onFiltersChange]
-  );
+  // handleQuickFilterClick removed - ProviderType model has been removed
 
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-neutral-700">
         {t('quickFilters', { defaultValue: 'Quick Filters' })}
       </h3>
-      <div className="flex flex-wrap gap-2">
-        {QUICK_FILTERS.map((filter) => {
-          const Icon = filter.icon;
-          const currentTypes = filters.businessTypes || [];
-          const isActive = currentTypes.includes(
-            filter.key as NonNullable<ServiceSearchParams['businessTypes']>[number]
-          );
-
-          return (
-            <Button
-              key={filter.key}
-              variant={isActive ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => handleQuickFilterClick(filter.key)}
-              className="flex items-center gap-2"
-              aria-label={t(filter.labelKey, { defaultValue: filter.key })}
-              aria-pressed={isActive}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{t(filter.labelKey, { defaultValue: filter.key })}</span>
-            </Button>
-          );
-        })}
-      </div>
+      {/* Quick filters removed - ProviderType model has been removed */}
+      <div className="flex flex-wrap gap-2">{/* No quick filters available */}</div>
     </div>
   );
 }

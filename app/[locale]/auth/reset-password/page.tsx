@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Link, useRouter } from '@/i18n/routing';
 import { authService } from '@/lib/services/auth.service';
-// Password validation is handled by commonValidations
+import { commonValidations, createPasswordConfirmationRefinement } from '@/lib/utils/validation';
 import { useUIStore } from '@/stores/uiStore';
 
 export default function ResetPasswordPage() {
@@ -156,7 +156,7 @@ export default function ResetPasswordPage() {
           <PasswordInput
             label={t('newPassword', { defaultValue: 'New Password' })}
             placeholder="••••••••"
-            error={errors.newPassword?.message}
+            error={errors.newPassword?.message as string | undefined}
             disabled={isLoading || isSubmitting}
             autoComplete="new-password"
             {...register('newPassword')}
@@ -165,7 +165,7 @@ export default function ResetPasswordPage() {
           <PasswordInput
             label={t('confirmPassword')}
             placeholder="••••••••"
-            error={errors.confirmPassword?.message}
+            error={errors.confirmPassword?.message as string | undefined}
             disabled={isLoading || isSubmitting}
             autoComplete="new-password"
             {...register('confirmPassword')}

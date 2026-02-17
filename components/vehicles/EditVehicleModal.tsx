@@ -144,7 +144,7 @@ export function EditVehicleModal({ isOpen, onClose, vehicle, onSuccess }: EditVe
           hasLpgSystem: data.hasLpgSystem,
           lpgType: data.hasLpgSystem ? (data.lpgType ?? undefined) : undefined,
           horsepower: data.horsepower ?? undefined,
-          notes: data.notes !== null && data.notes !== '' ? data.notes : null,
+          notes: data.notes !== null && data.notes !== '' ? data.notes : undefined,
         },
       },
       {
@@ -158,9 +158,10 @@ export function EditVehicleModal({ isOpen, onClose, vehicle, onSuccess }: EditVe
             onSuccess();
           }
         },
-        onError: (error: Error) => {
+        onError: (error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
           showToast(
-            error.message || t('vehicleUpdateError', { defaultValue: 'Failed to update vehicle' }),
+            errorMessage || t('vehicleUpdateError', { defaultValue: 'Failed to update vehicle' }),
             'error'
           );
         },

@@ -64,7 +64,7 @@ export function createLazyComponentWithFlag<T extends ComponentType<Record<strin
         return {
           default: ((props: Record<string, unknown>) => {
             // This will be checked at render time by LazyWrapper
-            return <Component {...props} />;
+            return <Component {...(props as Record<string, unknown>)} />;
           }) as ComponentType<Record<string, unknown>>,
         };
       }),

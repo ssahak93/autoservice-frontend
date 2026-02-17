@@ -14,17 +14,17 @@ export const FILE_CATEGORIES = {
   AVATARS: 'avatars',
 
   /**
-   * Auto service avatars (plural - used for all auto service avatars)
+   * Provider avatars (plural - used for all provider avatars)
    */
-  AUTO_SERVICE_AVATARS: 'auto-service-avatars',
+  PROVIDER_AVATARS: 'provider-avatars',
 
   /**
-   * Profile photos for auto service profiles
+   * Profile photos for provider branches
    */
   PROFILE_PHOTOS: 'profile-photos',
 
   /**
-   * Work photos for auto service profiles
+   * Work photos for provider branches
    */
   WORK_PHOTOS: 'work-photos',
 

@@ -5,7 +5,7 @@ import { Edit, Trash2, User, Shield, Briefcase, Crown, Users } from 'lucide-reac
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
-import { SectionHeader } from '@/components/auto-service/SectionHeader';
+import { SectionHeader } from '@/components/provider/SectionHeader';
 import { Button } from '@/components/ui/Button';
 import type { TeamMember } from '@/lib/services/team.service';
 import { getTransition } from '@/lib/utils/animations';

@@ -27,11 +27,11 @@ export const reviewsService = {
     serviceId: string,
     filters?: ReviewFilters
   ): Promise<PaginatedResponse<Review>> {
-    const queryParams = buildQueryParams(filters || {}, false);
+    const queryParams = buildQueryParams((filters || {}) as Record<string, unknown>, false);
 
     const response = await apiClient.get<
       PaginatedResponse<Review> | { success: boolean; data: PaginatedResponse<Review> } | Review[]
-    >(`/reviews/auto-service/${serviceId}`, {
+    >(`/reviews/provider-branch/${serviceId}`, {
       params: queryParams,
     });
     return unwrapPaginatedResponse(response);

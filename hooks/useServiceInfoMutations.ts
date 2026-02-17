@@ -2,7 +2,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 
-import { autoServiceProfileService } from '@/lib/services/auto-service-profile.service';
+import { providerBranchService } from '@/lib/services/provider-branch.service';
 import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
 
 /**
@@ -11,7 +11,7 @@ import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
  */
 export function useUpdateServiceInfo() {
   const callbacks = useMutationWithInvalidation(
-    [['autoServiceProfile'], ['availableAutoServices'], ['auth', 'me']],
+    [['providerBranch'], ['availableProviders'], ['auth', 'me']],
     'updateSuccess',
     'updateError',
     'myService.info'
@@ -19,17 +19,17 @@ export function useUpdateServiceInfo() {
 
   return useMutation({
     mutationFn: ({
-      autoServiceId,
+      providerId,
       data,
     }: {
-      autoServiceId: string;
+      providerId: string;
       data: {
         companyName?: string;
         firstName?: string;
         lastName?: string;
         avatarFileId?: string;
       };
-    }) => autoServiceProfileService.updateServiceInfo(autoServiceId, data),
+    }) => providerBranchService.updateServiceInfo(providerId, data),
     ...callbacks,
   });
 }

@@ -5,7 +5,6 @@ import { unwrapArrayResponse } from '@/lib/utils/api-response';
 export interface SearchHistoryItem {
   id: string;
   query?: string | null;
-  businessType?: string | null;
   city?: string | null;
   region?: string | null;
   district?: string | null;
@@ -16,12 +15,12 @@ export interface SearchHistoryItem {
 
 export interface ViewHistoryItem {
   id: string;
-  autoServiceProfileId: string;
+  providerBranchId: string;
   viewDuration?: number | null;
   createdAt: string;
-  autoServiceProfile?: {
+  providerBranch?: {
     id: string;
-    autoService: {
+    provider: {
       id: string;
       companyName?: string | null;
       firstName?: string | null;

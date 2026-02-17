@@ -36,9 +36,10 @@ export function VehicleCard({ vehicle, onEdit, onDelete }: VehicleCardProps) {
           onDelete();
         }
       },
-      onError: (error: Error) => {
+      onError: (error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         showToast(
-          error.message || t('vehicleDeleteError', { defaultValue: 'Failed to delete vehicle' }),
+          errorMessage || t('vehicleDeleteError', { defaultValue: 'Failed to delete vehicle' }),
           'error'
         );
       },

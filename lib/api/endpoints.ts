@@ -20,7 +20,7 @@ export const API_ENDPOINTS = {
 
   // Search
   SEARCH: {
-    AUTO_SERVICES: '/search/auto-services',
+    PROVIDERS: '/search/providers',
     RECOMMENDATIONS: '/search/recommendations',
     SUGGESTIONS: '/search/suggestions',
     TRACK_VIEW: (profileId: string) => `/search/profiles/${profileId}/view`,
@@ -36,28 +36,28 @@ export const API_ENDPOINTS = {
     LIST: '/feature-flags',
   },
 
-  // Auto Services (Public)
-  AUTO_SERVICES: {
-    BASE: '/auto-services',
-    SEARCH: '/search/auto-services',
-    DETAIL: (id: string) => `/auto-services/${id}`,
-    REVIEWS: (id: string) => `/auto-services/${id}/reviews`,
-    // Profile management
-    PROFILE: '/auto-services/profile',
-    CREATE_PROFILE: '/auto-services/profile',
-    UPDATE_PROFILE: '/auto-services/profile',
-    PUBLISH_PROFILE: '/auto-services/profile/publish',
-    UPLOAD_PHOTO: '/auto-services/profile/upload-photo',
-    DELETE_PHOTO: '/auto-services/profile/photo/delete',
-    REORDER_PHOTOS: '/auto-services/profile/photos/reorder',
-    // Available auto services (for owner/team members)
-    AVAILABLE: '/auto-services/available',
-    // Create auto service
-    CREATE: '/auto-services',
-    // Update auto service info
-    UPDATE: (id: string) => `/auto-services/${id}`,
-    // Delete auto service
-    DELETE: (id: string) => `/auto-services/${id}`,
+  // Providers (Public)
+  PROVIDERS: {
+    BASE: '/providers',
+    SEARCH: '/search/providers',
+    DETAIL: (id: string) => `/providers/${id}`,
+    REVIEWS: (id: string) => `/providers/${id}/reviews`,
+    // Branch management (renamed from profile)
+    BRANCH: '/providers/branch',
+    CREATE_BRANCH: '/providers/branch',
+    UPDATE_BRANCH: '/providers/branch',
+    PUBLISH_BRANCH: '/providers/branch/publish',
+    UPLOAD_PHOTO: '/providers/branch/upload-photo',
+    DELETE_PHOTO: '/providers/branch/photo/delete',
+    REORDER_PHOTOS: '/providers/branch/photos/reorder',
+    // Available providers (for owner/team members)
+    AVAILABLE: '/providers/available',
+    // Create provider
+    CREATE: '/providers',
+    // Update provider info
+    UPDATE: (id: string) => `/providers/${id}`,
+    // Delete provider
+    DELETE: (id: string) => `/providers/${id}`,
   },
 
   // Visits
@@ -72,9 +72,9 @@ export const API_ENDPOINTS = {
     COMPLETE: (id: string) => `/visits/${id}/complete`,
     HISTORY: (id: string) => `/visits/${id}/history`,
     RESCHEDULE: (id: string) => `/visits/${id}/reschedule`,
-    // Auto service endpoints
-    AUTO_SERVICE_LIST: '/visits/auto-service',
-    AUTO_SERVICE_STATISTICS: '/visits/auto-service/statistics',
+    // Provider endpoints
+    PROVIDER_LIST: '/visits/provider',
+    PROVIDER_STATISTICS: '/visits/provider/statistics',
   },
 
   // Reviews
@@ -98,6 +98,12 @@ export const API_ENDPOINTS = {
     CONVERSATIONS: '/chat/service/conversations',
     UNREAD_COUNT: (visitId: string) => `/chat/visits/${visitId}/unread-count`,
     MARK_AS_READ: (visitId: string) => `/chat/visits/${visitId}/messages/read`,
+  },
+
+  // Categories
+  CATEGORIES: {
+    LIST: '/categories',
+    BY_CODE: (code: string) => `/categories/${code}`,
   },
 
   // Service Types
@@ -131,15 +137,14 @@ export const API_ENDPOINTS = {
 
   // Team Management
   TEAM: {
-    LIST: '/auto-services/me/team',
-    GENERATE_QR: '/auto-services/me/team/generate-qr',
-    UPDATE: (memberId: string) => `/auto-services/me/team/${memberId}`,
-    REMOVE: (memberId: string) => `/auto-services/me/team/${memberId}`,
-    CHECK_INVITATION: (code: string) => `/auto-services/team/invitation/${code}`,
-    ACCEPT_INVITATION: '/auto-services/team/accept-qr',
-    PENDING_INVITATIONS: '/auto-services/me/team/invitations',
-    CANCEL_INVITATION: (invitationId: string) =>
-      `/auto-services/me/team/invitations/${invitationId}`,
+    LIST: '/providers/me/team',
+    GENERATE_QR: '/providers/me/team/generate-qr',
+    UPDATE: (memberId: string) => `/providers/me/team/${memberId}`,
+    REMOVE: (memberId: string) => `/providers/me/team/${memberId}`,
+    CHECK_INVITATION: (code: string) => `/providers/team/invitation/${code}`,
+    ACCEPT_INVITATION: '/providers/team/accept-qr',
+    PENDING_INVITATIONS: '/providers/me/team/invitations',
+    CANCEL_INVITATION: (invitationId: string) => `/providers/me/team/invitations/${invitationId}`,
   },
 
   // Favorites

@@ -11,7 +11,7 @@ import { useSocket, useOnSocketConnect } from './useSocket';
 interface TypingUserInfo {
   firstName: string | null;
   lastName: string | null;
-  autoService?: {
+  provider?: {
     companyName: string | null;
     firstName: string | null;
     lastName: string | null;
@@ -40,7 +40,7 @@ export function useChatRealtime(
       conversationId?: string;
       isTyping: boolean;
       userInfo?: { firstName: string | null; lastName: string | null };
-      autoService?: {
+      provider?: {
         companyName: string | null;
         firstName: string | null;
         lastName: string | null;
@@ -178,7 +178,7 @@ export function useChatRealtime(
       conversationId?: string;
       isTyping: boolean;
       userInfo?: { firstName: string | null; lastName: string | null };
-      autoService?: {
+      provider?: {
         companyName: string | null;
         firstName: string | null;
         lastName: string | null;
@@ -195,7 +195,7 @@ export function useChatRealtime(
           next.set(data.userId, {
             firstName: data.userInfo?.firstName ?? null,
             lastName: data.userInfo?.lastName ?? null,
-            autoService: data.autoService || null,
+            provider: data.provider || null,
             teamMember: data.teamMember || null,
           });
         } else {

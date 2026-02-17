@@ -40,7 +40,7 @@ export function RescheduleVisitModal({
   const [selectedTime, setSelectedTime] = useState(visit.scheduledTime || '');
 
   // Get profile ID for availability check
-  const profileId = visit.autoServiceProfileId;
+  const profileId = visit.providerBranchId;
 
   // Calculate date range for availability (next 60 days)
   const startDate = useMemo(() => {
@@ -208,7 +208,7 @@ export function RescheduleVisitModal({
                     onChange={handleDateChange}
                     placeholder={t('reschedule.selectDate', { defaultValue: 'Select date' })}
                     minDate={new Date()}
-                    autoServiceId={profileId}
+                    providerId={profileId}
                     showAvailability={!!profileId}
                   />
                   {errors.scheduledDate && (

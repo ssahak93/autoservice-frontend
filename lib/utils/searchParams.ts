@@ -18,12 +18,7 @@ export function serializeSearchParams(params: ServiceSearchParams): URLSearchPar
   // New fields (primary)
   if (params.regionId) searchParams.set('regionId', params.regionId);
   if (params.communityId) searchParams.set('communityId', params.communityId);
-  // Support multiple business types
-  if (params.businessTypes && params.businessTypes.length > 0) {
-    params.businessTypes.forEach((bt) => {
-      searchParams.append('businessTypes', bt);
-    });
-  }
+  // providerTypes removed - ProviderType model has been removed
   // Support multiple service types
   if (params.serviceTypes && params.serviceTypes.length > 0) {
     params.serviceTypes.forEach((st) => {
@@ -65,25 +60,7 @@ export function deserializeSearchParams(searchParams: URLSearchParams): ServiceS
   const communityId = searchParams.get('communityId');
   if (communityId) params.communityId = communityId;
 
-  // Support multiple business types
-  const businessTypes = searchParams.getAll('businessTypes');
-  if (businessTypes.length > 0) {
-    const validTypes = businessTypes.filter((bt) =>
-      [
-        'auto_service',
-        'auto_shop',
-        'car_wash',
-        'cleaning',
-        'tire_service',
-        'towing',
-        'tinting',
-        'other',
-      ].includes(bt)
-    ) as ServiceSearchParams['businessTypes'];
-    if (validTypes && validTypes.length > 0) {
-      params.businessTypes = validTypes;
-    }
-  }
+  // providerTypes removed - ProviderType model has been removed
 
   // Support multiple service types
   const serviceTypes = searchParams.getAll('serviceTypes');

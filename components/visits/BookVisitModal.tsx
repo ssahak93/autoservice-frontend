@@ -53,8 +53,9 @@ interface BookVisitModalProps {
     scheduledDate?: string;
     scheduledTime?: string;
     problemDescription?: string;
-    autoServiceId?: string;
-    autoServiceProfileId?: string;
+    providerId?: string;
+    providerBranchId?: string;
+    vehicleId?: string;
   };
   mode?: 'create' | 'edit';
   isOpen?: boolean;
@@ -106,13 +107,13 @@ export function BookVisitModal({
   const [selectedTime, setSelectedTime] = useState<string>(initialTime);
 
   // Get serviceId from visit in edit mode
-  // API expects profile ID, not autoService ID
+  // API expects profile ID, not provider ID
   // const actualServiceId = isEditMode
-  //   ? visit?.autoServiceProfileId || visit?.autoServiceId
+  //   ? visit?.providerBranchId || visit?.providerId
   //   : serviceId;
 
-  // Profile ID for availability API (must be profile ID, not autoService ID)
-  const profileIdForAvailability = isEditMode ? visit?.autoServiceProfileId : serviceId;
+  // Profile ID for availability API (must be profile ID, not provider ID)
+  const profileIdForAvailability = isEditMode ? visit?.providerBranchId : serviceId;
 
   // Check if this is user's own service (only in create mode)
   // Use useMemo to prevent hydration mismatch
@@ -291,7 +292,7 @@ export function BookVisitModal({
 
       createVisit(
         {
-          autoServiceId: serviceId,
+          providerId: serviceId,
           scheduledDate: data.scheduledDate,
           scheduledTime: data.scheduledTime,
           problemDescription: data.problemDescription,
@@ -340,7 +341,7 @@ export function BookVisitModal({
 
   // Get service name for display
   const displayServiceName = isEditMode
-    ? serviceName || visit?.autoServiceId || 'Service'
+    ? serviceName || visit?.providerId || 'Provider'
     : serviceName;
 
   return (
@@ -440,7 +441,7 @@ export function BookVisitModal({
                         error={errors.scheduledDate?.message}
                         required
                         minDate={minDate}
-                        autoServiceId={profileIdForAvailability}
+                        providerId={profileIdForAvailability}
                         showAvailability={!!profileIdForAvailability}
                       />
                     )}

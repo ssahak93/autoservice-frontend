@@ -130,12 +130,12 @@ export function LeaveReviewModal({ isOpen, onClose, visit }: LeaveReviewModalPro
                       })()}{' '}
                       at {visit.scheduledTime || visit.preferredTime}
                     </p>
-                    {visit.autoServiceProfile?.autoService && (
+                    {visit.providerBranch?.provider && (
                       <p className="mt-1 text-xs text-primary-600">
                         {formatServiceName(
-                          visit.autoServiceProfile.autoService.companyName,
-                          visit.autoServiceProfile.autoService.firstName,
-                          visit.autoServiceProfile.autoService.lastName
+                          visit.providerBranch.provider.companyName,
+                          visit.providerBranch.provider.firstName,
+                          visit.providerBranch.provider.lastName
                         )}
                       </p>
                     )}

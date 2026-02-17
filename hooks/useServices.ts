@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 
 import { queryConfig, queryKeys } from '@/lib/api/query-config';
 import { servicesService, type ServiceSearchParams } from '@/lib/services/services.service';
-import type { AutoService, PaginatedResponse } from '@/types';
+import type { Provider, PaginatedResponse } from '@/types';
 
 export const useServices = (
   params: ServiceSearchParams,
-  options?: { initialData?: PaginatedResponse<AutoService> }
+  options?: { initialData?: PaginatedResponse<Provider> }
 ) => {
   return useQuery({
     queryKey: queryKeys.services(params),
@@ -22,7 +22,7 @@ export const useServices = (
 };
 
 export const useService = (id: string | null) => {
-  return useQuery<AutoService | null>({
+  return useQuery<Provider | null>({
     queryKey: queryKeys.service(id || ''),
     queryFn: () => (id ? servicesService.getById(id) : null),
     enabled: !!id,

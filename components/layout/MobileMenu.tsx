@@ -29,8 +29,8 @@ export function MobileMenu({
   const t = useTranslations('navigation');
   const { user } = useAuth();
 
-  // Check if user owns an auto service
-  const isServiceOwner = user?.autoServices && user.autoServices.length > 0;
+  // Check if user owns a provider
+  const isServiceOwner = user?.providers && user.providers.length > 0;
 
   if (!isOpen) return null;
 

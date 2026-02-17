@@ -21,11 +21,18 @@ export function HeaderNavigation({ isAuthenticated, onLinkClick }: HeaderNavigat
   const t = useTranslations('navigation');
   const { user } = useAuth();
 
-  // Check if user owns an auto service
-  const isServiceOwner = user?.autoServices && user.autoServices.length > 0;
+  // Check if user owns a provider
+  const isServiceOwner = user?.providers && user.providers.length > 0;
 
   return (
     <nav className="hidden items-center gap-6 md:flex">
+      <Link
+        href="/categories"
+        className="text-neutral-700 transition-colors hover:text-primary-600"
+        onClick={onLinkClick}
+      >
+        {t('categories', { defaultValue: 'Categories' })}
+      </Link>
       <Link
         href="/services"
         className="text-neutral-700 transition-colors hover:text-primary-600"

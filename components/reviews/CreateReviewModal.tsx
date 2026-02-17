@@ -54,11 +54,7 @@ export function CreateReviewModal({ isOpen, onClose, serviceId }: CreateReviewMo
 
     return (
       visitsData?.data?.filter((visit) => {
-        if (
-          visit.autoServiceProfileId !== serviceId ||
-          visit.status !== 'completed' ||
-          visit.review
-        ) {
+        if (visit.providerBranchId !== serviceId || visit.status !== 'completed' || visit.review) {
           return false;
         }
         // Check if scheduled date has passed

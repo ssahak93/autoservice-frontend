@@ -8,7 +8,7 @@ interface SitemapProfile {
 async function getAllServices(): Promise<SitemapProfile[]> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const response = await fetch(`${apiUrl}/api/auto-services/sitemap/list`, {
+    const response = await fetch(`${apiUrl}/api/providers/sitemap/list`, {
       next: { revalidate: 3600 }, // Revalidate every hour
     });
 
@@ -26,17 +26,19 @@ async function getAllServices(): Promise<SitemapProfile[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://autoserviceconnect.am';
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    `https://${process.env.NEXT_PUBLIC_DOMAIN_NAME || 'autoserviceconnect.am'}`;
   const locales = ['en', 'ru', 'hy'];
 
-  // Get all services (replace with actual API call)
-  const services = await getAllServices();
+  // Get all providers (replace with actual API call)
+  const providers = await getAllServices();
 
-  // Generate service URLs for all locales
-  const serviceUrls = services.flatMap((service: { id: string; updatedAt?: string }) =>
+  // Generate provider URLs for all locales
+  const providerUrls = providers.flatMap((provider: { id: string; updatedAt?: string }) =>
     locales.map((locale) => ({
-      url: `${baseUrl}/${locale}/services/${service.id}`,
-      lastModified: service.updatedAt ? new Date(service.updatedAt) : new Date(),
+      url: `${baseUrl}/${locale}/services/${provider.id}`,
+      lastModified: provider.updatedAt ? new Date(provider.updatedAt) : new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }))
@@ -74,5 +76,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]);
 
-  return [...staticPages, ...localizedStaticPages, ...serviceUrls];
+  return [...staticPages, ...localizedStaticPages, ...providerUrls];
 }

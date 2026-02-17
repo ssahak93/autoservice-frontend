@@ -49,7 +49,7 @@ export const queryKeys = {
   visitHistory: (id: string) => ['visit-history', id] as const,
 
   // Profile
-  autoServiceProfile: (id?: string) => ['autoServiceProfile', id] as const,
+  providerBranch: (id?: string) => ['providerBranch', id] as const,
 
   // Notifications
   notifications: (params?: unknown) => ['notifications', params] as const,

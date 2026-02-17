@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { visitsService } from '@/lib/services/visits.service';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 
 export interface DashboardStatistics {
   total: number;
@@ -15,36 +15,36 @@ export interface DashboardStatistics {
 }
 
 export const useDashboardStatistics = (params?: { startDate?: string; endDate?: string }) => {
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
   return useQuery({
-    queryKey: ['dashboard', 'statistics', params, selectedAutoServiceId],
+    queryKey: ['dashboard', 'statistics', params, selectedProviderId],
     queryFn: () =>
-      visitsService.getAutoServiceStatistics({
+      visitsService.getProviderStatistics({
         ...params,
-        autoServiceId: selectedAutoServiceId || undefined,
+        providerId: selectedProviderId || undefined,
       }),
-    enabled: !!selectedAutoServiceId,
+    enabled: !!selectedProviderId,
     // Statistics can be cached longer (10 minutes) as they don't change frequently
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
 };
 
-export const useAutoServiceVisits = (params?: {
+export const useProviderVisits = (params?: {
   status?: string;
   date?: string;
   page?: number;
   limit?: number;
 }) => {
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
   return useQuery({
-    queryKey: ['dashboard', 'visits', params, selectedAutoServiceId],
+    queryKey: ['dashboard', 'visits', params, selectedProviderId],
     queryFn: () =>
-      visitsService.getAutoServiceList({
+      visitsService.getProviderList({
         ...params,
-        autoServiceId: selectedAutoServiceId || undefined,
+        providerId: selectedProviderId || undefined,
       }),
-    enabled: !!selectedAutoServiceId,
+    enabled: !!selectedProviderId,
     // Visits list should be fresh (2 minutes) as statuses change frequently
     staleTime: 2 * 60 * 1000,
     gcTime: 15 * 60 * 1000,

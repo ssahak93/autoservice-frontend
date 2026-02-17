@@ -20,7 +20,7 @@ export interface WorkingHours {
 
 export interface AvailabilityException {
   id: string;
-  autoServiceProfileId: string;
+  providerBranchId: string;
   date: string;
   isAvailable: boolean;
   startTime?: string | null;
@@ -54,20 +54,20 @@ export interface AvailabilityResponse {
 
 export const availabilityService = {
   /**
-   * Get availability for an auto service
-   * @param autoServiceId - Auto service ID
+   * Get availability for a provider
+   * @param providerId - Provider ID
    * @param startDate - Start date (YYYY-MM-DD)
    * @param endDate - End date (YYYY-MM-DD)
    */
   async getAvailability(
-    autoServiceId: string,
+    providerId: string,
     startDate: string,
     endDate: string
   ): Promise<AvailabilityResponse | null | 'OWN_SERVICE'> {
     try {
       const response = await apiClient.get<
         AvailabilityResponse | { success: boolean; data: AvailabilityResponse }
-      >(`/auto-services/${autoServiceId}/availability`, {
+      >(`/providers/${providerId}/availability`, {
         params: {
           startDate,
           endDate,
@@ -109,15 +109,15 @@ export const availabilityService = {
   async getOwnAvailability(
     startDate: string,
     endDate: string,
-    autoServiceId?: string
+    providerId?: string
   ): Promise<AvailabilityResponse> {
     const params: Record<string, string> = { startDate, endDate };
-    if (autoServiceId) {
-      params.autoServiceId = autoServiceId;
+    if (providerId) {
+      params.providerId = providerId;
     }
     const response = await apiClient.get<
       AvailabilityResponse | { success: boolean; data: AvailabilityResponse }
-    >('/auto-service/availability', {
+    >('/providers/availability', {
       params,
     });
     return unwrapResponseData(response);
@@ -126,11 +126,11 @@ export const availabilityService = {
   /**
    * Get all availability exceptions
    */
-  async getExceptions(autoServiceId?: string): Promise<AvailabilityException[]> {
-    const params = autoServiceId ? { autoServiceId } : {};
+  async getExceptions(providerId?: string): Promise<AvailabilityException[]> {
+    const params = providerId ? { providerId } : {};
     const response = await apiClient.get<
       AvailabilityException[] | { success: boolean; data: AvailabilityException[] }
-    >('/auto-service/availability/exceptions', { params });
+    >('/providers/availability/exceptions', { params });
     return unwrapArrayResponse(response);
   },
 
@@ -145,12 +145,12 @@ export const availabilityService = {
       endTime?: string;
       reason?: string;
     },
-    autoServiceId?: string
+    providerId?: string
   ): Promise<AvailabilityException> {
-    const params = autoServiceId ? { autoServiceId } : {};
+    const params = providerId ? { providerId } : {};
     const response = await apiClient.post<
       AvailabilityException | { success: boolean; data: AvailabilityException }
-    >('/auto-service/availability/exceptions', data, { params });
+    >('/providers/availability/exceptions', data, { params });
     return unwrapResponseData(response);
   },
 
@@ -165,12 +165,12 @@ export const availabilityService = {
       endTime?: string;
       reason?: string;
     },
-    autoServiceId?: string
+    providerId?: string
   ): Promise<AvailabilityException> {
-    const params = autoServiceId ? { autoServiceId } : {};
+    const params = providerId ? { providerId } : {};
     const response = await apiClient.put<
       AvailabilityException | { success: boolean; data: AvailabilityException }
-    >(`/auto-service/availability/exceptions/${exceptionId}`, data, { params });
+    >(`/providers/availability/exceptions/${exceptionId}`, data, { params });
     return unwrapResponseData(response);
   },
 
@@ -178,6 +178,6 @@ export const availabilityService = {
    * Delete availability exception
    */
   async deleteException(exceptionId: string): Promise<void> {
-    await apiClient.delete(`/auto-service/availability/exceptions/${exceptionId}`);
+    await apiClient.delete(`/providers/availability/exceptions/${exceptionId}`);
   },
 };

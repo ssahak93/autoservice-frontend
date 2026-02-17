@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
+import { SUPPORT_EMAIL } from '@/lib/constants/app.config';
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('contact');
 
@@ -39,11 +41,8 @@ export default async function ContactPage() {
                   <h3 className="mb-2 font-semibold text-neutral-900">
                     {t('info.email.title', { defaultValue: 'Email' })}
                   </h3>
-                  <a
-                    href="mailto:support@autoserviceconnect.com"
-                    className="text-primary-600 hover:underline"
-                  >
-                    {t('info.email.value', { defaultValue: 'support@autoserviceconnect.com' })}
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary-600 hover:underline">
+                    {SUPPORT_EMAIL}
                   </a>
                 </div>
                 <div>
@@ -96,7 +95,7 @@ export default async function ContactPage() {
                   {t('form.supportButton', { defaultValue: 'Go to Support Chat' })}
                 </a>
                 <a
-                  href="mailto:support@autoserviceconnect.com"
+                  href={`mailto:${SUPPORT_EMAIL}`}
                   className="block w-full rounded-lg border border-primary-600 px-6 py-3 text-center font-medium text-primary-600 transition-colors hover:bg-primary-50"
                 >
                   {t('form.emailButton', { defaultValue: 'Send Email' })}

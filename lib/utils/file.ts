@@ -8,7 +8,7 @@
 /**
  * Get avatar URL from user or auto service object
  * Handles both avatarFile.fileUrl and avatarUrl (for backward compatibility)
- * @param entity - User or AutoService object with avatarFile or avatarUrl
+ * @param entity - User or Provider object with avatarFile or avatarUrl
  * @returns Avatar URL or null if not available
  */
 export function getAvatarUrl(

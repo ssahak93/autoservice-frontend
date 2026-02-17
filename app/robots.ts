@@ -1,7 +1,9 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://autoserviceconnect.am';
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    `https://${process.env.NEXT_PUBLIC_DOMAIN_NAME || 'autoserviceconnect.am'}`;
 
   return {
     rules: [
@@ -29,4 +31,3 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: `${baseUrl}/sitemap.xml`,
   };
 }
-

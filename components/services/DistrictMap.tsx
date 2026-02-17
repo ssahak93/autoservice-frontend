@@ -139,7 +139,10 @@ export function DistrictMap({
 
           try {
             // Convert GeoJSON to Yandex Maps format
-            const geoJsonBounds = district.bounds as GeoJSON.Polygon;
+            const geoJsonBounds = district.bounds as {
+              type: 'Polygon';
+              coordinates: number[][][];
+            };
             const coordinates = geoJsonBounds.coordinates[0].map((coord: number[]) => [
               coord[1],
               coord[0],
@@ -151,7 +154,7 @@ export function DistrictMap({
                 geometry: {
                   type: 'Polygon',
                   coordinates: [coordinates],
-                },
+                } as ymaps.IGeometryJson,
                 properties: {
                   hintContent: district.name,
                   balloonContent: district.name,
@@ -315,14 +318,14 @@ export function DistrictMap({
                 suppressMapOpenBlock: true,
               }}
             >
-              {/* Render service markers */}
-              {services.map((service) => (
+              {/* Render provider markers */}
+              {services.map((provider) => (
                 <Placemark
-                  key={service.id}
-                  geometry={[service.latitude, service.longitude]}
+                  key={provider.id}
+                  geometry={[provider.latitude, provider.longitude]}
                   properties={{
-                    hintContent: service.name,
-                    balloonContent: service.name,
+                    hintContent: provider.name,
+                    balloonContent: provider.name,
                   }}
                   options={{
                     preset: 'islands#blueIcon',

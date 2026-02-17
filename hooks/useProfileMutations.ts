@@ -3,30 +3,30 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { queryKeys } from '@/lib/api/query-config';
-import { autoServiceProfileService } from '@/lib/services/auto-service-profile.service';
+import { providerBranchService } from '@/lib/services/provider-branch.service';
 import type {
-  CreateProfileRequest,
-  UpdateProfileRequest,
-} from '@/lib/services/auto-service-profile.service';
+  CreateBranchRequest,
+  UpdateBranchRequest,
+} from '@/lib/services/provider-branch.service';
 import { useMutationWithInvalidation } from '@/lib/utils/mutation-helpers';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 
 /**
  * Hook for profile mutations
  * Follows Single Responsibility Principle - handles only profile mutation logic
  */
 export function useCreateProfile() {
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
   const callbacks = useMutationWithInvalidation(
-    [queryKeys.autoServiceProfile()],
+    [...queryKeys.providerBranch()] as string[],
     'createSuccess',
     'createError',
     'myService.profile'
   );
 
   return useMutation({
-    mutationFn: (data: CreateProfileRequest) =>
-      autoServiceProfileService.createProfile(data, selectedAutoServiceId || undefined),
+    mutationFn: (data: CreateBranchRequest) =>
+      providerBranchService.createBranch(data, selectedProviderId || undefined),
     ...callbacks,
   });
 }
@@ -35,17 +35,17 @@ export function useCreateProfile() {
  * Hook for updating profile
  */
 export function useUpdateProfile() {
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
   const callbacks = useMutationWithInvalidation(
-    [queryKeys.autoServiceProfile()],
+    [...queryKeys.providerBranch()] as string[],
     'updateSuccess',
     'updateError',
     'myService.profile'
   );
 
   return useMutation({
-    mutationFn: (data: UpdateProfileRequest) =>
-      autoServiceProfileService.updateProfile(data, selectedAutoServiceId || undefined),
+    mutationFn: (data: UpdateBranchRequest) =>
+      providerBranchService.updateBranch(data, selectedProviderId || undefined),
     ...callbacks,
   });
 }

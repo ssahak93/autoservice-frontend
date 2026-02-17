@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { ServicesClient } from '@/components/services/ServicesClient';
 import { servicesServerService } from '@/lib/services/services.server';
-import type { AutoService, PaginatedResponse } from '@/types';
+import type { Provider, PaginatedResponse } from '@/types';
 
 import { generateServicesMetadata } from './metadata';
 
@@ -16,7 +16,7 @@ interface ServicesPageProps {
     district?: string;
     regionId?: string;
     communityId?: string;
-    businessTypes?: string | string[];
+    // providerTypeIds removed - ProviderType model has been removed
     serviceTypes?: string | string[];
     minRating?: string;
     latitude?: string;
@@ -46,16 +46,13 @@ export default async function ServicesPage({ params, searchParams }: ServicesPag
   }
 
   // Parse search params
-  const businessTypesArray = Array.isArray(search.businessTypes)
-    ? search.businessTypes
-    : search.businessTypes
-      ? [search.businessTypes]
-      : undefined;
   const serviceTypesArray = Array.isArray(search.serviceTypes)
     ? search.serviceTypes
     : search.serviceTypes
       ? [search.serviceTypes]
       : undefined;
+
+  // ProviderType filtering removed - no longer needed
 
   const filters = {
     city: search.city,
@@ -63,18 +60,7 @@ export default async function ServicesPage({ params, searchParams }: ServicesPag
     district: search.district,
     regionId: search.regionId,
     communityId: search.communityId,
-    businessTypes: businessTypesArray as
-      | Array<
-          | 'auto_service'
-          | 'auto_shop'
-          | 'car_wash'
-          | 'cleaning'
-          | 'tire_service'
-          | 'towing'
-          | 'tinting'
-          | 'other'
-        >
-      | undefined,
+    // providerTypeIds removed - ProviderType model has been removed
     serviceTypes: serviceTypesArray,
     minRating: search.minRating ? parseFloat(search.minRating) : undefined,
     latitude: search.latitude ? parseFloat(search.latitude) : undefined,
@@ -87,7 +73,7 @@ export default async function ServicesPage({ params, searchParams }: ServicesPag
   };
 
   // Fetch initial data server-side for SEO
-  let initialData: PaginatedResponse<AutoService> | undefined;
+  let initialData: PaginatedResponse<Provider> | undefined;
   let error: { message: string; code?: string } | null = null;
 
   try {
@@ -95,7 +81,7 @@ export default async function ServicesPage({ params, searchParams }: ServicesPag
     // Ensure data is serializable - convert to plain object
     // This handles any potential non-serializable values
     initialData = data
-      ? (JSON.parse(JSON.stringify(data)) as PaginatedResponse<AutoService>)
+      ? (JSON.parse(JSON.stringify(data)) as PaginatedResponse<Provider>)
       : undefined;
   } catch (err) {
     // Convert Error to plain object for serialization

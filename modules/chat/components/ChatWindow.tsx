@@ -48,12 +48,12 @@ export function ChatWindow({
     const isCustomer = visit.userId === user.id;
 
     if (isCustomer) {
-      const autoService = visit.autoServiceProfile?.autoService || visit.autoService;
-      if (autoService?.companyName) {
-        return autoService.companyName;
+      const provider = visit.providerBranch?.provider || visit.provider;
+      if (provider?.companyName) {
+        return provider.companyName;
       }
-      if (autoService?.firstName || autoService?.lastName) {
-        const name = `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim();
+      if (provider?.firstName || provider?.lastName) {
+        const name = `${provider.firstName || ''} ${provider.lastName || ''}`.trim();
         if (name) return name;
       }
       return t('service', { defaultValue: 'Service' });

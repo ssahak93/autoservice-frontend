@@ -72,7 +72,7 @@ export function AcceptVisitModal({
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
 
   // Get profile ID for availability check
-  const profileId = visit.autoServiceProfileId;
+  const profileId = visit.providerBranchId;
 
   // Calculate date range for availability (next 60 days)
   const startDate = useMemo(() => {

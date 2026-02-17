@@ -28,23 +28,7 @@ export function ActiveFilters({
 
   const activeFilters: Array<{ key: keyof ServiceSearchParams; label: string; value: string }> = [];
 
-  // Handle multiple business types
-  const businessTypes = filters.businessTypes || [];
-  if (businessTypes.length > 0) {
-    if (businessTypes.length === 1) {
-      activeFilters.push({
-        key: 'businessTypes',
-        label: t('businessType', { defaultValue: 'Business Type' }),
-        value: t(`businessTypes.${businessTypes[0]}`, { defaultValue: businessTypes[0] }),
-      });
-    } else {
-      activeFilters.push({
-        key: 'businessTypes',
-        label: t('businessType', { defaultValue: 'Business Type' }),
-        value: `${businessTypes.length} ${t('selected', { defaultValue: 'selected' })}`,
-      });
-    }
-  }
+  // providerTypes removed - ProviderType model has been removed
 
   // Note: city, region, and district filters removed - use communityId and regionId instead
 
@@ -117,9 +101,7 @@ export function ActiveFilters({
               onRemoveFilter('latitude');
               onRemoveFilter('longitude');
               onRemoveFilter('radius');
-            } else if (filter.key === 'businessTypes') {
-              // Remove business types array
-              onRemoveFilter('businessTypes');
+              // providerTypes removed - ProviderType model has been removed
             } else if (filter.key === 'serviceTypes') {
               // Remove service types array
               onRemoveFilter('serviceTypes');

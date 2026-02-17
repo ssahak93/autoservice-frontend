@@ -19,12 +19,12 @@ import { useSearch } from '@/hooks/useSearch';
 import { useServices } from '@/hooks/useServices';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import type { ServiceSearchParams } from '@/lib/services/services.service';
-import type { AutoService, PaginatedResponse } from '@/types';
+import type { Provider, PaginatedResponse } from '@/types';
 
 // DistrictMap removed - districts are now communities, no need for separate map component
 
 interface ServicesClientProps {
-  initialData?: PaginatedResponse<AutoService>;
+  initialData?: PaginatedResponse<Provider>;
   initialError?: { message: string; code?: string } | null;
   locale?: string;
 }
@@ -82,8 +82,7 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
   // Count active filters for mobile button badge
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    if (searchParams.businessTypes && searchParams.businessTypes.length > 0)
-      count += searchParams.businessTypes.length;
+    // providerTypes removed - ProviderType model has been removed
     if (searchParams.serviceTypes && searchParams.serviceTypes.length > 0)
       count += searchParams.serviceTypes.length;
     if (searchParams.regionId) count++;
@@ -292,18 +291,18 @@ export function ServicesClient({ initialData, initialError }: ServicesClientProp
                 className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2"
               >
                 {syncedDisplayData.data
-                  .filter((service: AutoService) => !service.isBlocked) // Filter out blocked services
-                  .map((service: AutoService, index: number) => {
+                  .filter((provider: Provider) => !provider.isBlocked) // Filter out blocked providers
+                  .map((provider: Provider, index: number) => {
                     // Extract distance from search results if available
                     const distance =
-                      'distance' in service &&
-                      typeof (service as AutoService & { distance?: number }).distance === 'number'
-                        ? (service as AutoService & { distance: number }).distance
+                      'distance' in provider &&
+                      typeof (provider as Provider & { distance?: number }).distance === 'number'
+                        ? (provider as Provider & { distance: number }).distance
                         : undefined;
                     return (
                       <ServiceCard
-                        key={service.id}
-                        service={service}
+                        key={provider.id}
+                        service={provider}
                         index={index}
                         distance={distance}
                       />

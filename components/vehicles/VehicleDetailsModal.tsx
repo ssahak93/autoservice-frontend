@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Car, X, Edit, Copy, Check } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -25,6 +25,7 @@ export function VehicleDetailsModal({
   onEdit,
 }: VehicleDetailsModalProps) {
   const t = useTranslations('vehicles');
+  const locale = useLocale();
   const { showToast } = useUIStore();
   const variants = getAnimationVariants();
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -315,7 +316,7 @@ export function VehicleDetailsModal({
                         {t('addedOn', { defaultValue: 'Added On' })}
                       </p>
                       <p className="mt-1 text-base font-semibold text-neutral-900 dark:text-white">
-                        {formatDate(vehicle.createdAt)}
+                        {formatDate(vehicle.createdAt, locale)}
                       </p>
                     </div>
                   )}

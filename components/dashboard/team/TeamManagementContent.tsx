@@ -6,14 +6,14 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 
-import { ServiceCardSkeleton } from '@/components/auto-service/ServiceCardSkeleton';
+import { ServiceCardSkeleton } from '@/components/provider/ServiceCardSkeleton';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/hooks/useAuth';
-import { autoServicesService } from '@/lib/services/auto-services.service';
+import { providersService } from '@/lib/services/providers.service';
 import { teamService, type TeamMember } from '@/lib/services/team.service';
 import { getAvatarUrl } from '@/lib/utils/file';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 import { useUIStore } from '@/stores/uiStore';
 
 // Lazy load modals to reduce initial bundle size
@@ -37,8 +37,7 @@ export function TeamManagementContent() {
   const t = useTranslations('dashboard.team');
   const tCommon = useTranslations('common');
   const { user } = useAuth();
-  const { selectedAutoServiceId, setAvailableAutoServices, setSelectedAutoServiceId } =
-    useAutoServiceStore();
+  const { selectedProviderId, setAvailableProviders, setSelectedProviderId } = useProviderStore();
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
 
@@ -55,76 +54,73 @@ export function TeamManagementContent() {
     setMounted(true);
   }, []);
 
-  // Fetch available auto services to ensure selectedAutoServiceId is set
-  const { data: availableServices = [] } = useQuery({
-    queryKey: ['availableAutoServices'],
-    queryFn: () => autoServicesService.getAvailableAutoServices(),
+  // Fetch available providers to ensure selectedProviderId is set
+  const { data: availableProviders = [] } = useQuery({
+    queryKey: ['availableProviders'],
+    queryFn: () => providersService.getAvailableProviders(),
     enabled: !!user,
   });
 
-  // Initialize available auto services and ensure a service is selected
+  // Initialize available providers and ensure a provider is selected
   useEffect(() => {
-    if (availableServices.length > 0) {
-      // Map services to match AutoServiceOption type, ensuring role is correctly typed
-      const mappedServices = availableServices.map((service) => ({
-        id: service.id,
-        name: service.name,
-        role: (service.role === 'owner' || service.role === 'manager' || service.role === 'employee'
-          ? service.role
+    if (availableProviders.length > 0) {
+      // Map providers to match ProviderOption type, ensuring role is correctly typed
+      const mappedProviders = availableProviders.map((provider) => ({
+        id: provider.id,
+        name: provider.name,
+        role: (provider.role === 'owner' ||
+        provider.role === 'manager' ||
+        provider.role === 'employee'
+          ? provider.role
           : 'employee') as 'owner' | 'manager' | 'employee',
-        serviceType: service.serviceType,
-        companyName: service.companyName ?? undefined,
-        firstName: service.firstName ?? undefined,
-        lastName: service.lastName ?? undefined,
-        avatarFile: service.avatarFile
+        serviceType: provider.serviceType,
+        companyName: provider.companyName ?? undefined,
+        firstName: provider.firstName ?? undefined,
+        lastName: provider.lastName ?? undefined,
+        avatarFile: provider.avatarFile
           ? {
-              fileUrl: getAvatarUrl(service) || '',
+              fileUrl: getAvatarUrl(provider) || '',
             }
           : undefined,
-        hasProfile: service.hasProfile,
-        isApproved: service.isApproved,
+        hasProfile: provider.hasBranch,
+        isApproved: provider.isApproved,
       }));
-      setAvailableAutoServices(mappedServices);
-      // If no service is selected, select the first one
-      if (!selectedAutoServiceId && mappedServices.length > 0) {
-        const firstOwnedService = mappedServices.find((s) => s.role === 'owner');
-        if (firstOwnedService) {
-          setSelectedAutoServiceId(firstOwnedService.id);
+      setAvailableProviders(mappedProviders);
+      // If no provider is selected, select the first one
+      if (!selectedProviderId && mappedProviders.length > 0) {
+        const firstOwnedProvider = mappedProviders.find((p) => p.role === 'owner');
+        if (firstOwnedProvider) {
+          setSelectedProviderId(firstOwnedProvider.id);
         }
       }
     }
-  }, [
-    availableServices,
-    selectedAutoServiceId,
-    setAvailableAutoServices,
-    setSelectedAutoServiceId,
-  ]);
+  }, [availableProviders, selectedProviderId, setAvailableProviders, setSelectedProviderId]);
 
   const {
     data: teamMembers = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['team', selectedAutoServiceId],
-    queryFn: () => teamService.getTeam(selectedAutoServiceId || undefined),
-    enabled: !!user && !!selectedAutoServiceId, // Only fetch when user is loaded and service is selected
+    queryKey: ['team', selectedProviderId],
+    queryFn: () => teamService.getTeam(selectedProviderId || undefined),
+    enabled: !!user && !!selectedProviderId, // Only fetch when user is loaded and provider is selected
   });
 
-  // Check if current user is owner from available services (for enabling queries)
-  const isOwnerFromAvailableServices = availableServices.some(
-    (s) => s.id === selectedAutoServiceId && s.role === 'owner'
+  // Check if current user is owner from available providers (for enabling queries)
+  const isOwnerFromAvailableProviders = availableProviders.some(
+    (provider) => provider.id === selectedProviderId && provider.role === 'owner'
   );
 
   // Fetch pending invitations (only for owners)
   const { data: pendingInvitations = [], isLoading: isLoadingInvitations } = useQuery({
-    queryKey: ['teamInvitations', selectedAutoServiceId],
-    queryFn: () => teamService.getPendingInvitations(selectedAutoServiceId || undefined),
-    enabled: !!user && !!selectedAutoServiceId && isOwnerFromAvailableServices, // Only fetch for owners
+    queryKey: ['teamInvitations', selectedProviderId],
+    queryFn: () => teamService.getPendingInvitations(selectedProviderId || undefined),
+    enabled: !!user && !!selectedProviderId && isOwnerFromAvailableProviders, // Only fetch for owners
   });
 
   const removeMutation = useMutation({
     mutationFn: (memberId: string) =>
-      teamService.removeTeamMember(memberId, selectedAutoServiceId || undefined),
+      teamService.removeTeamMember(memberId, selectedProviderId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team'] });
       showToast(
@@ -158,13 +154,15 @@ export function TeamManagementContent() {
   };
 
   // Check if current user is owner
-  // Check from available services first (faster), then from team members
-  const currentUserService = availableServices.find((s) => s.id === selectedAutoServiceId);
-  const isOwnerFromService = currentUserService?.role === 'owner';
+  // Check from available providers first (faster), then from team members
+  const currentUserProvider = availableProviders.find(
+    (provider) => provider.id === selectedProviderId
+  );
+  const isOwnerFromProvider = currentUserProvider?.role === 'owner';
   const currentUserMember = teamMembers.find((m) => m.userId === user?.id);
-  const isOwner = isOwnerFromService || currentUserMember?.role === 'owner';
+  const isOwner = isOwnerFromProvider || currentUserMember?.role === 'owner';
   const isManager =
-    currentUserService?.role === 'manager' || currentUserMember?.role === 'manager' || isOwner;
+    currentUserProvider?.role === 'manager' || currentUserMember?.role === 'manager' || isOwner;
 
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
@@ -278,7 +276,7 @@ export function TeamManagementContent() {
           ) : (
             <PendingInvitationsList
               invitations={pendingInvitations}
-              autoServiceId={selectedAutoServiceId || undefined}
+              providerId={selectedProviderId || undefined}
             />
           )}
         </div>

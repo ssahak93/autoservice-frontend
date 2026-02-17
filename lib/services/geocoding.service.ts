@@ -67,7 +67,7 @@ export const geocodingService = {
 
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'AutoServiceConnect/1.0', // Required by Nominatim
+          'User-Agent': process.env.NEXT_PUBLIC_USER_AGENT || 'AutoServiceConnect/1.0', // Required by Nominatim
           'Accept-Language': language, // Request results in specific language
         },
       });
@@ -113,7 +113,7 @@ export const geocodingService = {
 
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'AutoServiceConnect/1.0', // Required by Nominatim
+          'User-Agent': process.env.NEXT_PUBLIC_USER_AGENT || 'AutoServiceConnect/1.0', // Required by Nominatim
           'Accept-Language': language, // Request results in specific language
         },
       });

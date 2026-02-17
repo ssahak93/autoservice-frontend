@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Globe } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -23,6 +24,7 @@ export function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const t = useTranslations('navigation');
   const { isAuthenticated } = useAuth();
@@ -50,8 +52,12 @@ export function LanguageSwitcher() {
       }
     }
 
-    // Navigate to new locale
-    router.replace(pathname, { locale: newLocale });
+    // Preserve search parameters when switching languages
+    const queryString = searchParams.toString();
+    const newPath = queryString ? `${pathname}?${queryString}` : pathname;
+
+    // Navigate to new locale with preserved search params
+    router.replace(newPath, { locale: newLocale });
     setIsOpen(false);
   };
 

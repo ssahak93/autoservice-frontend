@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useRef, useEffect } from 'react';
 
 import { Link } from '@/i18n/routing';
-import { getAnimationVariants } from '@/lib/utils/animations';
+import { getAnimationVariants, getTransition } from '@/lib/utils/animations';
 
 /**
  * SupportInfoMenu Component
@@ -67,7 +67,7 @@ export function SupportInfoMenu() {
               initial={variants.fadeIn.initial}
               animate={variants.fadeIn.animate}
               exit={variants.fadeIn.exit}
-              transition={variants.fadeIn.transition}
+              transition={getTransition()}
               className="absolute left-0 top-full z-20 mt-2 w-48 rounded-lg bg-white shadow-lg ring-1 ring-black/5"
             >
               <div className="py-1">

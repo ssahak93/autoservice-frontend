@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { Skeleton } from '@/components/common/Skeleton';
 import { useDashboardStatistics } from '@/hooks/useDashboard';
 import { getAvatarUrl } from '@/lib/utils/file';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 
 // Lazy load heavy components
 const AnalyticsCharts = dynamic(
@@ -37,28 +37,28 @@ import { StatisticsCards } from './StatisticsCards';
 export function AnalyticsContent() {
   const t = useTranslations('dashboard.analytics');
   const [dateRange, setDateRange] = useState<{ startDate?: string; endDate?: string }>({});
-  const { selectedAutoServiceId, getSelectedAutoService } = useAutoServiceStore();
+  const { selectedProviderId, getSelectedProvider } = useProviderStore();
 
-  const selectedService = getSelectedAutoService();
+  const selectedProvider = getSelectedProvider();
   const { data: statistics, isLoading } = useDashboardStatistics(dateRange);
 
-  // Get service name
-  const getServiceName = () => {
-    if (!selectedService) return '';
-    if (selectedService.serviceType === 'company' && selectedService.companyName) {
-      return selectedService.companyName;
+  // Get provider name
+  const getProviderName = () => {
+    if (!selectedProvider) return '';
+    if (selectedProvider.serviceType === 'company' && selectedProvider.companyName) {
+      return selectedProvider.companyName;
     }
-    if (selectedService.firstName || selectedService.lastName) {
-      return `${selectedService.firstName || ''} ${selectedService.lastName || ''}`.trim();
+    if (selectedProvider.firstName || selectedProvider.lastName) {
+      return `${selectedProvider.firstName || ''} ${selectedProvider.lastName || ''}`.trim();
     }
-    return selectedService.name || '';
+    return selectedProvider.name || '';
   };
 
-  const serviceName = getServiceName();
-  const serviceAvatar = selectedService ? getAvatarUrl(selectedService) : null;
+  const providerName = getProviderName();
+  const providerAvatar = selectedProvider ? getAvatarUrl(selectedProvider) : null;
 
-  // Show message if no auto service is selected
-  if (!selectedAutoServiceId) {
+  // Show message if no provider is selected
+  if (!selectedProviderId) {
     return (
       <div className="space-y-6">
         <div>
@@ -74,7 +74,7 @@ export function AnalyticsContent() {
         <div className="rounded-lg bg-white p-8 text-center dark:bg-gray-800">
           <p className="text-gray-600 dark:text-gray-400">
             {t('selectService', {
-              defaultValue: 'Please select an auto service to view analytics',
+              defaultValue: 'Please select a provider to view analytics',
             })}
           </p>
         </div>
@@ -86,11 +86,11 @@ export function AnalyticsContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {/* Service Avatar and Name */}
-          {serviceAvatar ? (
+          {/* Provider Avatar and Name */}
+          {providerAvatar ? (
             <Image
-              src={serviceAvatar}
-              alt={serviceName}
+              src={providerAvatar}
+              alt={providerName}
               width={56}
               height={56}
               className="h-14 w-14 rounded-full object-cover"
@@ -105,14 +105,14 @@ export function AnalyticsContent() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {t('title', { defaultValue: 'Analytics & Reports' })}
             </h1>
-            {serviceName && (
+            {providerName && (
               <p className="mt-1 text-lg font-medium text-primary-600 dark:text-primary-400">
-                {serviceName}
+                {providerName}
               </p>
             )}
             <p className="mt-2 text-gray-600 dark:text-gray-400">
               {t('description', {
-                defaultValue: 'View detailed analytics and insights about your service',
+                defaultValue: 'View detailed analytics and insights about your provider',
               })}
             </p>
           </div>

@@ -41,7 +41,6 @@ export function RecentSearches() {
   const handleSearchClick = (search: (typeof searches)[0]) => {
     const params = new URLSearchParams();
     if (search.query) params.set('query', search.query);
-    if (search.businessType) params.set('businessType', search.businessType);
     if (search.city) params.set('city', search.city);
     if (search.region) params.set('region', search.region);
     if (search.district) params.set('district', search.district);
@@ -73,10 +72,7 @@ export function RecentSearches() {
           >
             <Clock className="h-4 w-4 flex-shrink-0 text-neutral-400" />
             <span className="flex-1 truncate">
-              {search.query ||
-                search.businessType ||
-                search.city ||
-                t('search', { defaultValue: 'Search' })}
+              {search.query || search.city || t('search', { defaultValue: 'Search' })}
             </span>
           </button>
         ))}

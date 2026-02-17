@@ -2,19 +2,9 @@ import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { unwrapResponseData, unwrapPaginatedResponse } from '@/lib/utils/api-response';
 import { cleanParams } from '@/lib/utils/params';
-import type { AutoService, PaginatedResponse } from '@/types';
+import type { Provider, PaginatedResponse, Review } from '@/types';
 
 export interface ServiceSearchParams {
-  businessTypes?: Array<
-    | 'auto_service'
-    | 'auto_shop'
-    | 'car_wash'
-    | 'cleaning'
-    | 'tire_service'
-    | 'towing'
-    | 'tinting'
-    | 'other'
-  >;
   regionId?: string;
   communityId?: string;
   serviceTypes?: string[];
@@ -29,12 +19,12 @@ export interface ServiceSearchParams {
 }
 
 export const servicesService = {
-  async search(params: ServiceSearchParams): Promise<PaginatedResponse<AutoService>> {
-    const cleanedParams = cleanParams(params);
+  async search(params: ServiceSearchParams): Promise<PaginatedResponse<Provider>> {
+    const cleanedParams = cleanParams(params as Record<string, unknown>);
 
     const response = await apiClient.get<
       | {
-          data: AutoService[];
+          data: Provider[];
           pagination: {
             page: number;
             limit: number;
@@ -42,18 +32,18 @@ export const servicesService = {
             totalPages: number;
           };
         }
-      | PaginatedResponse<AutoService>
-      | { success: boolean; data: PaginatedResponse<AutoService> }
-    >(API_ENDPOINTS.AUTO_SERVICES.SEARCH, {
+      | PaginatedResponse<Provider>
+      | { success: boolean; data: PaginatedResponse<Provider> }
+    >(API_ENDPOINTS.PROVIDERS.SEARCH, {
       params: cleanedParams,
     });
     // Backend returns { data, pagination } directly from search endpoint
     return unwrapPaginatedResponse(response);
   },
 
-  async getById(id: string): Promise<AutoService> {
-    const response = await apiClient.get<AutoService | { success: boolean; data: AutoService }>(
-      API_ENDPOINTS.AUTO_SERVICES.DETAIL(id)
+  async getById(id: string): Promise<Provider> {
+    const response = await apiClient.get<Provider | { success: boolean; data: Provider }>(
+      API_ENDPOINTS.PROVIDERS.DETAIL(id)
     );
     return unwrapResponseData(response);
   },
@@ -61,7 +51,7 @@ export const servicesService = {
   async getReviews(serviceId: string, params?: { page?: number; limit?: number; sortBy?: string }) {
     const response = await apiClient.get<
       PaginatedResponse<Review> | { success: boolean; data: PaginatedResponse<Review> } | Review[]
-    >(API_ENDPOINTS.AUTO_SERVICES.REVIEWS(serviceId), {
+    >(API_ENDPOINTS.PROVIDERS.REVIEWS(serviceId), {
       params,
     });
     return unwrapPaginatedResponse(response);

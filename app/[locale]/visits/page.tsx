@@ -21,9 +21,9 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useState, useMemo } from 'react';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { CreateServiceBanner } from '@/components/auto-service/CreateServiceBanner';
 import { Pagination } from '@/components/common/Pagination';
 import { VisitDetailsModal } from '@/components/dashboard/visits/VisitDetailsModal';
+import { CreateServiceBanner } from '@/components/provider/CreateServiceBanner';
 import { LeaveReviewModal } from '@/components/reviews/LeaveReviewModal';
 import { Button } from '@/components/ui/Button';
 import { BookVisitModal } from '@/components/visits/BookVisitModal';
@@ -91,16 +91,15 @@ function VisitCard({
             <div className="mb-2 flex items-center gap-2">
               <p className="font-semibold text-neutral-900">
                 {(() => {
-                  const autoService = visit.autoServiceProfile?.autoService || visit.autoService;
-                  const serviceType = autoService?.serviceType;
+                  const provider = visit.providerBranch?.provider || visit.provider;
+                  const serviceType = provider?.serviceType;
                   const isCompany = serviceType === 'company';
 
                   let serviceName = '';
-                  if (isCompany && autoService?.companyName) {
-                    serviceName = autoService.companyName;
-                  } else if (!isCompany && (autoService?.firstName || autoService?.lastName)) {
-                    serviceName =
-                      `${autoService.firstName || ''} ${autoService.lastName || ''}`.trim();
+                  if (isCompany && provider?.companyName) {
+                    serviceName = provider.companyName;
+                  } else if (!isCompany && (provider?.firstName || provider?.lastName)) {
+                    serviceName = `${provider.firstName || ''} ${provider.lastName || ''}`.trim();
                   } else {
                     serviceName = t('service', { defaultValue: 'Service' });
                   }
@@ -113,7 +112,7 @@ function VisitCard({
                 })()}
               </p>
               <Link
-                href={`/services/${visit.autoServiceProfileId}`}
+                href={`/services/${visit.providerBranchId}`}
                 className="text-primary-600 hover:text-primary-700"
                 title={t('viewService', { defaultValue: 'View Service' })}
               >
@@ -170,8 +169,8 @@ function VisitCard({
               <VisitChatButton
                 visitId={visit.id}
                 serviceName={
-                  visit.autoServiceProfile?.autoService?.companyName ||
-                  `${visit.autoServiceProfile?.autoService?.firstName || ''} ${visit.autoServiceProfile?.autoService?.lastName || ''}`.trim() ||
+                  visit.providerBranch?.provider?.companyName ||
+                  `${visit.providerBranch?.provider?.firstName || ''} ${visit.providerBranch?.provider?.lastName || ''}`.trim() ||
                   t('service', { defaultValue: 'Service' })
                 }
               />
@@ -511,12 +510,12 @@ export default function VisitsPage() {
               scheduledDate: editingVisit.scheduledDate || editingVisit.preferredDate,
               scheduledTime: editingVisit.scheduledTime || editingVisit.preferredTime,
               problemDescription: editingVisit.problemDescription || editingVisit.description,
-              autoServiceId: editingVisit.autoServiceId,
-              autoServiceProfileId: editingVisit.autoServiceProfileId,
+              providerId: editingVisit.providerId,
+              providerBranchId: editingVisit.providerBranchId,
             }}
             serviceName={
-              editingVisit.autoServiceProfile?.autoService?.companyName ||
-              `${editingVisit.autoServiceProfile?.autoService?.firstName || ''} ${editingVisit.autoServiceProfile?.autoService?.lastName || ''}`.trim() ||
+              editingVisit.providerBranch?.provider?.companyName ||
+              `${editingVisit.providerBranch?.provider?.firstName || ''} ${editingVisit.providerBranch?.provider?.lastName || ''}`.trim() ||
               t('service', { defaultValue: 'Service' })
             }
             isOpen={!!editingVisit}

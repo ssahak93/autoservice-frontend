@@ -91,26 +91,26 @@ export function UnifiedChatWindow({
     const isCurrentUserCustomer = visit.userId === user.id;
 
     if (isCurrentUserCustomer) {
-      // Current user is customer, show auto service info
-      if (visit.autoServiceProfile?.autoService) {
-        const autoService = visit.autoServiceProfile.autoService;
+      // Current user is customer, show provider info
+      if (visit.providerBranch?.provider) {
+        const provider = visit.providerBranch.provider;
         const name = formatServiceName(
-          autoService.companyName,
-          autoService.firstName,
-          autoService.lastName,
-          t('service', { defaultValue: 'Service' })
+          provider.companyName,
+          provider.firstName,
+          provider.lastName,
+          t('service', { defaultValue: 'Provider' })
         );
         return {
           name,
-          avatarUrl: getAvatarUrl(autoService),
+          avatarUrl: getAvatarUrl(provider),
         };
       }
       return {
-        name: t('service', { defaultValue: 'Service' }),
+        name: t('service', { defaultValue: 'Provider' }),
         avatarUrl: null,
       };
     } else {
-      // Current user is auto service (or team member), show customer info
+      // Current user is provider (or team member), show customer info
       const name = formatCustomerName(
         visit.user?.firstName,
         visit.user?.lastName,

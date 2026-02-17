@@ -16,8 +16,8 @@ import { useUIStore } from '@/stores/uiStore';
 
 interface InvitationStatus {
   valid: boolean;
-  autoServiceId?: string;
-  autoServiceName?: string;
+  providerId?: string;
+  providerName?: string;
   role?: string;
   message: string;
   requiresRegistration: boolean;
@@ -185,21 +185,21 @@ export default function InvitePage() {
           </p>
         </div>
 
-        {invitationStatus.autoServiceName && (
+        {invitationStatus.providerName && (
           <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('serviceName', { defaultValue: 'Service' })}:
+              {t('serviceName', { defaultValue: 'Provider' })}:
             </p>
             <div className="flex items-center justify-between">
               <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {invitationStatus.autoServiceName}
+                {invitationStatus.providerName}
               </p>
-              {invitationStatus.autoServiceId && (
+              {invitationStatus.providerId && (
                 <Link
-                  href={`/services/${invitationStatus.autoServiceId}`}
+                  href={`/services/${invitationStatus.providerId}`}
                   className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                 >
-                  {t('viewService', { defaultValue: 'View Service' })}
+                  {t('viewService', { defaultValue: 'View Provider' })}
                 </Link>
               )}
             </div>

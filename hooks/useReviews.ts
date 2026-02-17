@@ -43,7 +43,7 @@ export function useCreateReview() {
     mutationFn: (dto: CreateReviewDto) => reviewsService.createReview(dto),
     onSuccess: (data) => {
       // Get profileId from response data
-      const profileId = data.autoServiceProfileId;
+      const profileId = data.providerBranchId;
 
       // Invalidate relevant queries
       if (profileId) {

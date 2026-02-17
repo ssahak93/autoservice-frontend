@@ -126,9 +126,10 @@ export function AddVehicleModal({ isOpen, onClose, onSuccess }: AddVehicleModalP
             onSuccess();
           }
         },
-        onError: (error: Error) => {
+        onError: (error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : String(error);
           showToast(
-            error.message || t('vehicleCreateError', { defaultValue: 'Failed to add vehicle' }),
+            errorMessage || t('vehicleCreateError', { defaultValue: 'Failed to add vehicle' }),
             'error'
           );
         },

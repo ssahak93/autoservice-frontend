@@ -25,7 +25,7 @@ export function ChatWindow({ visitId, onClose }: ChatWindowProps) {
   const { data: visit } = useQuery({
     queryKey: ['visit', visitId],
     queryFn: async () => {
-      const visits = await visitsService.getAutoServiceList({ limit: 1000 });
+      const visits = await visitsService.getProviderList({ limit: 1000 });
       return visits.data.find((v) => v.id === visitId);
     },
     enabled: !!visitId,
@@ -96,20 +96,24 @@ export function ChatWindow({ visitId, onClose }: ChatWindowProps) {
         {/* Customer Info */}
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            {getAvatarUrl(visit?.user) ? (
-              <Image
-                src={getAvatarUrl(visit.user)!}
-                alt={customerName}
-                width={48}
-                height={48}
-                className="h-12 w-12 flex-shrink-0 rounded-full object-cover ring-2 ring-primary-200 dark:ring-primary-800"
-                unoptimized
-              />
-            ) : (
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 ring-2 ring-primary-200 dark:bg-primary-900/30 dark:ring-primary-800">
-                <User className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-              </div>
-            )}
+            {visit?.user &&
+              (() => {
+                const avatarUrl = getAvatarUrl(visit.user);
+                return avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={customerName}
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 flex-shrink-0 rounded-full object-cover ring-2 ring-primary-200 dark:ring-primary-800"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 ring-2 ring-primary-200 dark:bg-primary-900/30 dark:ring-primary-800">
+                    <User className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                  </div>
+                );
+              })()}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="truncate font-semibold text-gray-900 dark:text-white">

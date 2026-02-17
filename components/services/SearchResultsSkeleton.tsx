@@ -1,6 +1,6 @@
 'use client';
 
-import { ServiceCardSkeleton } from '@/components/auto-service';
+import { ServiceCardSkeleton } from '@/components/provider';
 
 interface SearchResultsSkeletonProps {
   count?: number;

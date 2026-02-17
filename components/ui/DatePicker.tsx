@@ -39,7 +39,7 @@ const CustomDateInput = forwardRef<HTMLInputElement, CustomDateInputProps>(
     // Format the date with month name if we have selectedDate
     const displayValue = useMemo(() => {
       if (!selectedDate) return value || '';
-      return formatDateForPicker(selectedDate, locale);
+      return formatDateForPicker(selectedDate, locale || 'en');
     }, [selectedDate, locale, value]);
 
     return (
@@ -80,7 +80,7 @@ export interface DatePickerProps {
   filterDate?: (date: Date) => boolean;
   id?: string;
   name?: string;
-  autoServiceId?: string; // For availability checking
+  providerId?: string; // For availability checking
   showAvailability?: boolean; // Whether to show availability status
   inline?: boolean; // Whether to show calendar inline (for modals)
   withPortal?: boolean; // Whether to render in portal (for modals)
@@ -91,7 +91,7 @@ export interface DatePickerProps {
  *
  * A modern, accessible date picker component built on react-datepicker
  * with consistent styling and behavior across the application.
- * Supports availability visualization when autoServiceId is provided.
+ * Supports availability visualization when providerId is provided.
  */
 export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
   (
@@ -112,7 +112,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       filterDate,
       id,
       name,
-      autoServiceId,
+      providerId,
       showAvailability = true,
       inline = false,
       withPortal = false,
@@ -179,15 +179,14 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       return formatDateISO(date);
     }, [isMounted]);
 
-    // Fetch availability if autoServiceId is provided (only after mount)
+    // Fetch availability if providerId is provided (only after mount)
     const { data: availability } = useQuery({
-      queryKey: ['availability', autoServiceId, startDate, endDate],
+      queryKey: ['availability', providerId, startDate, endDate],
       queryFn: () =>
-        autoServiceId && showAvailability
-          ? availabilityService.getAvailability(autoServiceId, startDate, endDate)
+        providerId && showAvailability
+          ? availabilityService.getAvailability(providerId, startDate, endDate)
           : null,
-      enabled:
-        !!autoServiceId && showAvailability && isMounted && startDate !== '' && endDate !== '',
+      enabled: !!providerId && showAvailability && isMounted && startDate !== '' && endDate !== '',
       staleTime: 5 * 60 * 1000, // 5 minutes
       retry: false, // Don't retry on 404 errors
     });
@@ -209,7 +208,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
 
     // Get status for a specific date
     const getDateStatus = (date: Date): DateLoad['status'] | null => {
-      if (!showAvailability || !autoServiceId || !availability || availability === 'OWN_SERVICE') {
+      if (!showAvailability || !providerId || !availability || availability === 'OWN_SERVICE') {
         return null;
       }
       const dateStr = formatDateISO(date);
@@ -232,7 +231,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
 
     // Check if a date is a working day (has available slots)
     const isWorkingDay = (date: Date): boolean => {
-      if (!showAvailability || !autoServiceId || !availability || availability === 'OWN_SERVICE') {
+      if (!showAvailability || !providerId || !availability || availability === 'OWN_SERVICE') {
         return true; // Allow all dates if availability is not loaded
       }
 
@@ -249,7 +248,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       }
 
       // If availability is loaded, only allow working days
-      if (showAvailability && autoServiceId && availability && availability !== 'OWN_SERVICE') {
+      if (showAvailability && providerId && availability && availability !== 'OWN_SERVICE') {
         return isWorkingDay(date);
       }
 
@@ -269,7 +268,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
       }
 
       // Check if this is a non-working day
-      if (showAvailability && autoServiceId && availability && availability !== 'OWN_SERVICE') {
+      if (showAvailability && providerId && availability && availability !== 'OWN_SERVICE') {
         if (!isWorkingDay(date)) {
           return '!text-neutral-300 !cursor-not-allowed !bg-neutral-50';
         }

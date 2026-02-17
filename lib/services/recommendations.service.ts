@@ -2,29 +2,27 @@ import { apiClient } from '@/lib/api/client';
 import { API_ENDPOINTS } from '@/lib/api/endpoints';
 import { unwrapArrayResponse } from '@/lib/utils/api-response';
 import { buildQueryParams } from '@/lib/utils/params';
-import type { AutoService } from '@/types';
+import type { Provider } from '@/types';
 
 export interface RecommendationParams {
   userId?: string;
   lat?: number;
   lng?: number;
-  businessType?: string;
 }
 
-export interface ServiceRecommendation extends AutoService {
+export interface ServiceRecommendation extends Provider {
   reason?: string;
   score?: number;
 }
 
 /**
- * Transform backend SearchResult to frontend AutoService format
+ * Transform backend SearchResult to frontend Provider format
  * Same transformation as in services.server.ts
  */
 function transformRecommendationResult(result: {
   id: string;
   name: string;
   serviceType: string;
-  businessType?: string;
   description: string;
   community?: string;
   region?: string;
@@ -51,16 +49,6 @@ function transformRecommendationResult(result: {
   return {
     id: result.id,
     serviceType: result.serviceType as 'individual' | 'company',
-    businessType: result.businessType as
-      | 'auto_service'
-      | 'auto_shop'
-      | 'car_wash'
-      | 'cleaning'
-      | 'tire_service'
-      | 'towing'
-      | 'tinting'
-      | 'other'
-      | undefined,
     companyName: result.serviceType === 'company' ? result.name || undefined : undefined,
     firstName: result.serviceType === 'individual' ? firstName || undefined : undefined,
     lastName: result.serviceType === 'individual' ? lastName || undefined : undefined,
@@ -87,14 +75,13 @@ function transformRecommendationResult(result: {
 
 export const recommendationsService = {
   async getRecommendations(params?: RecommendationParams): Promise<ServiceRecommendation[]> {
-    const queryParams = buildQueryParams(params || {}, false);
+    const queryParams = buildQueryParams((params || {}) as Record<string, unknown>, false);
 
     const response = await apiClient.get<
       Array<{
         id: string;
         name: string;
         serviceType: string;
-        businessType?: string;
         description: string;
         community?: string;
         region?: string;
@@ -117,7 +104,7 @@ export const recommendationsService = {
       params: queryParams,
     });
 
-    // Transform backend SearchResult format to frontend AutoService format
+    // Transform backend SearchResult format to frontend Provider format
     const data = unwrapArrayResponse(response);
     return data.map(transformRecommendationResult);
   },

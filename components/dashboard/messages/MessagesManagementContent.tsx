@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { formatCustomerName } from '@/lib/utils/user';
 import { chatService } from '@/modules/chat/services/chat.service';
 import { useChatStore } from '@/modules/chat/state/chatStore';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 
 // Lazy load chat components to reduce initial bundle size
 const UnifiedChatWindow = dynamic(
@@ -66,20 +66,20 @@ export interface Conversation {
 
 export function MessagesManagementContent() {
   const t = useTranslations('dashboard.messages');
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
   const { openChat } = useChatStore();
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Get all visits for the auto service
   const { data: visitsData, isLoading } = useQuery({
-    queryKey: ['autoServiceVisits', 'all', selectedAutoServiceId],
+    queryKey: ['providerVisits', 'all', selectedProviderId],
     queryFn: () =>
-      visitsService.getAutoServiceList({
+      visitsService.getProviderList({
         limit: 1000,
-        autoServiceId: selectedAutoServiceId || undefined,
+        providerId: selectedProviderId || undefined,
       }), // Get all visits
-    enabled: !!selectedAutoServiceId,
+    enabled: !!selectedProviderId,
   });
 
   // Get conversations with last message and unread count

@@ -18,7 +18,7 @@ import {
 import { getAvatarUrl } from '@/lib/utils/file';
 import { handleMutationError, handleMutationSuccess } from '@/lib/utils/toast';
 import { formatUserName } from '@/lib/utils/user';
-import { useAutoServiceStore } from '@/stores/autoServiceStore';
+import { useProviderStore } from '@/stores/providerStore';
 import { useUIStore } from '@/stores/uiStore';
 
 interface EditTeamMemberModalProps {
@@ -36,7 +36,7 @@ export function EditTeamMemberModal({
 }: EditTeamMemberModalProps) {
   const t = useTranslations('dashboard.team.edit');
   const tRoles = useTranslations('dashboard.team.roles');
-  const { selectedAutoServiceId } = useAutoServiceStore();
+  const { selectedProviderId } = useProviderStore();
   const { showToast } = useUIStore();
   const queryClient = useQueryClient();
 
@@ -70,7 +70,7 @@ export function EditTeamMemberModal({
 
   const updateMutation = useMutation({
     mutationFn: (data: UpdateTeamMemberRequest) =>
-      teamService.updateTeamMember(member.id, data, selectedAutoServiceId || undefined),
+      teamService.updateTeamMember(member.id, data, selectedProviderId || undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team'] });
       handleMutationSuccess(
@@ -132,18 +132,21 @@ export function EditTeamMemberModal({
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
-              {getAvatarUrl({ avatarUrl: member.avatarUrl }) ? (
-                <Image
-                  src={getAvatarUrl({ avatarUrl: member.avatarUrl })!}
-                  alt={formatUserName(member.firstName, member.lastName, 'Team Member')}
-                  width={64}
-                  height={64}
-                  className="h-16 w-16 rounded-full object-cover"
-                  unoptimized
-                />
-              ) : (
-                <User className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-              )}
+              {(() => {
+                const avatarUrl = getAvatarUrl({ avatarUrl: member.avatarUrl });
+                return avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={formatUserName(member.firstName, member.lastName, 'Team Member')}
+                    width={64}
+                    height={64}
+                    className="h-16 w-16 rounded-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <User className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+                );
+              })()}
             </div>
 
             {/* Member Info */}

@@ -63,13 +63,12 @@ export function MessageBubble({
   };
 
   const getSenderName = () => {
-    if (message.autoService) {
-      if (message.autoService.serviceType === 'company') {
-        return message.autoService.companyName || 'Auto Service';
+    if (message.provider) {
+      if (message.provider.serviceType === 'company') {
+        return message.provider.companyName || 'Provider';
       }
-      const name =
-        `${message.autoService.firstName || ''} ${message.autoService.lastName || ''}`.trim();
-      return name || 'Auto Service';
+      const name = `${message.provider.firstName || ''} ${message.provider.lastName || ''}`.trim();
+      return name || 'Provider';
     }
     if (message.sender) {
       // Admin doesn't have firstName/lastName, use "Admin" as display name
@@ -94,7 +93,7 @@ export function MessageBubble({
 
     const avatarUrl = isOwnMessage
       ? getAvatarUrl(user)
-      : getAvatarUrl(message.autoService) ||
+      : getAvatarUrl(message.provider) ||
         getAvatarUrl(message.teamMember) ||
         getAvatarUrl(message.sender);
 
@@ -121,10 +120,10 @@ export function MessageBubble({
                   ? user?.firstName?.charAt(0).toUpperCase() ||
                     user?.lastName?.charAt(0).toUpperCase() ||
                     'U'
-                  : message.autoService?.serviceType === 'company'
-                    ? message.autoService.companyName?.charAt(0).toUpperCase() || 'A'
-                    : message.autoService?.firstName?.charAt(0).toUpperCase() ||
-                      message.autoService?.lastName?.charAt(0).toUpperCase() ||
+                  : message.provider?.serviceType === 'company'
+                    ? message.provider.companyName?.charAt(0).toUpperCase() || 'P'
+                    : message.provider?.firstName?.charAt(0).toUpperCase() ||
+                      message.provider?.lastName?.charAt(0).toUpperCase() ||
                       message.teamMember?.firstName?.charAt(0).toUpperCase() ||
                       message.teamMember?.lastName?.charAt(0).toUpperCase() ||
                       message.sender?.firstName?.charAt(0).toUpperCase() ||
@@ -149,7 +148,7 @@ export function MessageBubble({
       <div
         className={`flex flex-1 flex-col gap-1 ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%]`}
       >
-        {!isOwnMessage && showName && !isGrouped && (message.sender || message.autoService) && (
+        {!isOwnMessage && showName && !isGrouped && (message.sender || message.provider) && (
           <div className="flex flex-col gap-0.5 px-1">
             <div className="flex items-baseline gap-2">
               <span className="text-xs font-semibold text-neutral-700">{senderName}</span>
@@ -157,7 +156,7 @@ export function MessageBubble({
                 <span className="text-xs text-neutral-500">({teamMemberName})</span>
               )}
             </div>
-            {message.autoService && teamMemberName && (
+            {message.provider && teamMemberName && (
               <span className="text-xs text-neutral-400">
                 {message.teamMember?.role === 'owner'
                   ? 'Owner'
