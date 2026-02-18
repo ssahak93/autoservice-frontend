@@ -34,9 +34,19 @@ export const categoriesService = {
    * Get all active categories
    */
   async getAll(): Promise<Category[]> {
-    const response = await apiClient.get<CategoriesResponse>(API_ENDPOINTS.CATEGORIES.LIST);
+    const response = await apiClient.get<CategoriesResponse | Category[]>(
+      API_ENDPOINTS.CATEGORIES.LIST
+    );
     const unwrapped = unwrapResponseData(response);
-    return Array.isArray(unwrapped) ? unwrapped : unwrapped.data || [];
+    // Handle both array and wrapped response formats
+    if (Array.isArray(unwrapped)) {
+      return unwrapped;
+    }
+    // Type guard for wrapped response
+    if (unwrapped && typeof unwrapped === 'object' && 'data' in unwrapped) {
+      return (unwrapped as CategoriesResponse).data || [];
+    }
+    return [];
   },
 
   /**
@@ -44,11 +54,31 @@ export const categoriesService = {
    */
   async getByCode(code: string): Promise<Category | null> {
     try {
-      const response = await apiClient.get<CategoryResponse>(
+      const response = await apiClient.get<CategoryResponse | Category>(
         API_ENDPOINTS.CATEGORIES.BY_CODE(code)
       );
       const unwrapped = unwrapResponseData(response);
-      return unwrapped.data || unwrapped;
+      // Handle both direct Category and wrapped CategoryResponse formats
+      if (
+        unwrapped &&
+        typeof unwrapped === 'object' &&
+        'data' in unwrapped &&
+        'success' in unwrapped
+      ) {
+        const wrapped = unwrapped as CategoryResponse;
+        return wrapped.data || null;
+      }
+      // If it's a direct Category object (has id, code, name properties)
+      if (
+        unwrapped &&
+        typeof unwrapped === 'object' &&
+        'id' in unwrapped &&
+        'code' in unwrapped &&
+        'name' in unwrapped
+      ) {
+        return unwrapped as Category;
+      }
+      return null;
     } catch {
       return null;
     }

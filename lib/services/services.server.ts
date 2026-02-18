@@ -199,7 +199,7 @@ export const servicesServerService = {
     params: ServiceSearchParams,
     locale: string = 'hy'
   ): Promise<PaginatedResponse<Provider>> {
-    const cleanedParams = cleanParams(params);
+    const cleanedParams = cleanParams(params as Record<string, unknown>);
 
     const response = await serverApiClient.get<BackendSearchResponse>(
       API_ENDPOINTS.PROVIDERS.SEARCH,

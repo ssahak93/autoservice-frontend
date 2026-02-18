@@ -16,6 +16,8 @@ import {
   Star,
   ExternalLink,
   Car,
+  Loader2,
+  UserX,
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useState, useMemo } from 'react';
@@ -38,6 +40,8 @@ const statusIcons = {
   confirmed: CheckCircle2,
   cancelled: XCircle,
   completed: CheckCircle2,
+  in_progress: Loader2,
+  no_show: UserX,
 };
 
 const statusColors = {
@@ -45,6 +49,8 @@ const statusColors = {
   confirmed: 'text-success-500',
   cancelled: 'text-error-500',
   completed: 'text-primary-500',
+  in_progress: 'text-primary-500',
+  no_show: 'text-error-500',
 };
 
 // Visit Card Component
