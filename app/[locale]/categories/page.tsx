@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { CategoriesClient } from '@/components/categories/CategoriesClient';
 import { categoriesServerService } from '@/lib/services/categories.server';
+import type { Category } from '@/lib/services/categories.service';
 
 interface CategoriesPageProps {
   params: Promise<{ locale: string }>;
@@ -35,7 +36,7 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
   const t = await getTranslations('serviceCategories');
 
   // Fetch categories server-side for SEO
-  let categories = [];
+  let categories: Category[] = [];
   try {
     categories = await categoriesServerService.getAll();
   } catch (error) {
