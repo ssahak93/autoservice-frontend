@@ -103,25 +103,43 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): Provid
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
 
+  // Safely handle averageRating - can be number, string, or null
+  let averageRating: number | undefined;
+  if (result.averageRating != null) {
+    const rating =
+      typeof result.averageRating === 'string'
+        ? parseFloat(result.averageRating)
+        : Number(result.averageRating);
+    averageRating = isNaN(rating) ? undefined : rating;
+  }
+
+  // Safely handle totalReviews - ensure it's a number
+  const totalReviews =
+    typeof result.totalReviews === 'number'
+      ? result.totalReviews
+      : typeof result.totalReviews === 'string'
+        ? parseInt(result.totalReviews, 10)
+        : 0;
+
   return {
-    id: result.id,
-    serviceType: result.serviceType as 'individual' | 'company',
+    id: result.id || '',
+    serviceType: (result.serviceType as 'individual' | 'company') || 'individual',
     companyName: result.serviceType === 'company' ? result.name || undefined : undefined,
     firstName: result.serviceType === 'individual' ? firstName || undefined : undefined,
     lastName: result.serviceType === 'individual' ? lastName || undefined : undefined,
     description: result.description || undefined,
     address: result.address || '',
-    addressHy: result.addressHy,
-    addressRu: result.addressRu,
-    community: result.community,
-    region: result.region,
-    communityType: result.communityType,
+    addressHy: result.addressHy || undefined,
+    addressRu: result.addressRu || undefined,
+    community: result.community || undefined,
+    region: result.region || undefined,
+    communityType: result.communityType || undefined,
     latitude: 0, // Will be set from detail if needed
     longitude: 0, // Will be set from detail if needed
-    averageRating: result.averageRating ? Number(result.averageRating) : undefined,
-    totalReviews: result.totalReviews,
-    isApproved: result.isApproved,
-    isBlocked: result.isBlocked || false,
+    averageRating,
+    totalReviews: isNaN(totalReviews) ? 0 : totalReviews,
+    isApproved: result.isApproved ?? false,
+    isBlocked: result.isBlocked ?? false,
     blockedReason: result.blockedReason || undefined,
     avatarFile: result.avatarUrl
       ? {
@@ -130,11 +148,13 @@ function transformSearchResult(result: BackendSearchResponse['data'][0]): Provid
       : undefined,
     specialization: result.services?.[0]?.name || undefined,
     // Transform services array, preserving category (optional)
-    services: result.services?.map((service) => ({
-      id: service.id,
-      name: service.name,
-      category: service.category, // Category is optional now
-    })),
+    services: Array.isArray(result.services)
+      ? result.services.map((service) => ({
+          id: service?.id || '',
+          name: service?.name || '',
+          category: service?.category, // Category is optional now
+        }))
+      : undefined,
   };
 }
 
@@ -211,9 +231,21 @@ export const servicesServerService = {
       }
     );
 
+    // Transform with error handling for each item
+    const transformedData: Provider[] = [];
+    for (const item of response.data) {
+      try {
+        transformedData.push(transformSearchResult(item));
+      } catch (error) {
+        // Log error but continue processing other items
+        console.error('Error transforming provider:', item.id, error);
+        // Skip this item - don't include it in results
+      }
+    }
+
     return {
       success: true,
-      data: response.data.map(transformSearchResult),
+      data: transformedData,
       pagination: response.pagination,
     };
   },
