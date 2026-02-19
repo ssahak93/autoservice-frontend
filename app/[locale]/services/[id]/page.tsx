@@ -309,9 +309,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
       <ServiceSchema service={provider} />
       <BreadcrumbSchema
         items={[
-          { name: tNav('home'), url: `/${locale}` },
-          { name: t('title'), url: `/${locale}/services` },
-          { name, url: `/${locale}/services/${id}` },
+          { name: tNav('home'), url: '/' },
+          { name: t('title'), url: '/services' },
+          { name, url: `/services/${id}` },
         ]}
       />
     </div>

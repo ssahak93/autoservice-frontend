@@ -61,10 +61,10 @@ export default async function CategoryDetailPage({ params }: CategoryDetailPageP
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: t('home', { defaultValue: 'Home' }), href: `/${locale}` },
+          { label: t('home', { defaultValue: 'Home' }), href: '/' },
           {
             label: t('categories', { defaultValue: 'Categories' }),
-            href: `/${locale}/categories`,
+            href: '/categories',
           },
           { label: getName() },
         ]}

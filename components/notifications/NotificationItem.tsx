@@ -11,13 +11,13 @@ import {
   ExternalLink,
   ArrowRight,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
 import { useMarkNotificationAsRead, useDeleteNotification } from '@/hooks/useNotifications';
 import { useVisit } from '@/hooks/useVisits';
+import { Link } from '@/i18n/routing';
 import type { Notification } from '@/lib/services/notifications.service';
 import { formatDateFull } from '@/lib/utils/date';
 
@@ -63,6 +63,7 @@ export function NotificationItem({ notification, compact = false }: Notification
   const { data: visit } = useVisit(visitId || null);
 
   // Determine navigation link based on notification type
+  // Note: next-intl automatically adds locale prefix, so we don't include it here
   const getNotificationLink = () => {
     if (visitId) {
       // For visit-related notifications, determine if user is customer or provider
@@ -71,12 +72,12 @@ export function NotificationItem({ notification, compact = false }: Notification
 
       // If user is customer, link to user visits; otherwise to dashboard visits
       if (isCustomer) {
-        return `/${locale}/visits`;
+        return '/visits';
       }
-      return `/${locale}/dashboard/visits`;
+      return '/dashboard/visits';
     }
     if (messageId || notification.type === 'new_message') {
-      return `/${locale}/dashboard/messages`;
+      return '/dashboard/messages';
     }
     return null;
   };
